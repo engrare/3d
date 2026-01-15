@@ -10,34 +10,25 @@ const BASE_PRICE = 0.50;
 // --- DOM READY ---
 $(document).ready(function() {
     
+    // Initialize 3D immediately but hidden, so it's ready when tab opens
+    init3D();
+
     // NAVIGATION
     $('.nav-menu li, .nav-trigger').click(function() {
         const target = $(this).data('target');
         
-        // 1. Update UI Tabs
+        // UI Updates
         $('.nav-menu li').removeClass('active');
         $(`.nav-menu li[data-target="${target}"]`).addClass('active');
         
-        // 2. Switch Pages
         $('.page').removeClass('active');
         $(target).addClass('active');
 
-        // 3. CRITICAL FIX: Handle 3D Viewer Resize
-        if (target === '#upload-page') {
-            // We wait 10ms to ensure the CSS 'display: block' has applied
-            setTimeout(() => {
-                if (!renderer) {
-                    init3D();
-                } else {
-                    onWindowResize(); // Force resize now that div is visible
-                }
-            }, 10);
-        }
-        
+        // Check checkout
         if (target === '#checkout-page') renderCart();
     });
 
-    // UPLOAD LOGIC
+    // UPLOAD BUTTONS
     $('#upload-btn').click(() => $('#real-file-input').click());
     
     $('#real-file-input').change(function(e) {
@@ -54,7 +45,6 @@ $(document).ready(function() {
     });
 
     $('#material-select').change(calculatePrice);
-
     $('#add-to-cart').click(addToCart);
 });
 
@@ -62,14 +52,10 @@ $(document).ready(function() {
 function init3D() {
     const container = document.getElementById('3d-viewer');
     
-    // Get actual dimensions
-    const width = container.clientWidth;
-    const height = container.clientHeight;
-
+    // 1. Setup Scene
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf8f9fa); // Matches --bg-alt
+    scene.background = new THREE.Color(0xf8f9fa); 
     
-    // Lighting
     const ambLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambLight);
     
@@ -77,43 +63,50 @@ function init3D() {
     dirLight.position.set(100, 100, 50);
     scene.add(dirLight);
 
-    camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+    // 2. Setup Camera (Aspect ratio 1 temporarily)
+    camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
     camera.position.set(0, 50, 100);
 
+    // 3. Setup Renderer
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(width, height);
+    // Don't set size here, let ResizeObserver handle it
     renderer.setPixelRatio(window.devicePixelRatio);
     
-    // Append canvas
-    container.innerHTML = ''; // Clear existing if any
+    container.innerHTML = ''; 
     container.appendChild(renderer.domElement);
 
     controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
 
+    // 4. ANIMATION LOOP
+    function animate() {
+        requestAnimationFrame(animate);
+        if(controls) controls.update();
+        renderer.render(scene, camera);
+    }
     animate();
-    window.addEventListener('resize', onWindowResize);
+
+    // 5. RESIZE OBSERVER (THE FIX)
+    // This watches the container. When it appears or resizes, it updates Three.js automatically.
+    const resizeObserver = new ResizeObserver(() => {
+        updateDimensions();
+    });
+    resizeObserver.observe(container);
 }
 
-function animate() {
-    requestAnimationFrame(animate);
-    if(controls) controls.update();
-    if(renderer && scene && camera) renderer.render(scene, camera);
-}
-
-function onWindowResize() {
+function updateDimensions() {
     const container = document.getElementById('3d-viewer');
-    if (!container || !camera || !renderer) return;
+    if (!container || !renderer || !camera) return;
 
+    // Get the computed size of the container
     const width = container.clientWidth;
     const height = container.clientHeight;
 
-    // Only resize if container has size
-    if (width > 0 && height > 0) {
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-        renderer.setSize(width, height);
-    }
+    if (width === 0 || height === 0) return;
+
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(width, height, false); // false prevents resizing the canvas style, only internal buffer
 }
 
 function loadSTL(data) {
@@ -121,8 +114,8 @@ function loadSTL(data) {
     try {
         const geometry = loader.parse(data);
         const material = new THREE.MeshPhongMaterial({ 
-            color: 0x2563eb, // Tech Blue
-            specular: 0x111111,
+            color: 0x2563eb, 
+            specular: 0x111111, 
             shininess: 200 
         });
 
@@ -132,23 +125,25 @@ function loadSTL(data) {
         geometry.computeBoundingBox();
         geometry.center();
         
-        // Fit camera to object
+        // Auto-fit camera
         const box = geometry.boundingBox;
         const maxDim = Math.max(
             box.max.x - box.min.x,
             box.max.y - box.min.y,
             box.max.z - box.min.z
         );
-        camera.position.set(0, maxDim * 1.5, maxDim * 2.5);
-        mesh.rotation.x = -Math.PI / 2;
         
+        // Reset camera position based on object size
+        camera.position.set(0, maxDim * 1.5, maxDim * 2.5);
+        camera.lookAt(0,0,0);
+        
+        mesh.rotation.x = -Math.PI / 2;
         scene.add(mesh);
 
-        // Stats
-        const vol = getVolume(geometry) / 1000; // cm3
+        // Calculate Volume
+        const vol = getVolume(geometry) / 1000;
         $('#model-vol').data('raw', vol).text(vol.toFixed(2) + ' cm³');
         
-        // Dimensions
         const sizeX = (box.max.x - box.min.x).toFixed(1);
         const sizeY = (box.max.y - box.min.y).toFixed(1);
         const sizeZ = (box.max.z - box.min.z).toFixed(1);
@@ -164,7 +159,6 @@ function loadSTL(data) {
 }
 
 function getVolume(geometry) {
-    // Simple signed volume
     if(geometry.index) geometry = geometry.toNonIndexed();
     const pos = geometry.attributes.position;
     let vol = 0;
@@ -183,7 +177,6 @@ function calculatePrice() {
     if(!vol) return;
     const multiplier = parseFloat($('#material-select').val());
     const price = Math.max(5, vol * BASE_PRICE * multiplier);
-    
     $('#price-display').text('$' + price.toFixed(2));
 }
 
@@ -196,7 +189,6 @@ function addToCart() {
     $('#cart-badge').text(cart.length);
     alert('Added to Cart');
     
-    // Reset
     if(mesh) { scene.remove(mesh); mesh=null; }
     $('#price-display').text('$0.00');
     $('#add-to-cart').prop('disabled', true);
