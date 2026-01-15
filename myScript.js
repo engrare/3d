@@ -136,40 +136,54 @@ $(document).ready(function() {
         window.addEventListener('resize', onWindowResize);
     }
 
-    function loadSTL(data) {
+function loadSTL(data) {
         const loader = new STLLoader();
-        const geometry = loader.parse(data);
-
-        // Create a "Premium" looking material
-        const material = new THREE.MeshPhysicalMaterial({ 
-            color: 0xffffff, 
-            metalness: 0.1,
-            roughness: 0.2,
-            clearcoat: 1.0,
-            clearcoatRoughness: 0.1
-        });
-
-        if (mesh) scene.remove(mesh);
-
-        mesh = new THREE.Mesh(geometry, material);
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-
-        geometry.computeBoundingBox();
-        geometry.center();
-        mesh.rotation.x = -Math.PI / 2; 
-
-        scene.add(mesh);
-
-        // Calculation
-        const volume = getVolume(geometry);
-        const volumeCm3 = volume / 1000; 
         
-        $('#model-vol').data('vol', volumeCm3);
-        $('#model-vol').text(volumeCm3.toFixed(2) + " cm³");
+        try {
+            const geometry = loader.parse(data);
+            
+            // Create a "Premium" looking material
+            const material = new THREE.MeshPhysicalMaterial({ 
+                color: 0xffffff, 
+                metalness: 0.1,
+                roughness: 0.2,
+                clearcoat: 1.0,
+                clearcoatRoughness: 0.1
+            });
 
-        calculatePrice();
-        $('#add-to-cart-btn').prop('disabled', false);
+            if (mesh) scene.remove(mesh);
+
+            mesh = new THREE.Mesh(geometry, material);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+
+            // Center geometry
+            geometry.computeBoundingBox();
+            geometry.center();
+            
+            // Rotate: Most STLs are Z-up, Three.js is Y-up
+            mesh.rotation.x = -Math.PI / 2; 
+
+            scene.add(mesh);
+
+            // Calculation
+            const volume = getVolume(geometry);
+            const volumeCm3 = volume / 1000; 
+            
+            $('#model-vol').data('vol', volumeCm3);
+            $('#model-vol').text(volumeCm3.toFixed(2) + " cm³");
+
+            calculatePrice();
+            $('#add-to-cart-btn').prop('disabled', false);
+            
+            // Reset button text
+            $('#upload-trigger').text('Change File');
+
+        } catch (error) {
+            console.error(error);
+            alert("Error loading file: It might be corrupted or an unsupported ASCII format. Please try a standard Binary STL.");
+            $('#upload-trigger').text('Try Again');
+        }
     }
 
     function getVolume(geometry) {
