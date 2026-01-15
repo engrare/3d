@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Engrare 3D Printing Service</title>
+    <title>Engrare Pro | 3D Printing Service</title>
     
-    <link rel="stylesheet" href="files/myStyle.css">
-
+    <link rel="stylesheet" href="myStyle.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <script type="importmap">
@@ -21,142 +20,157 @@
 <body>
 
     <nav class="navbar">
-        <div class="logo">Engrare 3D</div>
-        <ul class="nav-links">
-            <li><a href="#" id="nav-home" class="active">Home</a></li>
-            <li><a href="#" id="nav-upload">Upload & Quote</a></li>
-            <li><a href="#" id="nav-checkout">Checkout <span id="cart-count">(0)</span></a></li>
-        </ul>
+        <div class="nav-content">
+            <div class="logo">Engrare</div>
+            <ul class="nav-links">
+                <li><a href="#" id="nav-home" class="active">Overview</a></li>
+                <li><a href="#" id="nav-upload">Studio</a></li>
+                <li><a href="#" id="nav-checkout">Bag <span id="cart-pill">0</span></a></li>
+            </ul>
+        </div>
     </nav>
 
-    <section id="home-page" class="page-section">
-        <header class="hero-banner">
-            <div class="hero-content">
-                <h1>Bring Your Ideas to Life</h1>
-                <p>Professional 3D Printing & Shipping Service</p>
-                <button id="cta-upload">Start Printing Now</button>
+    <section id="home-page" class="page-section fade-in">
+        <div class="hero">
+            <h1 class="headline">Pro-grade 3D Printing.</h1>
+            <h2 class="subheadline">From your browser to your door.</h2>
+            <div class="hero-actions">
+                <button id="cta-upload" class="btn-primary">Start Printing</button>
+                <a href="#" class="link-secondary">Learn more ></a>
             </div>
-        </header>
+        </div>
 
-        <div class="container">
-            <h2>Our Services</h2>
-            <div class="services-row">
-                <div class="service-card">
-                    <h3>High Quality Printing</h3>
-                    <p>We use industrial grade FDM and SLA printers.</p>
+        <div class="section-container">
+            <h3 class="section-title">The Engrare Difference.</h3>
+            <div class="bento-grid">
+                <div class="card large-card">
+                    <div class="card-text">
+                        <h4>Industrial Precision.</h4>
+                        <p>SLA & FDM technology calibrated to 0.05mm accuracy.</p>
+                    </div>
                 </div>
-                <div class="service-card">
-                    <h3>Fast Shipping</h3>
-                    <p>Direct delivery to your doorstep within 3 days.</p>
+                <div class="card small-card bg-gray">
+                    <div class="card-text">
+                        <h4>Speed.</h4>
+                        <p>Ships in 48 hours.</p>
+                    </div>
                 </div>
-                <div class="service-card">
-                    <h3>Design Support</h3>
-                    <p>Experts available to help fix your STL files.</p>
+                <div class="card small-card bg-dark">
+                    <div class="card-text">
+                        <h4>Support.</h4>
+                        <p>Engineers on standby.</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="container">
-            <h2>Most Sold Products</h2>
-            <div class="product-grid">
-                <div class="product-item">
-                    <div class="placeholder-img">Cube Key</div>
-                    <h4>Calibration Cube</h4>
-                    <p>$5.00</p>
+        <div class="section-container">
+            <h3 class="section-title">Popular Models.</h3>
+            <div class="product-row">
+                <div class="product-card">
+                    <div class="prod-img"></div>
+                    <h5>Calibration Cube</h5>
+                    <p class="price">$5.00</p>
+                    <button class="btn-text">Add</button>
                 </div>
-                <div class="product-item">
-                    <div class="placeholder-img">Phone Stand</div>
-                    <h4>Phone Stand</h4>
-                    <p>$12.50</p>
+                <div class="product-card">
+                    <div class="prod-img"></div>
+                    <h5>Phone Stand</h5>
+                    <p class="price">$12.50</p>
+                    <button class="btn-text">Add</button>
                 </div>
-                <div class="product-item">
-                    <div class="placeholder-img">Gear Set</div>
-                    <h4>Planetary Gears</h4>
-                    <p>$25.00</p>
+                <div class="product-card">
+                    <div class="prod-img"></div>
+                    <h5>Gear Set</h5>
+                    <p class="price">$25.00</p>
+                    <button class="btn-text">Add</button>
                 </div>
             </div>
         </div>
     </section>
 
     <section id="upload-page" class="page-section" style="display: none;">
-        <div class="container full-height-container">
-            <h2>Upload Your Model</h2>
-            
-            <div class="upload-controls">
-                <input type="file" id="file-input" accept=".stl,.3mf">
-                <p class="note">Supported formats: .STL (Binary), .3MF</p>
+        <div class="studio-container">
+            <div class="studio-header">
+                <h2>Studio</h2>
+                <p>Upload .STL or .3MF files to visualize and quote.</p>
             </div>
 
-            <div class="viewer-layout">
-                <div id="3d-viewer"></div>
+            <div class="studio-workspace">
+                <div class="viewer-wrapper">
+                    <div id="3d-viewer"></div>
+                    <div class="viewer-overlay">
+                        <button id="upload-trigger" class="btn-glass">Choose File</button>
+                        <input type="file" id="file-input" accept=".stl,.3mf" hidden>
+                    </div>
+                </div>
 
-                <div class="sidebar">
-                    <h3>Model Details</h3>
-                    <div class="detail-row">
-                        <span>Volume:</span>
-                        <span id="model-vol">0 cm³</span>
+                <div class="controls-panel">
+                    <div class="panel-section">
+                        <label>Material</label>
+                        <div class="select-wrapper">
+                            <select id="material-select">
+                                <option value="1">PLA (Standard)</option>
+                                <option value="1.5">PETG (Durable)</option>
+                                <option value="2.5">TPU (Flexible)</option>
+                            </select>
+                        </div>
                     </div>
                     
-                    <div class="control-group">
-                        <label>Material:</label>
-                        <select id="material-select">
-                            <option value="1">PLA (Standard)</option>
-                            <option value="1.5">PETG (Strong)</option>
-                            <option value="2.5">TPU (Flexible)</option>
-                        </select>
+                    <div class="panel-section">
+                        <label>Analysis</label>
+                        <div class="stat-row">
+                            <span>Volume</span>
+                            <span id="model-vol">--</span>
+                        </div>
                     </div>
 
-                    <div class="price-box">
-                        <span>Estimated Price:</span>
-                        <h2 id="calculated-price">$0.00</h2>
+                    <div class="panel-footer">
+                        <div class="price-tag">
+                            <span>Total</span>
+                            <h3 id="calculated-price">$0.00</h3>
+                        </div>
+                        <button id="add-to-cart-btn" class="btn-primary full-width" disabled>Add to Bag</button>
                     </div>
-
-                    <button id="add-to-cart-btn" disabled>Add to Checkout</button>
                 </div>
             </div>
         </div>
     </section>
 
     <section id="checkout-page" class="page-section" style="display: none;">
-        <div class="container small-container">
-            <h2>Checkout</h2>
-            
-            <div class="cart-items" id="cart-list">
-                <p class="empty-msg">Your cart is empty.</p>
-            </div>
-
-            <div class="checkout-summary">
-                <div class="summary-row">
-                    <span>Subtotal</span>
-                    <span id="cart-subtotal">$0.00</span>
-                </div>
-                <div class="summary-row">
-                    <span>Shipping</span>
-                    <span>$5.00</span>
-                </div>
-                <hr>
-                <div class="summary-row total">
-                    <span>Total</span>
-                    <span id="cart-total">$5.00</span>
-                </div>
-            </div>
-
-            <div class="payment-info">
-                <h3>Payment Method</h3>
-                <p>Secure payment infrastructure provided by <strong>iyzico</strong>.</p>
-                <div class="iyzico-logo">
-                    [Iyzico Secured Badge Placeholder]
+        <div class="checkout-container">
+            <h2 class="section-title">Review your Bag.</h2>
+            <div class="checkout-layout">
+                <div class="cart-list" id="cart-list">
+                    </div>
+                
+                <div class="summary-card">
+                    <div class="summary-line">
+                        <span>Subtotal</span>
+                        <span id="cart-subtotal">$0.00</span>
+                    </div>
+                    <div class="summary-line">
+                        <span>Shipping</span>
+                        <span>$5.00</span>
+                    </div>
+                    <div class="summary-line total">
+                        <span>Total</span>
+                        <span id="cart-total">$5.00</span>
+                    </div>
+                    
+                    <div class="iyzico-box">
+                        <p>Secured by <strong>iyzico</strong></p>
+                    </div>
+                    <a href="#" class="btn-primary full-width">Check Out</a>
                 </div>
             </div>
-
-            <a href="https://www.iyzico.com/en" target="_blank" class="payment-btn">Proceed to Payment with Iyzico</a>
         </div>
     </section>
 
     <footer>
-        <p>&copy; 2026 Engrare 3D Solutions.</p>
+        <p>Copyright © 2026 Engrare Inc. All rights reserved.</p>
     </footer>
 
-    <script type="module" src="files/myScript.js"></script>
+    <script type="module" src="myScript.js"></script>
 </body>
 </html>
