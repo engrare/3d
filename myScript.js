@@ -10,11 +10,13 @@ const BASE_PRICE_PER_CM3 = 15.00;
 // Bambu Lab Build Volume (256x256x256)
 const BUILD_VOLUME_X = 256;
 const BUILD_VOLUME_Y = 256;
-const BUILD_VOLUME_Z = 256;
 
 // --- DOM READY ---
 $(document).ready(function() {
     
+    // Change 5: Restore Cart from LocalStorage
+    loadCart();
+
     init3D(); 
 
     // 1. Navigation
@@ -40,60 +42,113 @@ $(document).ready(function() {
         loadLibrarySTL(stlPath);
     });
 
+    // Change 3: Quick Start Templates in Studio
+    $('.template-btn').click(function() {
+        const stlPath = $(this).data('stl');
+        const name = $(this).data('name');
+        $('#file-name-display').text(name);
+        loadLibrarySTL(stlPath);
+    });
+
     // 4. Upload Button
     $('#upload-btn').click(() => $('#real-file-input').click());
     $('#real-file-input').change(handleFileUpload);
 
-    // 5. Mode Switcher (Fixed Selector)
+    // Change 2: Fix Drag and Drop (Counter Method)
+    const dropZone = document.querySelector('.viewer-container');
+    const overlay = document.getElementById('drop-zone-overlay');
+    let dragCounter = 0;
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+
+    dropZone.addEventListener('dragenter', (e) => {
+        dragCounter++;
+        overlay.style.display = 'flex';
+    }, false);
+
+    dropZone.addEventListener('dragleave', (e) => {
+        dragCounter--;
+        if (dragCounter === 0) {
+            overlay.style.display = 'none';
+        }
+    }, false);
+
+    dropZone.addEventListener('drop', (e) => {
+        dragCounter = 0;
+        overlay.style.display = 'none';
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length > 0) handleFile(files[0]);
+    }, false);
+
+
+    // 5. Mode Switcher
     $('.tab-btn').click(function() {
         $('.tab-btn').removeClass('active');
         $(this).addClass('active');
-        const mode = $(this).data('mode'); // 'basic' or 'advanced'
+        const mode = $(this).data('mode'); 
         $('.config-panel').hide();
         $(`#panel-${mode}`).fadeIn(200);
     });
 
-    // 6. Color Selection (Fixed Logic & 3D Sync)
+    // 6. Color Selection
     $('.color-option').click(function() { 
-        // UI Update
         $('.color-option').removeClass('selected'); 
         $(this).addClass('selected');
         
-        // Text Update
         const colorName = $(this).data('color');
-        const hexColor = $(this).data('hex'); // We need the HEX code for 3D
+        const hexColor = $(this).data('hex'); 
         $('#selected-color-name').text(colorName);
 
-        // 3D Model Update
         if (mesh && mesh.material) {
             mesh.material.color.set(hexColor);
         }
     });
 
-    // 7. Price Calculation
-    $('#material-select, #infill-select, #quality-select, #quantity-input, input[name="delivery"]').on('input change', calculatePrice);
-    
-    // 8. Add to Cart (Fixed Double Click Issue)
-    $('#add-to-cart').off('click').on('click', addToCart);
-
-    // 9. FAQ Logic
-    $('.faq-question').click(function() {
-        const answer = $(this).next('.faq-answer');
-        const toggle = $(this).find('.toggle');
-        $('.faq-answer').not(answer).slideUp();
-        $('.toggle').not(toggle).text('+');
-        answer.slideToggle();
-        setTimeout(() => { toggle.text(answer.is(':visible') ? '-' : '+'); }, 10);
+    // 7. Price Calculation & Sync
+    $('#material-select, #infill-select, #quantity-input, input[name="delivery"]').on('input change', function() {
+        calculatePrice();
+        syncBasicToPro(); // Change 4: Sync
     });
+
+    // Change 4: Pro Mode Sync listeners
+    $('#pro-infill, #pro-layer-height').on('input change', function() {
+        syncProToBasic();
+        calculatePrice(); // Recalculate based on current form inputs
+    });
+    
+    // 8. Add to Cart
+    $('#add-to-cart').off('click').on('click', addToCart);
 
     // 10. Remove Cart Item
     $(document).on('click', '.remove-btn', function() {
         const index = $(this).data('index');
         cart.splice(index, 1);
-        $('#cart-badge').text(cart.length);
+        saveCart(); // Change 5: Save
         renderCart();
     });
 });
+
+// Change 4: Synchronization Logic
+function syncBasicToPro() {
+    // Basic Infill -> Pro Infill
+    const basicInfill = $('#infill-select').val();
+    $('#pro-infill').val(basicInfill);
+}
+
+function syncProToBasic() {
+    // Pro Infill -> Basic Infill
+    const proInfill = $('#pro-infill').val();
+    // Try to match dropdown, if not exact, it remains as is conceptually or we could add a "Custom" option
+    // For now, if user sets 20 manually, the dropdown stays at what it was unless it matches exactly
+    $(`#infill-select option[value="${proInfill}"]`).prop('selected', true);
+}
+
 
 function switchPage(targetId) {
     $('.nav-menu li').removeClass('active');
@@ -104,7 +159,6 @@ function switchPage(targetId) {
     if (targetId === '#upload-page') {
         setTimeout(updateDimensions, 100);
     }
-    if (targetId === '#checkout-page') renderCart();
     window.scrollTo(0, 0);
 }
 
@@ -124,53 +178,38 @@ function init3D() {
 
     // Camera
     camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
-    camera.position.set(0, 200, 300); // High angle view
+    camera.position.set(200, 200, 200); 
 
     // Renderer
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.shadowMap.enabled = true;
     
-    container.innerHTML = '';
     container.appendChild(renderer.domElement);
 
     // Controls
     controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    
-    // FIX 4: Disable controls initially so user can scroll the page
     controls.enabled = false; 
 
-    // FIX 6: Add Bambu Lab Style Bed
     createBed();
-
     animate();
     const resizeObserver = new ResizeObserver(() => updateDimensions());
     resizeObserver.observe(container);
 }
 
 function createBed() {
-    // 1. Bed Base (Dark Grey)
     const geometry = new THREE.PlaneGeometry(BUILD_VOLUME_X, BUILD_VOLUME_Y);
-    const material = new THREE.MeshPhongMaterial({ 
-        color: 0x222222, 
-        side: THREE.DoubleSide,
-        shininess: 10
-    });
+    const material = new THREE.MeshPhongMaterial({ color: 0x222222, side: THREE.DoubleSide, shininess: 10 });
     const plane = new THREE.Mesh(geometry, material);
     plane.rotation.x = -Math.PI / 2;
     plane.receiveShadow = true;
     scene.add(plane);
 
-    // 2. Grid Helper (256mm, 20mm divisions)
-    // Size, Divisions, CenterLineColor, GridColor
     const gridHelper = new THREE.GridHelper(BUILD_VOLUME_X, 12, 0x444444, 0x555555);
-    gridHelper.position.y = 0.1; // Slightly above plane to prevent z-fighting
+    gridHelper.position.y = 0.1; 
     scene.add(gridHelper);
-
-    // 3. Bed Label (Optional text)
-    // For simplicity, we stick to the visual grid which is the standard indicator
 }
 
 function updateDimensions() {
@@ -192,7 +231,16 @@ function animate() {
 
 function handleFileUpload(e) {
     const file = e.target.files[0];
+    handleFile(file);
+}
+
+function handleFile(file) {
     if (!file) return;
+    const fileName = file.name.toLowerCase();
+    if (!fileName.endsWith('.stl') && !fileName.endsWith('.3mf')) {
+        alert("Only .STL and .3MF files are supported.");
+        return;
+    }
     $('#file-name-display').text(file.name);
     const reader = new FileReader();
     reader.onload = function(ev) { loadSTL(ev.target.result); };
@@ -203,15 +251,16 @@ function loadLibrarySTL(url) {
     fetch(url)
         .then(res => { if(!res.ok) throw new Error("Missing File"); return res.arrayBuffer(); })
         .then(data => loadSTL(data))
-        .catch(err => alert("File not found in assets folder."));
+        .catch(err => {
+             console.error(err);
+             alert("Demo Mode: Ensure assets exist locally. Check console.");
+        });
 }
 
 function loadSTL(data) {
     const loader = new STLLoader();
     try {
         const geometry = loader.parse(data);
-        
-        // Default Color: Dark Grey/Black (like Carbon Fiber PLA)
         const initialColor = $('.color-option.selected').data('hex') || 0x333333;
         const material = new THREE.MeshPhongMaterial({ 
             color: initialColor, 
@@ -223,43 +272,42 @@ function loadSTL(data) {
         mesh = new THREE.Mesh(geometry, material);
         mesh.castShadow = true;
         
-        // Center and Position on Bed
         geometry.computeBoundingBox();
-        const center = new THREE.Vector3();
-        geometry.boundingBox.getCenter(center);
-        geometry.center(); // Center geometry at 0,0,0
-        
-        // Move up so it sits ON the bed (y=0), not cutting through it
         const box = geometry.boundingBox;
-        const height = box.max.y - box.min.y;
-        mesh.position.y = height / 2;
+        const size = new THREE.Vector3();
+        box.getSize(size);
+        geometry.center(); 
         
-        // Rotate -90 if it came in flat (common with STL)
+        mesh.position.y = size.y / 2;
+        mesh.rotation.x = -Math.PI / 2;
+        
+        // Fix rotation floor gap
+        mesh.rotation.set(0,0,0);
         mesh.rotation.x = -Math.PI / 2; 
+        const bbox2 = new THREE.Box3().setFromObject(mesh);
+        const bottomWorld = bbox2.min.y;
+        mesh.position.y -= bottomWorld; 
 
         scene.add(mesh);
 
-        // FIX 5: Calculate and Show Dimensions
-        const sizeX = (box.max.x - box.min.x).toFixed(1);
-        const sizeY = (box.max.y - box.min.y).toFixed(1);
-        const sizeZ = (box.max.z - box.min.z).toFixed(1);
-        
-        $('#dim-x').text(sizeX + ' mm');
-        $('#dim-y').text(sizeY + ' mm');
-        $('#dim-z').text(sizeZ + ' mm');
+        $('#dim-x').text(size.x.toFixed(1));
+        $('#dim-y').text(size.y.toFixed(1));
+        $('#dim-z').text(size.z.toFixed(1));
         $('.dimensions-box').fadeIn();
 
-        // FIX 4: Enable Controls Now
         controls.enabled = true;
-
-        // Auto Zoom
-        const maxDim = Math.max(parseFloat(sizeX), parseFloat(sizeY), parseFloat(sizeZ));
+        const maxDim = Math.max(size.x, size.y, size.z);
         camera.position.set(maxDim * 2, maxDim * 2, maxDim * 2);
         camera.lookAt(0,0,0);
 
-        // Price Calc
-        const vol = getVolume(geometry) / 1000; 
-        $('#model-vol').data('raw', vol);
+        const vol = getVolume(geometry) / 1000; // cm3
+        
+        if (isNaN(vol) || vol <= 0) {
+            $('#model-vol').data('raw', 10); 
+        } else {
+            $('#model-vol').data('raw', vol);
+        }
+        
         calculatePrice();
         $('#add-to-cart').prop('disabled', false);
 
@@ -270,7 +318,6 @@ function loadSTL(data) {
 }
 
 function getVolume(geometry) {
-    // Simple volume calc for triangle meshes
     if(geometry.index) geometry = geometry.toNonIndexed();
     const pos = geometry.attributes.position;
     let vol = 0;
@@ -285,42 +332,68 @@ function getVolume(geometry) {
 }
 
 function formatTL(price) {
+    if (isNaN(price)) return "₺0.00";
     return price.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
 }
 
 function calculatePrice() {
-    const vol = $('#model-vol').data('raw');
-    if(!vol) return;
+    let vol = $('#model-vol').data('raw');
+    if(vol === undefined || vol === null || isNaN(vol)) vol = 0;
 
     const materialFactor = parseFloat($('#material-select').val());
-    const infillFactor = parseFloat($('#infill-select').val()) / 20; 
+    
+    // Change 4: Use value from Pro Input (which is synced with Basic)
+    const infillVal = parseFloat($('#pro-infill').val());
+    const infillFactor = infillVal / 20; 
+
     const deliveryFactor = parseFloat($('input[name="delivery"]:checked').val());
-    const quantity = parseInt($('#quantity-input').val()) || 1;
+    let quantity = parseInt($('#quantity-input').val());
+    if (isNaN(quantity) || quantity < 1) quantity = 1;
 
     let unitPrice = vol * BASE_PRICE_PER_CM3 * materialFactor * infillFactor;
-    unitPrice = Math.max(100, unitPrice); // Minimum 100 TL
     
+    if (vol > 0 && unitPrice < 50) unitPrice = 50; 
+    if (vol === 0) unitPrice = 0;
+
     let totalPrice = unitPrice * quantity * deliveryFactor;
     $('#price-display').text(formatTL(totalPrice));
 }
 
 function addToCart() {
-    // Disable button to prevent double clicks
     const $btn = $('#add-to-cart');
     $btn.prop('disabled', true).text('Added!');
 
     const priceText = $('#price-display').text();
-    const numericPrice = parseFloat(priceText.replace('₺', '').replace('.', '').replace(',', '.').trim());
+    const numericPrice = parseFloat(priceText.replace('₺', '').replace(/\./g, '').replace(',', '.').trim());
     const name = $('#file-name-display').text();
     const mode = $('.tab-btn.active').text();
     
     cart.push({ name, price: numericPrice, mode, formattedPrice: priceText });
-    $('#cart-badge').text(cart.length);
+    saveCart(); // Change 5
+    renderCart();
     
-    // Re-enable after 1 second
     setTimeout(() => {
         $btn.prop('disabled', false).text('Add to Cart');
     }, 1000);
+}
+
+// Change 5: LocalStorage Persistence
+function saveCart() {
+    localStorage.setItem('engrare_cart', JSON.stringify(cart));
+    $('#cart-badge').text(cart.length);
+}
+
+function loadCart() {
+    const stored = localStorage.getItem('engrare_cart');
+    if (stored) {
+        try {
+            cart = JSON.parse(stored);
+            $('#cart-badge').text(cart.length);
+            renderCart();
+        } catch(e) {
+            console.error("Cart load failed", e);
+        }
+    }
 }
 
 function renderCart() {
