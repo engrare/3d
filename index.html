@@ -11,11 +11,14 @@
     
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-    <script type="importmap">
+<script type="importmap">
         {
             "imports": {
                 "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+                "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+                "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+                "firebase/database": "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"
             }
         }
     </script>
@@ -25,11 +28,23 @@
 
     <nav class="navbar">
         <div class="nav-container">
-            <div class="brand-logo"><img src="./content/engrare_logo_elegant.png" height="40px" alt="Engrare" onerror="this.style.display='none'; this.parentElement.innerText='ENGRARE.'"></div>
-            <ul class="nav-menu">
+            <div class="brand-logo"><img src="./content/engrare_logo_elegant.png" height="65px" alt="Engrare" onerror="this.style.display='none'; this.parentElement.innerText='ENGRARE.'"></div>
+<ul class="nav-menu">
                 <li data-target="#home-page" class="active">Discover</li>
+                <li data-target="#models-page">Models</li>
                 <li data-target="#upload-page">Studio</li>
                 <li data-target="#checkout-page">Cart <span id="cart-badge">0</span></li>
+                
+                <li id="nav-user-container" style="margin-left: auto; display: flex; align-items: center;">
+                    <div id="nav-login-btn" data-target="#login-page">Log In</div>
+                    <div id="nav-user-profile" style="display: none; position: relative;">
+                        <img id="nav-user-img" src="./content/default_user.png" alt="User" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border);">
+                        <div class="profile-dropdown">
+                            <div class="dropdown-item" data-target="#dashboard-page">Dashboard</div>
+                            <div class="dropdown-item" id="action-logout">Log Out</div>
+                        </div>
+                    </div>
+                </li>
             </ul>
         </div>
     </nav>
@@ -48,7 +63,6 @@
                     <button class="btn secondary scroll-trigger" data-scroll="#library-section">Browse Catalog</button>
                 </div>
             </div>
-			
         </header>
 
         <div id="library-section" class="container">
@@ -145,74 +159,11 @@
             </div>
         </div>
 
-        <div class="bg-surface border-top">
-            <div class="container">
-                <div class="section-header">
-                    <span class="section-subtitle">Value Proposition</span>
-                    <h3>Why Engineers Choose Engrare</h3>
-                </div>
-                <div class="grid-4">
-                    <div class="value-item">
-                        <div class="value-img" style="background-image: url('https://img.icons8.com/ios/100/material-sharp.png'); background-size: contain; background-repeat: no-repeat; background-position: center; height: 80px;"></div>
-                        <h5>Certified Materials</h5>
-                    </div>
-                    <div class="value-item">
-                         <div class="value-img" style="background-image: url('https://img.icons8.com/ios/100/ruler.png'); background-size: contain; background-repeat: no-repeat; background-position: center; height: 80px;"></div>
-                        <h5>±0.1mm Tolerance</h5>
-                    </div>
-                    <div class="value-item">
-                         <div class="value-img" style="background-image: url('https://img.icons8.com/ios/100/calculator.png'); background-size: contain; background-repeat: no-repeat; background-position: center; height: 80px;"></div>
-                        <h5>Instant Quoting</h5>
-                    </div>
-                    <div class="value-item">
-                         <div class="value-img" style="background-image: url('https://img.icons8.com/ios/100/shipped.png'); background-size: contain; background-repeat: no-repeat; background-position: center; height: 80px;"></div>
-                        <h5>Next Day Shipping</h5>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="container">
-            <div class="section-header">
-                <span class="section-subtitle">Testimonials</span>
-                <h3>Trusted by Makers</h3>
-            </div>
-            <div class="grid-3">
-                <div class="review-card">
-                    <div class="stars">★★★★★</div>
-                    <p class="review-text">"The ESP Drone chassis was printed perfectly. The tolerances for the motor mounts were spot on."</p>
-                    <div class="review-author">Emre D.</div>
-                </div>
-                <div class="review-card">
-                    <div class="stars">★★★★☆</div>
-                    <p class="review-text">"Print quality is amazing (Bambulab quality is visible). Shipping took 1 day longer than expected, but packaging was great."</p>
-                    <div class="review-author">Selin K.</div>
-                </div>
-                <div class="review-card">
-                    <div class="stars">★★★★★</div>
-                    <p class="review-text">"Used their scanning service for a broken car part. The replacement fit perfectly. Highly recommended."</p>
-                    <div class="review-author">Burak Y.</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="cta-section">
-            <div class="container" style="text-align: center;">
-                <h2>Have other questions?</h2>
-                <p style="margin-bottom: 30px;">Our engineering team is ready to help with your project.</p>
-                <button class="btn primary">Contact Us</button>
-            </div>
-        </div>
-
         <footer class="main-footer">
             <div class="container footer-grid">
                 <div class="footer-col">
                     <div class="brand-logo" style="color:white; margin-bottom: 15px;">ENGRARE.</div>
                     <p style="color: #94A3B8; font-size: 0.9rem;">Precision 3D manufacturing for the modern age.</p>
-                    <div style="margin-top: 20px; color: #94A3B8; font-size: 0.9rem;">
-                        <p>📍 Istanbul, Teknopark Blvd. No:1</p>
-                        <p>📞 +90 555 123 45 67</p>
-                    </div>
                 </div>
                 <div class="footer-col">
                     <h5>Services</h5>
@@ -236,11 +187,46 @@
                 </div>
             </div>
         </footer>
-
     </section>
 
+    <section id="models-page" class="page">
+        <div class="container">
+            <div class="model-gallery-header">
+                <h1 style="margin-bottom: 20px;">Discover Models.</h1>
+                <p>Explore our curated collection of high-performance 3D models. Click to view details or instantly load them into our Studio.</p>
+            </div>
+
+            <div class="grid-3" id="models-grid-container">
+                </div>
+        </div>
+    </section>
+
+    <div id="model-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-close">&times;</div>
+            <div class="modal-image">
+                <img id="modal-img" src="" alt="3D Model">
+            </div>
+            <div class="modal-details">
+                <span class="section-subtitle">Ready to Print</span>
+                <h2 id="modal-title">Model Name</h2>
+                <p id="modal-desc" style="margin-bottom: 30px;">Description goes here.</p>
+                
+                <div class="price-row">
+                    <span class="price-label">Starting from</span>
+                    <span id="modal-price" class="total-price" style="font-size: 1.5rem;">₺0.00</span>
+                </div>
+
+                <div style="margin-top: auto; display: flex; gap: 15px;">
+                    <button id="modal-show-studio-btn" class="btn primary" style="width: 100%;">Show in Studio</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <section id="upload-page" class="page">
-        <div class="container" style="padding-top: 20px;"> <div class="upload-layout">
+        <div class="container" style="padding-top: 20px;"> 
+            <div class="upload-layout">
                 
                 <div class="viewer-container">
                     <div id="drop-zone-overlay">
@@ -269,14 +255,6 @@
                     </div>
 
                     <div class="sidebar-content">
-                        <div id="template-section" style="margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 15px;">
-                            <label style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-light);">Quick Templates</label>
-                            <div style="display: flex; gap: 10px; margin-top: 10px; overflow-x: auto;">
-                                <button class="btn-sm template-btn" data-stl="./assets/cube.stl" data-name="Calib Cube">Cube</button>
-                                <button class="btn-sm template-btn" data-stl="./assets/benchy.stl" data-name="Benchy">Benchy</button>
-                                <button class="btn-sm template-btn" data-stl="./assets/phone_stand.stl" data-name="Stand">Stand</button>
-                            </div>
-                        </div>
 
                         <div id="panel-basic" class="config-panel">
                             <div class="form-group">
@@ -365,45 +343,7 @@
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="pro-section">
-                                <h5 class="pro-header">3. Speed</h5>
-                                <div class="form-grid-2">
-                                    <div class="form-group">
-                                        <label>Outer Wall (mm/s)</label>
-                                        <input type="number" class="input-box" value="200">
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Infill (mm/s)</label>
-                                        <input type="number" class="input-box" value="300">
-                                    </div>
-                                </div>
                             </div>
-
-                            <div class="pro-section">
-                                <h5 class="pro-header">4. Support</h5>
-                                <div class="form-group">
-                                    <label>Type</label>
-                                    <select class="select-box">
-                                        <option>Tree (Auto)</option>
-                                        <option>Normal (Auto)</option>
-                                        <option>None</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Threshold Angle</label>
-                                    <input type="number" class="input-box" value="30">
-                                </div>
-                            </div>
-
-                            <div class="pro-section">
-                                <h5 class="pro-header">5. Others</h5>
-                                <div class="form-group">
-                                    <label>Brim Type</label>
-                                    <select class="select-box"><option>Auto</option><option>Mouse Ear</option></select>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     <div class="sidebar-footer">
@@ -441,6 +381,123 @@
                     <span id="val-total" style="font-weight:800; font-size:1.5rem; color:var(--primary);">₺50.00</span>
                 </div>
                 <button class="btn primary" style="width: 100%; margin-top: 20px;">Proceed to Secure Checkout</button>
+            </div>
+        </div>
+    </section>
+
+<section id="login-page" class="page">
+        <div class="login-container">
+            <div class="login-card">
+                
+                <div id="view-signin">
+                    <div class="login-header">
+                        <h2>Welcome Back</h2>
+                        <p>Sign in to access your projects.</p>
+                    </div>
+                    <form class="login-form">
+                        <div class="form-group">
+                            <input type="email" id="signin-email" class="login-input" placeholder="Email Address">
+                        </div>
+                        <div class="form-group">
+                            <input type="password" id="signin-password" class="login-input" placeholder="Password">
+                        </div>
+                        <button type="button" id="btn-signin" class="btn primary" style="width: 100%;">Sign In</button>
+                    </form>
+                    <div class="login-links">
+                        <span class="link-text" onclick="$('#view-signin').hide(); $('#view-reset').fadeIn();">Forgot password?</span>
+                        <span class="link-text" onclick="$('#view-signin').hide(); $('#view-signup').fadeIn();">Create account ↗</span>
+                    </div>
+                </div>
+
+                <div id="view-signup" style="display: none;">
+                    <div class="login-header">
+                        <h2>Create Account</h2>
+                        <p>Join Engrare today.</p>
+                    </div>
+                    <form class="login-form">
+                        <div class="form-group">
+                            <input type="text" id="signup-name" class="login-input" placeholder="Full Name">
+                        </div>
+                        <div class="form-group">
+                            <input type="email" id="signup-email" class="login-input" placeholder="Email Address">
+                        </div>
+                        <div class="form-group">
+                            <input type="password" id="signup-password" class="login-input" placeholder="Password">
+                        </div>
+                        <button type="button" id="btn-signup" class="btn primary" style="width: 100%;">Sign Up</button>
+                    </form>
+                    <div class="login-links" style="justify-content: center;">
+                        <span class="link-text" onclick="$('#view-signup').hide(); $('#view-signin').fadeIn();">Already have an account? Log In</span>
+                    </div>
+                </div>
+
+                <div id="view-reset" style="display: none;">
+                    <div class="login-header">
+                        <h2>Reset Password</h2>
+                        <p>Enter your email to receive a reset link.</p>
+                    </div>
+                    <form class="login-form">
+                        <div class="form-group">
+                            <input type="email" id="reset-email" class="login-input" placeholder="Email Address">
+                        </div>
+                        <button type="button" id="btn-reset" class="btn primary" style="width: 100%;">Send Link</button>
+                    </form>
+                    <div class="login-links" style="justify-content: center;">
+                        <span class="link-text" onclick="$('#view-reset').hide(); $('#view-signin').fadeIn();">Back to Log In</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+	<section id="dashboard-page" class="page">
+        <div class="container">
+            <h2 style="margin-bottom: 30px;">My Dashboard</h2>
+            <div class="dashboard-layout">
+                <div class="dash-sidebar">
+                    <div class="user-brief">
+                        <img id="dash-user-img" src="./content/default_user.png">
+                        <div style="font-weight: 700;" id="dash-user-name">User</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);" id="dash-user-email">email@example.com</div>
+                    </div>
+                    <ul class="dash-menu">
+                        <li class="active" data-tab="orders">My Orders</li>
+                        <li data-tab="favorites">Favorites</li>
+                        <li data-tab="addresses">My Addresses</li>
+                        <li data-tab="account">Account Info</li>
+                        <li data-tab="support">Support</li>
+                    </ul>
+                </div>
+
+                <div class="dash-content">
+                    <div id="tab-orders" class="dash-tab active">
+                        <h3>Order History</h3>
+                        <div id="orders-list" style="margin-top: 20px; color: var(--text-muted);">Loading orders...</div>
+                    </div>
+                    <div id="tab-favorites" class="dash-tab" style="display:none">
+                        <h3>Saved Models</h3>
+                        <p>Your favorite items will appear here.</p>
+                    </div>
+                    <div id="tab-addresses" class="dash-tab" style="display:none">
+                        <h3>Saved Addresses</h3>
+                        <div class="address-card">
+                            <strong>Home</strong>
+                            <p>123 Engineering Lane, Istanbul, TR</p>
+                        </div>
+                    </div>
+                    <div id="tab-account" class="dash-tab" style="display:none">
+                        <h3>Account Settings</h3>
+                        <div class="form-group" style="max-width: 400px;">
+                            <label>Display Name</label>
+                            <input type="text" class="input-box" id="update-display-name" placeholder="Update Name">
+                            <button class="btn btn-sm primary" id="btn-update-profile" style="margin-top: 10px;">Save Changes</button>
+                        </div>
+                    </div>
+                    <div id="tab-support" class="dash-tab" style="display:none">
+                        <h3>Support</h3>
+                        <p>Need help? Contact us at support@engrare.com</p>
+                    </div>
+                </div>
             </div>
         </div>
     </section>

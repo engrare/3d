@@ -1,24 +1,184 @@
+import { initializeApp } from "firebase/app";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail } from "firebase/auth";
+import { getDatabase, ref, set, push, onValue } from "firebase/database";
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { STLLoader } from 'three/addons/loaders/STLLoader.js';
 
 // --- STATE ---
+
+// --- FIREBASE CONFIG ---
+// TODO: Replace with your specific Firebase Project Config Keys
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY_HERE",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
 let scene, camera, renderer, mesh, controls;
 let cart = [];
 const BASE_PRICE_PER_CM3 = 15.00; 
-
-// Bambu Lab Build Volume (256x256x256)
 const BUILD_VOLUME_X = 256;
 const BUILD_VOLUME_Y = 256;
+
+// --- MODEL DATABASE (Mock Data) ---
+const modelsData = [
+    {
+        id: 1,
+        name: "Calibration Cube",
+        desc: "The gold standard for calibrating 3D printers. Measure dimensions to ensure X, Y, and Z accuracy.",
+        price: 150,
+        img: "./content/product1.jpeg",
+        stl: "./assets/cube.stl"
+    },
+    {
+        id: 2,
+        name: "Modular Phone Stand",
+        desc: "A sleek, adjustable stand for smartphones. Features a sturdy base and variable viewing angles.",
+        price: 350,
+        img: "./content/product2.jpeg",
+        stl: "./assets/phone_stand.stl"
+    },
+    {
+        id: 3,
+        name: "Planetary Gear Set",
+        desc: "A fully functional mechanical assembly demonstrating high-torque gear reduction concepts.",
+        price: 600,
+        img: "./content/product3.avif",
+        stl: "./assets/gear.stl"
+    },
+    {
+        id: 4,
+        name: "Vase Mode Container",
+        desc: "Designed for spiralize outer contour mode. Perfect for aesthetic storage solutions.",
+        price: 200,
+        img: "https://images.unsplash.com/photo-1628194451659-335d5a782485?auto=format&fit=crop&q=80&w=600",
+        stl: "./assets/cube.stl" // Using placeholder stl
+    },
+    {
+        id: 5,
+        name: "Drone Frame Arms",
+        desc: "Lightweight and rigid arms for quadcopter builds. Optimized for strength-to-weight ratio.",
+        price: 450,
+        img: "https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&q=80&w=600",
+        stl: "./assets/phone_stand.stl" // Using placeholder stl
+    },
+    {
+        id: 6,
+        name: "Headphone Holder",
+        desc: "Desk-mountable holder to keep your workspace clean and organized.",
+        price: 280,
+        img: "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&q=80&w=600",
+        stl: "./assets/gear.stl" // Using placeholder stl
+    }
+];
 
 // --- DOM READY ---
 $(document).ready(function() {
     
-    // Change 5: Restore Cart from LocalStorage
     loadCart();
-
     init3D(); 
+    renderModelsPage(); // NEW: Populate the models grid
+// ... existing init code ...
 
+    // --- FIREBASE AUTH LISTENERS ---
+    
+    // 1. Sign Up
+    $('#btn-signup').click(async () => {
+        const email = $('#signup-email').val();
+        const pass = $('#signup-password').val();
+        const name = $('#signup-name').val();
+        
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+            await updateProfile(userCredential.user, { displayName: name });
+            // Save basic user data to Realtime DB
+            set(ref(db, 'users/' + userCredential.user.uid), {
+                username: name,
+                email: email
+            });
+            alert("Account created! Welcome " + name);
+            switchPage('#home-page');
+        } catch (error) {
+            alert("Error: " + error.message);
+        }
+    });
+
+    // 2. Sign In
+    $('#btn-signin').click(async () => {
+        const email = $('#signin-email').val();
+        const pass = $('#signin-password').val();
+        try {
+            await signInWithEmailAndPassword(auth, email, pass);
+            // Alert removed for smoother UX, auth observer handles redirect
+            switchPage('#home-page');
+        } catch (error) {
+            alert("Login Failed: " + error.message);
+        }
+    });
+
+    // 3. Log Out
+    $('#action-logout').click(() => {
+        signOut(auth).then(() => {
+            switchPage('#home-page');
+            alert("Logged out successfully.");
+        });
+    });
+
+    // 4. Password Reset
+    $('#btn-reset').click(async () => {
+        const email = $('#reset-email').val();
+        try {
+            await sendPasswordResetEmail(auth, email);
+            alert("Password reset email sent!");
+            $('#view-reset').hide();
+            $('#view-signin').fadeIn();
+        } catch (error) {
+            alert("Error: " + error.message);
+        }
+    });
+
+    // 5. Dashboard Tabs
+    $('.dash-menu li').click(function() {
+        $('.dash-menu li').removeClass('active');
+        $(this).addClass('active');
+        const tab = $(this).data('tab');
+        $('.dash-tab').hide();
+        $(`#tab-${tab}`).fadeIn(200);
+    });
+    
+    // --- MONITOR AUTH STATE ---
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            // User is signed in
+            $('#nav-login-btn').hide();
+            $('#nav-user-profile').css('display', 'flex');
+            
+            // Update Dashboard UI
+            $('#dash-user-name').text(user.displayName || "User");
+            $('#dash-user-email').text(user.email);
+            if(user.photoURL) {
+                $('#nav-user-img, #dash-user-img').attr('src', user.photoURL);
+            }
+
+            // Load Orders
+            loadUserOrders(user.uid);
+        } else {
+            // User is signed out
+            $('#nav-login-btn').show();
+            $('#nav-user-profile').hide();
+            $('#dash-user-name').text("Guest");
+        }
+    });
     // 1. Navigation
     $('.nav-menu li, .nav-trigger').click(function() {
         const target = $(this).data('target');
@@ -33,61 +193,21 @@ $(document).ready(function() {
         }, 800);
     });
 
-    // 3. Library Selection
+    // 3. Library Selection (Home Page)
     $('.library-select-btn').click(function() {
         const stlPath = $(this).data('stl');
         const name = $(this).data('name');
-        switchPage('#upload-page');
-        $('#file-name-display').text(name);
-        loadLibrarySTL(stlPath);
-    });
-
-    // Change 3: Quick Start Templates in Studio
-    $('.template-btn').click(function() {
-        const stlPath = $(this).data('stl');
-        const name = $(this).data('name');
-        $('#file-name-display').text(name);
-        loadLibrarySTL(stlPath);
+        openInStudio(name, stlPath);
     });
 
     // 4. Upload Button
     $('#upload-btn').click(() => $('#real-file-input').click());
     $('#real-file-input').change(handleFileUpload);
 
-    // Change 2: Fix Drag and Drop (Counter Method)
-    const dropZone = document.querySelector('.viewer-container');
-    const overlay = document.getElementById('drop-zone-overlay');
-    let dragCounter = 0;
+    // 5. Drag and Drop
+    setupDragDrop();
 
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, preventDefaults, false);
-        document.body.addEventListener(eventName, preventDefaults, false);
-    });
-
-    function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
-
-    dropZone.addEventListener('dragenter', (e) => {
-        dragCounter++;
-        overlay.style.display = 'flex';
-    }, false);
-
-    dropZone.addEventListener('dragleave', (e) => {
-        dragCounter--;
-        if (dragCounter === 0) {
-            overlay.style.display = 'none';
-        }
-    }, false);
-
-    dropZone.addEventListener('drop', (e) => {
-        dragCounter = 0;
-        overlay.style.display = 'none';
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        if (files.length > 0) handleFile(files[0]);
-    }, false);
-
-
-    // 5. Mode Switcher
+    // 6. Mode Switcher & Tabs
     $('.tab-btn').click(function() {
         $('.tab-btn').removeClass('active');
         $(this).addClass('active');
@@ -96,13 +216,12 @@ $(document).ready(function() {
         $(`#panel-${mode}`).fadeIn(200);
     });
 
-    // 6. Color Selection
+    // 7. Color Selection
     $('.color-option').click(function() { 
         $('.color-option').removeClass('selected'); 
         $(this).addClass('selected');
-        
-        const colorName = $(this).data('color');
         const hexColor = $(this).data('hex'); 
+        const colorName = $(this).data('color');
         $('#selected-color-name').text(colorName);
 
         if (mesh && mesh.material) {
@@ -110,45 +229,153 @@ $(document).ready(function() {
         }
     });
 
-    // 7. Price Calculation & Sync
+    // 8. Price Sync
     $('#material-select, #infill-select, #quantity-input, input[name="delivery"]').on('input change', function() {
         calculatePrice();
-        syncBasicToPro(); // Change 4: Sync
+        syncBasicToPro();
     });
 
-    // Change 4: Pro Mode Sync listeners
     $('#pro-infill, #pro-layer-height').on('input change', function() {
         syncProToBasic();
-        calculatePrice(); // Recalculate based on current form inputs
+        calculatePrice();
     });
     
-    // 8. Add to Cart
+    // 9. Cart Actions
     $('#add-to-cart').off('click').on('click', addToCart);
 
-    // 10. Remove Cart Item
     $(document).on('click', '.remove-btn', function() {
         const index = $(this).data('index');
         cart.splice(index, 1);
-        saveCart(); // Change 5: Save
+        saveCart();
         renderCart();
+    });
+
+    // --- NEW: MODAL LOGIC ---
+    let currentModalStl = "";
+    let currentModalName = "";
+
+    // Open Modal when Model Card clicked
+    $(document).on('click', '.model-card', function() {
+        const id = $(this).data('id');
+        const model = modelsData.find(m => m.id === id);
+        if(model) {
+            $('#modal-img').attr('src', model.img);
+            $('#modal-title').text(model.name);
+            $('#modal-desc').text(model.desc);
+            $('#modal-price').text('₺' + model.price.toFixed(2));
+            
+            currentModalStl = model.stl;
+            currentModalName = model.name;
+
+            $('#model-modal').addClass('open');
+        }
+    });
+
+    // Close Modal
+    $('.modal-close, .modal-overlay').click(function(e) {
+        if (e.target === this) {
+            $('#model-modal').removeClass('open');
+        }
+    });
+
+    // "Show in Studio" Button in Modal
+    $('#modal-show-studio-btn').click(function() {
+        $('#model-modal').removeClass('open');
+        openInStudio(currentModalName, currentModalStl);
     });
 });
 
-// Change 4: Synchronization Logic
+// --- HELPER FUNCTIONS ---
+
+function renderModelsPage() {
+    const $grid = $('#models-grid-container');
+    $grid.empty();
+    modelsData.forEach(model => {
+        $grid.append(`
+            <div class="model-card" data-id="${model.id}">
+                <div class="card-image"><img src="${model.img}" alt="${model.name}"/></div>
+                <div class="model-info">
+                    <div class="model-title">${model.name}</div>
+                    <div class="model-desc">${model.desc.substring(0, 60)}...</div>
+                    <div class="card-meta">
+                        <span class="price-tag">₺${model.price.toFixed(2)}</span>
+                        <button class="btn-sm">View Details</button>
+                    </div>
+                </div>
+            </div>
+        `);
+    });
+}
+
+function loadUserOrders(userId) {
+    const ordersRef = ref(db, 'orders/' + userId);
+    onValue(ordersRef, (snapshot) => {
+        const data = snapshot.val();
+        const $list = $('#orders-list');
+        $list.empty();
+        
+        if (data) {
+            Object.values(data).forEach(order => {
+                $list.append(`
+                    <div class="cart-item">
+                        <div class="info">
+                            <div style="font-weight:600">Order #${order.id}</div>
+                            <div style="font-size:0.8rem">${order.date}</div>
+                        </div>
+                        <div style="font-weight:500">₺${order.total}</div>
+                        <div style="color: green; font-size: 0.85rem; font-weight: 600;">${order.status}</div>
+                    </div>
+                `);
+            });
+        } else {
+            $list.html('<p>No past orders found.</p>');
+        }
+    });
+}
+
+function openInStudio(name, stlPath) {
+    switchPage('#upload-page');
+    $('#file-name-display').text(name);
+    loadLibrarySTL(stlPath);
+}
+
+function setupDragDrop() {
+    const dropZone = document.querySelector('.viewer-container');
+    const overlay = document.getElementById('drop-zone-overlay');
+    let dragCounter = 0;
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
+        document.body.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
+    });
+
+    dropZone.addEventListener('dragenter', () => {
+        dragCounter++;
+        overlay.style.display = 'flex';
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dragCounter--;
+        if (dragCounter === 0) overlay.style.display = 'none';
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        dragCounter = 0;
+        overlay.style.display = 'none';
+        const files = e.dataTransfer.files;
+        if (files.length > 0) handleFile(files[0]);
+    });
+}
+
 function syncBasicToPro() {
-    // Basic Infill -> Pro Infill
     const basicInfill = $('#infill-select').val();
     $('#pro-infill').val(basicInfill);
 }
 
 function syncProToBasic() {
-    // Pro Infill -> Basic Infill
     const proInfill = $('#pro-infill').val();
-    // Try to match dropdown, if not exact, it remains as is conceptually or we could add a "Custom" option
-    // For now, if user sets 20 manually, the dropdown stays at what it was unless it matches exactly
     $(`#infill-select option[value="${proInfill}"]`).prop('selected', true);
 }
-
 
 function switchPage(targetId) {
     $('.nav-menu li').removeClass('active');
@@ -168,7 +395,6 @@ function init3D() {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xF8F9FB); 
     
-    // Lighting
     const ambLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambLight);
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
@@ -176,18 +402,15 @@ function init3D() {
     dirLight.castShadow = true;
     scene.add(dirLight);
 
-    // Camera
     camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
     camera.position.set(200, 200, 200); 
 
-    // Renderer
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.shadowMap.enabled = true;
     
     container.appendChild(renderer.domElement);
 
-    // Controls
     controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
@@ -253,7 +476,7 @@ function loadLibrarySTL(url) {
         .then(data => loadSTL(data))
         .catch(err => {
              console.error(err);
-             alert("Demo Mode: Ensure assets exist locally. Check console.");
+             alert("Demo Mode: Ensure assets exist locally or update paths.");
         });
 }
 
@@ -341,11 +564,8 @@ function calculatePrice() {
     if(vol === undefined || vol === null || isNaN(vol)) vol = 0;
 
     const materialFactor = parseFloat($('#material-select').val());
-    
-    // Change 4: Use value from Pro Input (which is synced with Basic)
     const infillVal = parseFloat($('#pro-infill').val());
     const infillFactor = infillVal / 20; 
-
     const deliveryFactor = parseFloat($('input[name="delivery"]:checked').val());
     let quantity = parseInt($('#quantity-input').val());
     if (isNaN(quantity) || quantity < 1) quantity = 1;
@@ -369,7 +589,7 @@ function addToCart() {
     const mode = $('.tab-btn.active').text();
     
     cart.push({ name, price: numericPrice, mode, formattedPrice: priceText });
-    saveCart(); // Change 5
+    saveCart(); 
     renderCart();
     
     setTimeout(() => {
@@ -377,7 +597,6 @@ function addToCart() {
     }, 1000);
 }
 
-// Change 5: LocalStorage Persistence
 function saveCart() {
     localStorage.setItem('engrare_cart', JSON.stringify(cart));
     $('#cart-badge').text(cart.length);
