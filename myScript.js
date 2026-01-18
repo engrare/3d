@@ -6,6 +6,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { STLLoader } from 'three/addons/loaders/STLLoader.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { STLExporter } from 'three/addons/exporters/STLExporter.js';
 
 // --- STATE ---
 
@@ -26,6 +28,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
+const storage = getStorage(app); // Storage servisini başlat
 let activeModelConfig = null;
 
 let scene, camera, renderer, mesh, controls;
@@ -87,25 +90,29 @@ const modelsData = [
 	{
         id: 7,
         name: "Custom Name Plate",
-        desc: "Personalized desk plate with editable 3D text. Click 'Customize' to type your own text.",
+        desc: "Personalized desk plate with editable 3D text.",
         price: 180,
         img: "./content/product2.jpeg", 
         stl: "./content/desktop_writing_holder.STL",
         isCustomizable: true,
         customConfig: {
-            // Bu ayarlar cube.stl'i düz bir plakaya çevirir
             baseScale: { x: 5, y: 0.2, z: 2 }, 
             
+            // --- KOLAYLAŞTIRILMIŞ AYARLAR ---
             text: {
                 initialContent: "ENGRARE",
                 fontUrl: 'https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json',
-                size: 10,
-                height: 20,
-                curveSegments: 12,
-                color: "#FFFFFF",
-                // Yazının konumu (Scale değişirse burasıyla oynayabilirsiniz)
-                position: { x: 0, y: -20, z: 10 }, 
-                rotation: { x: Math.PI / 2, y: 0, z: 0 }
+                
+                // --- BURASI DÜZENLENECEK KISIM ---
+                fontSize: 10,       // Yazının büyüklüğü
+                fontThickness: 4,   // Yazının kalınlığı (kabarıklığı)
+                
+                // Konum Ayarları (Otomatik Merkeze Göre)
+                offsetY: 0,         // 0 = Tam yüzeye yapışık. 1 = Havada. -1 = Gömülü.
+                shiftX: 0,          // Sağa/Sola kaydırma (Negatif = Sol)
+                shiftZ: 10,         // İleri/Geri kaydırma (Pozitif = Aşağı/Bize yakın)
+                
+                color: "#FFFFFF"
             }
         }
     }
@@ -437,6 +444,9 @@ function loadUserOrders(userId) {
 }
 
 function openInStudio(model) {
+    // --- INPUT TEMİZLEME ---
+    $('#real-file-input').val('');
+
     switchPage('#upload-page');
     $('#file-name-display').text(model.name);
     
@@ -447,7 +457,7 @@ function openInStudio(model) {
         const initialText = activeModelConfig ? activeModelConfig.text.initialContent : "ENGRARE";
         $('#custom-text-input').val(initialText);
         
-        // YENİ: Rengi Beyaza Sıfırla (Görsel Olarak)
+        // Rengi Beyaza Sıfırla
         $('.text-color-option').removeClass('selected');
         $('.text-color-option[data-hex="#FFFFFF"]').addClass('selected');
         
@@ -589,29 +599,18 @@ function handleFile(file) {
         alert("Only .STL and .3MF files are supported.");
         return;
     }
-
-    // --- DÜZELTME: SIFIRLAMA (RESET) ---
-    // Kullanıcı dışarıdan dosya yüklediğinde, önceki "Custom Model" ayarlarını unut.
+    
+    // YENİ: Dışarıdan dosya yüklendiğinde custom modunu kapat
     activeModelConfig = null; 
-    
-    // Custom Text arayüzünü gizle
-    $('#custom-text-group').hide(); 
-    
-    // Varsa sahnedeki eski yazıyı sil
-    if (typeof textMesh !== 'undefined' && textMesh) {
+    $('#custom-text-group').hide();
+    if (textMesh) {
          scene.remove(textMesh);
          textMesh = null;
     }
-    // ---------------------------a
-    
+
     $('#file-name-display').text(file.name);
     const reader = new FileReader();
-    
-    // Dosya okununca loadSTL'e gönder (activeModelConfig null olduğu için standart yükleme yapacak)
-    reader.onload = function(ev) { 
-        loadSTL(ev.target.result); 
-    };
-    
+    reader.onload = function(ev) { loadSTL(ev.target.result); };
     reader.readAsArrayBuffer(file);
 }
 
@@ -762,20 +761,23 @@ let textMesh = null;
 function updateCustomText(message) {
     if (!mesh || !activeModelConfig) return;
     
+    // Mesaj boşsa sil
     if (message === "") {
         if (textMesh) mesh.remove(textMesh);
+        textMesh = null; // Referansı temizle
         return;
     }
 
     const cfg = activeModelConfig.text;
     
-    // YENİ: Rengi seçili olan yuvarlak butondan al
+    // Rengi al
     const selectedDiv = $('.text-color-option.selected');
     const currentColor = selectedDiv.length > 0 ? selectedDiv.data('hex') : (cfg.color || "#FFFFFF");
 
     const loader = new FontLoader();
     loader.load(cfg.fontUrl, function (font) {
         
+        // Eski yazıyı temizle
         if (textMesh) {
             mesh.remove(textMesh);
             if(textMesh.geometry) textMesh.geometry.dispose();
@@ -783,19 +785,45 @@ function updateCustomText(message) {
 
         const textGeo = new TextGeometry(message, {
             font: font,
-            size: cfg.size,
-            height: cfg.height,
-            curveSegments: cfg.curveSegments,
+            size: cfg.fontSize,           // Config'den geliyor
+            height: cfg.fontThickness,    // Config'den geliyor
+            curveSegments: 12,
             bevelEnabled: false
         });
 
+        // Yazıyı kendi merkezine al (Ortalamak için şart)
         textGeo.center();
 
         const textMat = new THREE.MeshPhongMaterial({ color: currentColor });
         textMesh = new THREE.Mesh(textGeo, textMat);
 
-        textMesh.position.set(cfg.position.x, cfg.position.y, cfg.position.z);
-        textMesh.rotation.set(cfg.rotation.x, cfg.rotation.y, cfg.rotation.z);
+        // --- AKILLI KONUMLANDIRMA ---
+        // 1. Ana modelin (plakanın) sınırlarını ölç
+        mesh.geometry.computeBoundingBox();
+        const box = mesh.geometry.boundingBox;
+        
+        // 2. En üst yüzeyi bul (box.max.y)
+        // Eğer mesh döndürülmüşse (rotation.x = -90 gibi), dünya koordinatlarını kullanmalıyız.
+        // Ancak bu senaryoda mesh'in içine child olarak eklediğimiz için local koordinat yeterli.
+        
+        // Yükseklik = (Modelin Tavanı) + (Config'deki Ekstra Pay)
+        // Not: BoxGeometry merkezde olduğu için max.y modelin yarısıdır. 
+        // Eğer scale işlemi loadSTL'de yapıldıysa geometry sınırları günceldir.
+        
+        let targetY = box.max.y + (cfg.offsetY || 0);
+
+        // 3. Yazıyı Konumlandır
+        // X: Merkez + Kaydırma
+        // Y: Hesaplanan Tavan
+        // Z: Merkez + Kaydırma
+        textMesh.position.set(
+            0 + (cfg.shiftX || 0), 
+            targetY, 
+            0 + (cfg.shiftZ || 0)
+        );
+
+        // Yazıyı yatır (Çünkü plaka yatık, yazı da ona paralel olmalı)
+        textMesh.rotation.x = -Math.PI / 2; 
 
         mesh.add(textMesh);
     });
@@ -840,22 +868,81 @@ function calculatePrice() {
     $('#price-display').text(formatTL(totalPrice));
 }
 
-function addToCart() {
+async function addToCart() {
     const $btn = $('#add-to-cart');
-    $btn.prop('disabled', true).text('Added!');
+    
+    // 1. GÜVENLİK KONTROLÜ
+    const user = auth.currentUser;
+    if (!user) {
+        alert("Lütfen sepetinize ürün eklemek için giriş yapın veya kayıt olun.");
+        switchPage('#login-page');
+        return;
+    }
 
-    const priceText = $('#price-display').text();
-    const numericPrice = parseFloat(priceText.replace('₺', '').replace(/\./g, '').replace(',', '.').trim());
-    const name = $('#file-name-display').text();
-    const mode = $('.tab-btn.active').text();
-    
-    cart.push({ name, price: numericPrice, mode, formattedPrice: priceText });
-    saveCart(); 
-    renderCart();
-    
-    setTimeout(() => {
+    // Butonu Kilitle
+    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Dosya Hazırlanıyor...');
+
+    try {
+        // --- 2. STL EXPORT İŞLEMİ (DÜZELTİLDİ) ---
+        // Sadece modeli ve üzerindeki yazıyı export etmek için geçici grup
+        const exportGroup = new THREE.Group();
+        const meshClone = mesh.clone();
+        
+        // Eğer yazı varsa onu da meshClone içine (veya gruba) eklediğimizden emin olalım
+        // (Normalde mesh.add(textMesh) yaptığımız için clone alınca o da gelir)
+        exportGroup.add(meshClone);
+
+        const exporter = new STLExporter();
+        
+        // Dosya Adı (STL uzantılı)
+        const timestamp = Date.now();
+        const baseName = $('#file-name-display').text().replace(/\s+/g, '_').replace('.stl', '').replace('.STL', '');
+        const fileName = `projects/${user.uid}/${baseName}_${timestamp}.stl`;
+
+        // STL Binary formatında çıktı al (Dosya boyutu küçük olur ve BambuLab sever)
+        const result = exporter.parse(exportGroup, { binary: true });
+        
+        // Blob Oluştur
+        const blob = new Blob([result], { type: 'application/octet-stream' });
+
+        // --- 3. FIREBASE STORAGE UPLOAD ---
+        $btn.html('<i class="fas fa-cloud-upload-alt"></i> Buluta Yükleniyor...');
+        
+        const storageRef = sRef(storage, fileName);
+        const snapshot = await uploadBytes(storageRef, blob);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+
+        console.log("Dosya yüklendi:", downloadURL);
+
+        // --- 4. SEPETE EKLEME ---
+        const priceText = $('#price-display').text();
+        const numericPrice = parseFloat(priceText.replace('₺', '').replace(/\./g, '').replace(',', '.').trim());
+        const name = $('#file-name-display').text();
+        const mode = $('.tab-btn.active').text();
+        
+        cart.push({ 
+            name: name, 
+            price: numericPrice, 
+            mode: mode, 
+            formattedPrice: priceText,
+            fileUrl: downloadURL,
+            date: new Date().toLocaleString()
+        });
+        
+        saveCart(); 
+        renderCart();
+        
+        $btn.text('Sepete Eklendi!').css('background-color', '#10B981');
+
+        setTimeout(() => {
+            $btn.prop('disabled', false).text('Add to Cart').css('background-color', '');
+        }, 2000);
+
+    } catch (error) {
+        console.error("Export/Upload Hatası:", error);
+        alert("Dosya oluşturulurken bir hata oluştu: " + error.message);
         $btn.prop('disabled', false).text('Add to Cart');
-    }, 1000);
+    }
 }
 
 function saveCart() {
