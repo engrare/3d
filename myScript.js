@@ -90,7 +90,7 @@ const modelsData = [
         desc: "Personalized desk plate with editable 3D text. Click 'Customize' to type your own text.",
         price: 180,
         img: "./content/product2.jpeg", 
-        stl: "./content/desktop_writing_holder.stl",
+        stl: "./content/desktop_writing_holder.STL",
         isCustomizable: true,
         customConfig: {
             // Bu ayarlar cube.stl'i düz bir plakaya çevirir
@@ -589,18 +589,29 @@ function handleFile(file) {
         alert("Only .STL and .3MF files are supported.");
         return;
     }
-    
-    // YENİ: Dışarıdan dosya yüklendiğinde custom modunu kapat
+
+    // --- DÜZELTME: SIFIRLAMA (RESET) ---
+    // Kullanıcı dışarıdan dosya yüklediğinde, önceki "Custom Model" ayarlarını unut.
     activeModelConfig = null; 
-    $('#custom-text-group').hide();
-    if (textMesh) {
+    
+    // Custom Text arayüzünü gizle
+    $('#custom-text-group').hide(); 
+    
+    // Varsa sahnedeki eski yazıyı sil
+    if (typeof textMesh !== 'undefined' && textMesh) {
          scene.remove(textMesh);
          textMesh = null;
     }
-
+    // ---------------------------a
+    
     $('#file-name-display').text(file.name);
     const reader = new FileReader();
-    reader.onload = function(ev) { loadSTL(ev.target.result); };
+    
+    // Dosya okununca loadSTL'e gönder (activeModelConfig null olduğu için standart yükleme yapacak)
+    reader.onload = function(ev) { 
+        loadSTL(ev.target.result); 
+    };
+    
     reader.readAsArrayBuffer(file);
 }
 
