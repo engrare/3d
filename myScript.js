@@ -4,25 +4,29 @@ import { getDatabase, ref, set, push, onValue } from "firebase/database";
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
 // --- STATE ---
 
 // --- FIREBASE CONFIG ---
 // TODO: Replace with your specific Firebase Project Config Keys
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY_HERE",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+	apiKey: "AIzaSyBM7oB0EkTjGJiOHdo67ByXA6qxVcvPS8Y",
+	authDomain: "engrar3d.firebaseapp.com",
+	databaseURL: "https://engrar3d-default-rtdb.europe-west1.firebasedatabase.app",
+	projectId: "engrar3d",
+	storageBucket: "engrar3d.firebasestorage.app",
+	messagingSenderId: "68298863793",
+	appId: "1:68298863793:web:ba7ec7ded3424b4c779e90",
+	measurementId: "G-NLSV32JMM2"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
+let activeModelConfig = null;
 
 let scene, camera, renderer, mesh, controls;
 let cart = [];
@@ -78,7 +82,32 @@ const modelsData = [
         desc: "Desk-mountable holder to keep your workspace clean and organized.",
         price: 280,
         img: "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&q=80&w=600",
-        stl: "./assets/gear.stl" // Using placeholder stl
+        stl: "./content/desktop_writing_holder.stl" // Using placeholder stl
+    },
+	{
+        id: 7,
+        name: "Custom Name Plate",
+        desc: "Personalized desk plate with editable 3D text. Click 'Customize' to type your own text.",
+        price: 180,
+        img: "./content/product2.jpeg", 
+        stl: "./content/desktop_writing_holder.stl",
+        isCustomizable: true,
+        customConfig: {
+            // Bu ayarlar cube.stl'i düz bir plakaya çevirir
+            baseScale: { x: 5, y: 0.2, z: 2 }, 
+            
+            text: {
+                initialContent: "ENGRARE",
+                fontUrl: 'https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json',
+                size: 10,
+                height: 20,
+                curveSegments: 12,
+                color: "#FFFFFF",
+                // Yazının konumu (Scale değişirse burasıyla oynayabilirsiniz)
+                position: { x: 0, y: -20, z: 10 }, 
+                rotation: { x: Math.PI / 2, y: 0, z: 0 }
+            }
+        }
     }
 ];
 
@@ -180,9 +209,10 @@ $(document).ready(function() {
         }
     });
     // 1. Navigation
-    $('.nav-menu li, .nav-trigger').click(function() {
+	$('.nav-menu li, .nav-trigger, .dropdown-item').click(function(e) {
+        e.stopPropagation(); // Prevents bubbling issues
         const target = $(this).data('target');
-        switchPage(target);
+        if (target) switchPage(target);
     });
 
     // 2. Scroll to Library
@@ -193,11 +223,64 @@ $(document).ready(function() {
         }, 800);
     });
 
-    // 3. Library Selection (Home Page)
-    $('.library-select-btn').click(function() {
-        const stlPath = $(this).data('stl');
-        const name = $(this).data('name');
-        openInStudio(name, stlPath);
+// 3. Library Selection (Hem Home Hem Models Sayfası - HİBRİT ÇÖZÜM)
+    $(document).on('click', '.library-select-btn', function() {
+        const id = $(this).data('id'); // Home sayfasında bu 'undefined' gelir.
+        // 1. Önce ID ile aramayı dene
+        let model = modelsData.find(m => m.id == id);
+
+        // 2. KİLİT NOKTA BURASI: 
+        // Eğer model 'undefined' ise (yani bulamadıysa), javascript aptallık yapmadı, sadece bulamadı.
+        // O zaman biz manuel olarak oluşturacağız.
+        if (!model) {
+            // Home sayfasındaki butonlarda ID yok, o yüzden stl ve name verisini direkt alıyoruz
+            model = {
+                id: null,
+                name: $(this).data('name'), // Butondan ismi al
+                stl: $(this).data('stl'),   // Butondan dosya yolunu al
+                isCustomizable: $(this).data('custom'), // Custom mı değil mi?
+                customConfig: null
+            };
+        }
+        // Artık elimizde kesinlikle dolu bir 'model' var.
+        openInStudio(model);
+    });
+// YENİ: Yazı Rengi (Yuvarlak Butonlar) Dinleyicisi
+    $('.text-color-option').click(function() { 
+        // 1. Görsel Seçimi Güncelle
+        $('.text-color-option').removeClass('selected'); 
+        $(this).addClass('selected');
+        
+        // 2. Rengi Al ve Uygula
+        const hexColor = $(this).data('hex'); 
+        
+        if (textMesh && textMesh.material) {
+            textMesh.material.color.set(hexColor);
+        }
+        
+        // 3. Config'e Kaydet
+        if (activeModelConfig && activeModelConfig.text) {
+            activeModelConfig.text.color = hexColor;
+        }
+    });
+// NEW: Real-time Text Listener
+
+    $('#custom-text-input').on('input', function() {
+        const text = $(this).val();
+        updateCustomText(text);
+    });
+
+    // YENİ: Yazı Rengi Değiştiğinde Tetiklenir
+    $('#custom-text-color').on('input', function() {
+        const color = $(this).val();
+        if (textMesh && textMesh.material) {
+            // Sadece materyalin rengini değiştir (Yeniden mesh yaratmaya gerek yok, performans artar)
+            textMesh.material.color.set(color);
+        }
+        // Config'i güncelle ki yazı içeriği değişirse renk unutulmasın
+        if (activeModelConfig && activeModelConfig.text) {
+            activeModelConfig.text.color = color;
+        }
     });
 
     // 4. Upload Button
@@ -253,11 +336,13 @@ $(document).ready(function() {
     // --- NEW: MODAL LOGIC ---
     let currentModalStl = "";
     let currentModalName = "";
+	let currentModalId = null; // YENİ: ID'yi tutmak için
 
     // Open Modal when Model Card clicked
-    $(document).on('click', '.model-card', function() {
+$(document).on('click', '.model-card', function() {
         const id = $(this).data('id');
         const model = modelsData.find(m => m.id === id);
+        
         if(model) {
             $('#modal-img').attr('src', model.img);
             $('#modal-title').text(model.name);
@@ -266,6 +351,7 @@ $(document).ready(function() {
             
             currentModalStl = model.stl;
             currentModalName = model.name;
+            currentModalId = model.id; // YENİ: ID'yi hafızaya atıyoruz
 
             $('#model-modal').addClass('open');
         }
@@ -279,9 +365,24 @@ $(document).ready(function() {
     });
 
     // "Show in Studio" Button in Modal
-    $('#modal-show-studio-btn').click(function() {
+	$('#modal-show-studio-btn').click(function() {
         $('#model-modal').removeClass('open');
-        openInStudio(currentModalName, currentModalStl);
+        
+        // 1. Önce hafızadaki ID ile gerçek modeli bulmaya çalış
+        let model = modelsData.find(m => m.id == currentModalId);
+
+        // 2. Eğer ID ile bulamazsa (veritabanında yoksa), eldeki bilgilerle manuel oluştur
+        if (!model) {
+             model = {
+                name: currentModalName,
+                stl: currentModalStl,
+                isCustomizable: false, // Manuel oluşturulanlarda bu false olsun
+                customConfig: null
+             };
+        }
+
+        // Artık 'model' objesi hazır, stüdyoya gönder
+        openInStudio(model);
     });
 });
 
@@ -299,7 +400,9 @@ function renderModelsPage() {
                     <div class="model-desc">${model.desc.substring(0, 60)}...</div>
                     <div class="card-meta">
                         <span class="price-tag">₺${model.price.toFixed(2)}</span>
-                        <button class="btn-sm">View Details</button>
+                        <button class="btn-sm library-select-btn" data-id="${model.id}">
+                            Customize
+                        </button>
                     </div>
                 </div>
             </div>
@@ -333,10 +436,26 @@ function loadUserOrders(userId) {
     });
 }
 
-function openInStudio(name, stlPath) {
+function openInStudio(model) {
     switchPage('#upload-page');
-    $('#file-name-display').text(name);
-    loadLibrarySTL(stlPath);
+    $('#file-name-display').text(model.name);
+    
+    activeModelConfig = model.customConfig || null;
+
+    if (model.isCustomizable) {
+        $('#custom-text-group').fadeIn(); 
+        const initialText = activeModelConfig ? activeModelConfig.text.initialContent : "ENGRARE";
+        $('#custom-text-input').val(initialText);
+        
+        // YENİ: Rengi Beyaza Sıfırla (Görsel Olarak)
+        $('.text-color-option').removeClass('selected');
+        $('.text-color-option[data-hex="#FFFFFF"]').addClass('selected');
+        
+    } else {
+        $('#custom-text-group').hide();
+    }
+
+    loadLibrarySTL(model.stl);
 }
 
 function setupDragDrop() {
@@ -380,6 +499,12 @@ function syncProToBasic() {
 function switchPage(targetId) {
     $('.nav-menu li').removeClass('active');
     $(`.nav-menu li[data-target="${targetId}"]`).addClass('active');
+    
+    // NEW ADDITION HERE
+    if (targetId === '#login-page' || targetId === '#dashboard-page') {
+        $('#nav-user-container').addClass('active');
+    }
+
     $('.page').removeClass('active');
     $(targetId).addClass('active');
     
@@ -464,6 +589,15 @@ function handleFile(file) {
         alert("Only .STL and .3MF files are supported.");
         return;
     }
+    
+    // YENİ: Dışarıdan dosya yüklendiğinde custom modunu kapat
+    activeModelConfig = null; 
+    $('#custom-text-group').hide();
+    if (textMesh) {
+         scene.remove(textMesh);
+         textMesh = null;
+    }
+
     $('#file-name-display').text(file.name);
     const reader = new FileReader();
     reader.onload = function(ev) { loadSTL(ev.target.result); };
@@ -476,68 +610,184 @@ function loadLibrarySTL(url) {
         .then(data => loadSTL(data))
         .catch(err => {
              console.error(err);
-             alert("Demo Mode: Ensure assets exist locally or update paths.");
+             alert("Demo Mode: Ensure assets exist locally.");
         });
 }
 
+// CHANGED: Added 'isCustom' parameter to the function definition
 function loadSTL(data) {
     const loader = new STLLoader();
+    let geometry = null;
+    let isFileValid = false;
+
+    // 1. Dosya Okuma
     try {
-        const geometry = loader.parse(data);
-        const initialColor = $('.color-option.selected').data('hex') || 0x333333;
-        const material = new THREE.MeshPhongMaterial({ 
-            color: initialColor, 
-            specular: 0x111111, 
-            shininess: 30 
+        if (data) {
+            geometry = loader.parse(data);
+            if (geometry && geometry.attributes.position && geometry.attributes.position.count > 0) {
+                geometry.computeBoundingBox();
+                if (isFinite(geometry.boundingBox.min.x)) isFileValid = true;
+            }
+        }
+    } catch (e) { console.warn("Veri okunamadı."); }
+
+    // 2. Dosya Yoksa: Sanal Kutu Yarat
+    if (!isFileValid) {
+        console.log("Dosya yüklenemedi, Sanal Kutu kullanılıyor.");
+        // Standart küp
+        geometry = new THREE.BoxGeometry(20, 20, 20);
+    }
+
+    // 3. Geometriyi Merkezle
+    geometry.center(); 
+    
+    // --- 4. ÖLÇEKLENDİRME (DÜZELTME BURADA) ---
+    // Eğer gerçek dosya yüklendiyse (isFileValid: true), ASLA 'baseScale' uygulama!
+    // 'baseScale' sadece dosya bulunamadığında yaratılan küpü plakaya çevirmek içindir.
+    
+    if (!isFileValid && activeModelConfig && activeModelConfig.baseScale) {
+        const s = activeModelConfig.baseScale;
+        geometry.scale(s.x, s.y, s.z);
+    }
+    // ------------------------------------------
+
+    // 5. Materyal
+    const initialColor = $('.color-option.selected').data('hex') || 0x333333;
+    const material = new THREE.MeshPhongMaterial({ 
+        color: initialColor, 
+        specular: 0x111111, 
+        shininess: 30 
+    });
+
+    // Sahne Temizliği
+    if (mesh) scene.remove(mesh);
+    scene.children.forEach(child => {
+        if (child.type === "BoxHelper" || child.type === "AxesHelper") scene.remove(child);
+    });
+    if (typeof textMesh !== 'undefined' && textMesh) {
+         scene.remove(textMesh);
+         textMesh = null;
+    }
+
+    // 6. Mesh Oluştur
+    mesh = new THREE.Mesh(geometry, material);
+    mesh.castShadow = true;
+    
+    // Konumlandırma
+    geometry.computeBoundingBox();
+    const box = geometry.boundingBox;
+    const size = new THREE.Vector3();
+    box.getSize(size);
+
+    // Zemine Oturtma
+    if (activeModelConfig) {
+        // Custom modeller (Sanal veya Gerçek) için rotasyon kontrolü
+        if (!isFileValid) {
+            // Eğer sanal plakaysa yatıktır, döndürme
+            mesh.rotation.x = 0;
+            mesh.position.y = size.y / 2;
+        } else {
+            // Eğer gerçek STL dosyasıysa (Writing Holder gibi), genelde dik gelir.
+            // Burayı dosyanızın durumuna göre ayarlayabilirsiniz.
+            // Genelde -90 derece çevirmek gerekir:
+            mesh.rotation.x = -Math.PI / 2; 
+            
+            // Döndürünce Z boyutu yükseklik olur
+            mesh.position.y = size.z / 2;
+        }
+    } else {
+        // Standart modeller
+        mesh.rotation.x = -Math.PI / 2; 
+        mesh.position.y = size.z / 2;
+    }
+
+    if (!isFinite(mesh.position.y)) mesh.position.y = 0;
+
+    scene.add(mesh);
+
+    // 7. Yazı Ekleme
+    // Not: Gerçek dosya yüklenince yazı konumu kayabilir, JSON'dan 'position' ayarını güncellemeniz gerekebilir.
+    if (activeModelConfig) {
+        try { updateCustomText(activeModelConfig.text.initialContent); } catch(e){}
+    }
+
+    // 8. Panel Bilgileri
+    const finalBox = new THREE.Box3().setFromObject(mesh);
+    const finalSize = new THREE.Vector3();
+    finalBox.getSize(finalSize);
+
+    $('#dim-x').text(finalSize.x.toFixed(1));
+    $('#dim-y').text(finalSize.y.toFixed(1));
+    $('#dim-z').text(finalSize.z.toFixed(1));
+    $('.dimensions-box').fadeIn();
+
+    // 9. Kamera Odaklama (Auto-Focus)
+    const maxDim = Math.max(finalSize.x, finalSize.y, finalSize.z);
+    
+    // Kamerayı objenin boyutuna göre ayarla (1.5 kat mesafe idealdir)
+    let fitDistance = Math.max(maxDim * 1.5, 60);
+
+    camera.position.set(fitDistance, fitDistance, fitDistance);
+    
+    const center = new THREE.Vector3();
+    finalBox.getCenter(center);
+    camera.lookAt(center);
+    
+    if(controls) {
+        controls.target.copy(center);
+        controls.enabled = true;
+        controls.update();
+    }
+
+    const vol = getVolume(geometry) / 1000;
+    $('#model-vol').data('raw', (isNaN(vol) || vol <= 0) ? 10 : vol);
+    
+    calculatePrice();
+    $('#add-to-cart').prop('disabled', false);
+}
+
+let textMesh = null;
+
+function updateCustomText(message) {
+    if (!mesh || !activeModelConfig) return;
+    
+    if (message === "") {
+        if (textMesh) mesh.remove(textMesh);
+        return;
+    }
+
+    const cfg = activeModelConfig.text;
+    
+    // YENİ: Rengi seçili olan yuvarlak butondan al
+    const selectedDiv = $('.text-color-option.selected');
+    const currentColor = selectedDiv.length > 0 ? selectedDiv.data('hex') : (cfg.color || "#FFFFFF");
+
+    const loader = new FontLoader();
+    loader.load(cfg.fontUrl, function (font) {
+        
+        if (textMesh) {
+            mesh.remove(textMesh);
+            if(textMesh.geometry) textMesh.geometry.dispose();
+        }
+
+        const textGeo = new TextGeometry(message, {
+            font: font,
+            size: cfg.size,
+            height: cfg.height,
+            curveSegments: cfg.curveSegments,
+            bevelEnabled: false
         });
 
-        if (mesh) scene.remove(mesh);
-        mesh = new THREE.Mesh(geometry, material);
-        mesh.castShadow = true;
-        
-        geometry.computeBoundingBox();
-        const box = geometry.boundingBox;
-        const size = new THREE.Vector3();
-        box.getSize(size);
-        geometry.center(); 
-        
-        mesh.position.y = size.y / 2;
-        mesh.rotation.x = -Math.PI / 2;
-        
-        // Fix rotation floor gap
-        mesh.rotation.set(0,0,0);
-        mesh.rotation.x = -Math.PI / 2; 
-        const bbox2 = new THREE.Box3().setFromObject(mesh);
-        const bottomWorld = bbox2.min.y;
-        mesh.position.y -= bottomWorld; 
+        textGeo.center();
 
-        scene.add(mesh);
+        const textMat = new THREE.MeshPhongMaterial({ color: currentColor });
+        textMesh = new THREE.Mesh(textGeo, textMat);
 
-        $('#dim-x').text(size.x.toFixed(1));
-        $('#dim-y').text(size.y.toFixed(1));
-        $('#dim-z').text(size.z.toFixed(1));
-        $('.dimensions-box').fadeIn();
+        textMesh.position.set(cfg.position.x, cfg.position.y, cfg.position.z);
+        textMesh.rotation.set(cfg.rotation.x, cfg.rotation.y, cfg.rotation.z);
 
-        controls.enabled = true;
-        const maxDim = Math.max(size.x, size.y, size.z);
-        camera.position.set(maxDim * 2, maxDim * 2, maxDim * 2);
-        camera.lookAt(0,0,0);
-
-        const vol = getVolume(geometry) / 1000; // cm3
-        
-        if (isNaN(vol) || vol <= 0) {
-            $('#model-vol').data('raw', 10); 
-        } else {
-            $('#model-vol').data('raw', vol);
-        }
-        
-        calculatePrice();
-        $('#add-to-cart').prop('disabled', false);
-
-    } catch (e) {
-        console.error(e);
-        alert("Error parsing STL.");
-    }
+        mesh.add(textMesh);
+    });
 }
 
 function getVolume(geometry) {

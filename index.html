@@ -22,7 +22,8 @@
             }
         }
     </script>
-	<link rel="stylesheet" href="myStyle.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<link rel="stylesheet" href="./myStyle.css">
 </head>
 <body>
 
@@ -33,10 +34,10 @@
                 <li data-target="#home-page" class="active">Discover</li>
                 <li data-target="#models-page">Models</li>
                 <li data-target="#upload-page">Studio</li>
-                <li data-target="#checkout-page">Cart <span id="cart-badge">0</span></li>
+				<li data-target="#checkout-page" title="Cart"><i class="fa-solid fa-cart-shopping" style="font-size: 1.2rem;"></i> <span id="cart-badge">0</span></li>
                 
                 <li id="nav-user-container" style="margin-left: auto; display: flex; align-items: center;">
-                    <div id="nav-login-btn" data-target="#login-page">Log In</div>
+                    <div id="nav-login-btn" class="nav-trigger" data-target="#login-page" style="cursor: pointer; padding: 10px;"><i class="fa-regular fa-user" style="font-size: 1.2rem;"></i></div>
                     <div id="nav-user-profile" style="display: none; position: relative;">
                         <img id="nav-user-img" src="./content/default_user.png" alt="User" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border);">
                         <div class="profile-dropdown">
@@ -257,6 +258,19 @@
                     <div class="sidebar-content">
 
                         <div id="panel-basic" class="config-panel">
+							<div class="form-group" id="custom-text-group" style="display:none; background: #eff6ff; padding: 12px; border-radius: 8px; border: 1px solid #bfdbfe; margin-bottom: 20px;">
+                                <label style="color: #1e40af; display:block; margin-bottom:5px;">Custom Text</label>
+                                <input type="text" id="custom-text-input" class="input-box" value="ENGRARE" placeholder="Type here..." style="border-color: #60a5fa; color: #1e3a8a; font-weight: 600; margin-bottom: 15px;">
+                                
+                                <label style="color: #1e40af; font-size: 0.85rem; margin-bottom: 8px; display:block;">Text Color</label>
+                                <div class="color-grid">
+                                    <div class="text-color-option" style="background:#111;" data-hex="#111111" title="Black"></div>
+                                    <div class="text-color-option selected" style="background:#fff;" data-hex="#FFFFFF" title="White"></div>
+                                    <div class="text-color-option" style="background:#9ca3af;" data-hex="#9ca3af" title="Grey"></div>
+                                    <div class="text-color-option" style="background:#ef4444;" data-hex="#ef4444" title="Red"></div>
+                                    <div class="text-color-option" style="background:#3b82f6;" data-hex="#3b82f6" title="Blue"></div>
+                                </div>
+                            </div>
                             <div class="form-group">
                                 <label>Material Selection</label>
                                 <select id="material-select" class="select-box">

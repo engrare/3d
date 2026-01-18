@@ -70,6 +70,12 @@ body {
     background: var(--primary); border-radius: 4px 4px 0 0;
 }
 
+/* Center icons in navbar */
+.nav-menu li i {
+    display: flex;
+    align-items: center;
+}
+
 
 #cart-badge { 
     background: var(--accent); color: white; padding: 2px 8px; 
@@ -255,6 +261,13 @@ p { color: var(--text-muted); }
     border: 2px solid white; box-shadow: 0 0 0 1px var(--border);
     transition: transform 0.2s; position: relative;
 }
+.text-color-option {
+    width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+    border: 2px solid white; box-shadow: 0 0 0 1px var(--border);
+    transition: transform 0.2s; position: relative;
+}
+.text-color-option:hover { transform: scale(1.1); }
+.text-color-option.selected { box-shadow: 0 0 0 2px var(--accent); transform: scale(1.1); }
 .color-option:hover { transform: scale(1.1); }
 .color-option.selected { box-shadow: 0 0 0 2px var(--accent); transform: scale(1.1); }
 
@@ -405,23 +418,22 @@ p { color: var(--text-muted); }
 .grid-3 {
     /* Existing is fine, just ensures auto-flow */
 }
-
-/* --- ADDED: PRO MODE SECTIONS --- */
-.pro-section { 
+.pro-section {
     margin-bottom: 30px; 
     border-bottom: 1px dashed var(--border); 
     padding-bottom: 15px; 
 }
-.pro-section:last-child { 
+
+.pro-section:last-child {
     border-bottom: none; 
 }
-.pro-header { 
+.pro-header {
     font-size: 0.95rem; 
     font-weight: 700; 
     color: var(--primary); 
     margin-bottom: 15px; 
 }
-.form-grid-2 { 
+.form-grid-2 {
     display: grid; 
     grid-template-columns: 1fr 1fr; 
     gap: 15px; 
@@ -474,10 +486,12 @@ p { color: var(--text-muted); }
     line-height: 1.5;
 }
 
-/* Modal/Popup Overlay */
 .modal-overlay {
     position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
+    top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
     background: rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(8px);
     z-index: 2000;
