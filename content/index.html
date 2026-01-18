@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engrare 3D</title>
+    <link rel="icon" type="image/png" href="https://www.engrare.com/files/photos/title_icon.png" sizes="48x48">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+                "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+                "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+                "firebase/database": "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js",
+                "firebase/storage": "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"
+            }
+        }
+    </script>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<link rel="stylesheet" href="./myStyle.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="brand-logo"><img src="./content/engrare_logo_elegant.png" height="65px" alt="Engrare" onerror="this.style.display='none'; this.parentElement.innerText='ENGRARE.'"></div>
+<ul class="nav-menu">
+                <li data-target="#home-page" class="active">Discover</li>
+                <li data-target="#models-page">Models</li>
+                <li data-target="#upload-page">Studio</li>
+				<li data-target="#checkout-page" title="Cart"><i class="fa-solid fa-cart-shopping" style="font-size: 1.2rem;"></i> <span id="cart-badge">0</span></li>
+                
+                <li id="nav-user-container" style="margin-left: auto; display: flex; align-items: center;">
+                    <div id="nav-login-btn" class="nav-trigger" data-target="#login-page" style="cursor: pointer; padding: 10px;"><i class="fa-regular fa-user" style="font-size: 1.2rem;"></i></div>
+                    <div id="nav-user-profile" style="display: none; position: relative;">
+                        <img id="nav-user-img" src="./content/default_user.png" alt="User" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border);">
+                        <div class="profile-dropdown">
+                            <div class="dropdown-item" data-target="#dashboard-page">Dashboard</div>
+                            <div class="dropdown-item" id="action-logout">Log Out</div>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <section id="home-page" class="page active">
+        <header class="hero-section">
+            <div class="blob blob-1"></div>
+            <div class="blob blob-2"></div>
+            <div class="precision_manuf"><img src="./content/vase.png"></div>
+            <div class="hero-overlay"></div> 
+			<div class="hero-content">
+                <h1>Precision Manufacturing<br>On Demand.</h1>
+                <p>Industrial-grade 3D printing for engineers and designers. Upload your CAD or browse our curated parts library.</p>
+                <div class="hero-actions">
+                    <button class="btn primary nav-trigger" data-target="#upload-page">Start Project</button>
+                    <button class="btn secondary scroll-trigger" data-scroll="#library-section">Browse Catalog</button>
+                </div>
+            </div>
+        </header>
+
+        <div id="library-section" class="container">
+            <div class="section-header">
+                <span class="section-subtitle">Commercial Library</span>
+                <h3>Engineered Components</h3>
+                <p>Validated designs ready for immediate production.</p>
+            </div>
+            
+            <div class="grid-3">
+                <div class="product-card">
+                    <div class="card-image"><img src="./content/product1.jpeg" alt="Calibration Cube"/></div>
+                    <div class="card-info">
+                        <h4>Calibration Cube</h4>
+                        <p class="text-sm">Accuracy testing standard.</p>
+                        <div class="card-meta">
+                            <span class="price-tag">₺150.00</span>
+                            <button class="btn-sm library-select-btn" data-stl="./assets/cube.stl" data-name="Calibration Cube">Customize</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="product-card">
+                    <div class="card-image"><img src="./content/product2.jpeg" alt="Phone Stand"/></div>
+                    <div class="card-info">
+                        <h4>Modular Phone Stand</h4>
+                        <p class="text-sm">Adjustable viewing angles.</p>
+                        <div class="card-meta">
+                            <span class="price-tag">₺350.00</span>
+                            <button class="btn-sm library-select-btn" data-stl="./assets/phone_stand.stl" data-name="Phone Stand">Customize</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-card">
+                    <div class="card-image"><img src="./content/product3.avif" alt="Gear Set"/></div>
+                    <div class="card-info">
+                        <h4>Planetary Gear Set</h4>
+                        <p class="text-sm">High-torque mechanical assembly.</p>
+                        <div class="card-meta">
+                            <span class="price-tag">₺600.00</span>
+                            <button class="btn-sm library-select-btn" data-stl="./assets/gear.stl" data-name="Planetary Gear">Customize</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-surface border-top">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-subtitle">Our Expertise</span>
+                    <h3>Comprehensive 3D Solutions</h3>
+                </div>
+                <div class="grid-3">
+                    <div class="feature-box">
+                        <div class="icon-box">🖨️</div>
+                        <h4>Professional 3D Printing</h4>
+                        <p>High-fidelity parts for end-use applications using industrial grade filaments.</p>
+                    </div>
+                    <div class="feature-box">
+                        <div class="icon-box">🏎️</div>
+                        <h4>Rapid Prototyping</h4>
+                        <p>Specialized electronics integration including <strong>Arduino Cars</strong> and <strong>ESP Drones</strong>.</p>
+                    </div>
+                    <div class="feature-box">
+                        <div class="icon-box">📐</div>
+                        <h4>Reverse Engineering</h4>
+                        <p>Precision 3D scanning services to recreate CAD models from physical objects.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="tech-layout">
+                <div class="tech-text">
+                    <span class="section-subtitle">Production Capacity</span>
+                    <h3>Advanced Manufacturing Fleet</h3>
+                    <p>We utilize a farm of high-speed <strong>Bambu Lab</strong> printers for unmatched detail and speed.</p>
+                    
+                    <div class="tech-item">
+                        <h5>FDM Precision Printing</h5>
+                        <p>Layer heights as low as 0.08mm for injection-molding-like surface finish.</p>
+                    </div>
+                    <div class="tech-item">
+                        <h5>Silicone Molding</h5>
+                        <p>Hybrid manufacturing: FDM printed master patterns used to create silicone molds for final resin casting.</p>
+                    </div>
+                </div>
+                <div class="tech-visual">
+                    <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=1000&auto=format&fit=crop" style="width:100%; height:100%; object-fit:cover;">
+                </div>
+            </div>
+        </div>
+
+        <footer class="main-footer">
+            <div class="container footer-grid">
+                <div class="footer-col">
+                    <div class="brand-logo" style="color:white; margin-bottom: 15px;">ENGRARE.</div>
+                    <p style="color: #94A3B8; font-size: 0.9rem;">Precision 3D manufacturing for the modern age.</p>
+                </div>
+                <div class="footer-col">
+                    <h5>Services</h5>
+                    <ul>
+                        <li>FDM Printing</li>
+                        <li>Silicone Molding</li>
+                        <li>3D Scanning</li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h5>Payment Options</h5>
+                    <div class="payment-icons">
+                        <div class="card-icon">Visa</div>
+                        <div class="card-icon">Master</div>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="container" style="padding: 5px 5px;">
+                    © 2026 ENGRARE. All rights reserved.
+                </div>
+            </div>
+        </footer>
+    </section>
+
+    <section id="models-page" class="page">
+        <div class="container">
+			<div class="model-gallery-header">
+				<h1 style="margin-bottom: 20px;">Discover Models.</h1>
+				<p>Explore our curated collection of high-performance 3D models.</p>
+				
+				<div style="margin-top: 30px; position: relative; max-width: 500px;">
+					<i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: #94A3B8;"></i>
+					<input type="text" id="model-search-bar" placeholder="Search for parts, gears, drones..." 
+						   style="width: 100%; padding: 16px 16px 16px 50px; border-radius: 50px; border: 1px solid #E2E8F0; font-size: 1rem; outline: none; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+				</div>
+			</div>
+
+            <div class="grid-3" id="models-grid-container">
+                </div>
+        </div>
+    </section>
+
+    <div id="model-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-close">&times;</div>
+            <div class="modal-image">
+                <img id="modal-img" src="" alt="3D Model">
+            </div>
+            <div class="modal-details">
+                <span class="section-subtitle">Ready to Print</span>
+                <h2 id="modal-title">Model Name</h2>
+                <p id="modal-desc" style="margin-bottom: 30px;">Description goes here.</p>
+                
+                <div class="price-row">
+                    <span class="price-label">Starting from</span>
+                    <span id="modal-price" class="total-price" style="font-size: 1.5rem;">₺0.00</span>
+                </div>
+
+                <div style="margin-top: auto; display: flex; gap: 15px;">
+                    <button id="modal-show-studio-btn" class="btn primary" style="width: 100%;">Show in Studio</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section id="upload-page" class="page">
+        <div class="container" style="padding-top: 20px;"> 
+            <div class="upload-layout">
+                
+                <div class="viewer-container">
+                    <div id="drop-zone-overlay">
+                        Drop Your File Here
+                    </div>
+                    
+                    <div id="3d-viewer" class="canvas-wrapper"></div>
+                    
+                    <div class="viewer-controls">
+                        <span id="file-name-display" class="file-status">No file loaded</span>
+                        <div style="width: 1px; height: 20px; background: #ddd;"></div>
+                        <button id="upload-btn" class="btn primary" style="padding: 8px 16px; font-size: 0.9rem;">
+                            Upload File
+                        </button>
+                        <input type="file" id="real-file-input" hidden accept=".stl,.3mf">
+                    </div>
+                </div>
+
+                <div class="config-sidebar">
+                    <div class="sidebar-header">
+                        <h4>Configuration</h4>
+                        <div class="sidebar-tabs">
+                            <button class="tab-btn active" data-mode="basic">Essential</button>
+                            <button class="tab-btn" data-mode="advanced">Pro Mode</button>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-content">
+
+                        <div id="panel-basic" class="config-panel">
+							<div class="form-group" id="custom-text-group" style="display:none; background: #eff6ff; padding: 12px; border-radius: 8px; border: 1px solid #bfdbfe; margin-bottom: 20px;">
+                                <label style="color: #1e40af; display:block; margin-bottom:5px;">Custom Text</label>
+                                <input type="text" id="custom-text-input" class="input-box" value="ENGRARE" placeholder="Type here..." style="border-color: #60a5fa; color: #1e3a8a; font-weight: 600; margin-bottom: 15px;">
+                                
+                                <label style="color: #1e40af; font-size: 0.85rem; margin-bottom: 8px; display:block;">Text Color</label>
+                                <div class="color-grid">
+                                    <div class="text-color-option" style="background:#111;" data-hex="#111111" title="Black"></div>
+                                    <div class="text-color-option selected" style="background:#fff;" data-hex="#FFFFFF" title="White"></div>
+                                    <div class="text-color-option" style="background:#9ca3af;" data-hex="#9ca3af" title="Grey"></div>
+                                    <div class="text-color-option" style="background:#ef4444;" data-hex="#ef4444" title="Red"></div>
+                                    <div class="text-color-option" style="background:#3b82f6;" data-hex="#3b82f6" title="Blue"></div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Material Selection</label>
+                                <select id="material-select" class="select-box">
+                                    <option value="1">PLA+ (Standard)</option>
+                                    <option value="1.5">PETG (Engineering)</option>
+                                    <option value="3.0">ABS (Heat Resistant)</option>
+                                    <option value="2.5">TPU (Flexible 95A)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Color</label>
+                                <div class="color-grid">
+                                    <div class="color-option selected" style="background:#111;" data-color="Black" data-hex="#111111"></div>
+                                    <div class="color-option" style="background:#fff;" data-color="White" data-hex="#FFFFFF"></div>
+                                    <div class="color-option" style="background:#9ca3af;" data-color="Grey" data-hex="#9ca3af"></div>
+                                    <div class="color-option" style="background:#ef4444;" data-color="Red" data-hex="#ef4444"></div>
+                                    <div class="color-option" style="background:#3b82f6;" data-color="Blue" data-hex="#3b82f6"></div>
+                                </div>
+                                <div id="selected-color-name" style="margin-top:8px; font-size:0.85rem; color:var(--text-light)">Black</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Infill Density</label>
+                                <select id="infill-select" class="select-box">
+                                    <option value="15">15% (Light)</option>
+                                    <option value="20" selected>20% (Standard)</option>
+                                    <option value="50">50% (Heavy Duty)</option>
+                                    <option value="100">100% (Solid)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Quantity</label>
+                                <input type="number" id="quantity-input" class="input-box" value="1" min="1">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Delivery Priority</label>
+                                <div class="delivery-list">
+                                    <label class="delivery-option active">
+                                        <div><span class="del-title">Standard</span></div><input type="radio" name="delivery" value="1" checked>
+                                    </label>
+                                    <label class="delivery-option">
+                                        <div><span class="del-title">Express</span></div><input type="radio" name="delivery" value="1.5">
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="panel-advanced" class="config-panel" style="display: none;">
+                            <div style="background: #FFFBEB; padding: 10px; border-radius: 6px; font-size: 0.75rem; color: #92400E; margin-bottom: 15px;">
+                                ⚠️ Sync Active: Changing values here updates Basic settings.
+                            </div>
+
+                            <div class="pro-section">
+                                <h5 class="pro-header">1. Quality</h5>
+                                <div class="form-grid-2">
+                                    <div class="form-group">
+                                        <label>Layer Height (mm)</label>
+                                        <input type="number" id="pro-layer-height" class="input-box" value="0.2" step="0.04">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Initial Layer</label>
+                                        <input type="number" class="input-box" value="0.2">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pro-section">
+                                <h5 class="pro-header">2. Strength</h5>
+                                <div class="form-grid-2">
+                                    <div class="form-group">
+                                        <label>Infill %</label>
+                                        <input type="number" id="pro-infill" class="input-box" value="20" min="0" max="100">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Wall Loops</label>
+                                        <input type="number" class="input-box" value="3">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Top/Bottom Shells</label>
+                                        <input type="number" class="input-box" value="4">
+                                    </div>
+                                </div>
+                            </div>
+                            </div>
+                    </div>
+
+                    <div class="sidebar-footer">
+                         <div class="dimensions-box" style="margin-bottom: 15px; font-size: 0.8rem; color: var(--text-muted); display:none;">
+                            <strong>Dimensions:</strong> <span id="dim-x"></span> x <span id="dim-y"></span> x <span id="dim-z"></span>
+                        </div>
+                        <div class="price-row">
+                            <span class="price-label">Estimated Cost</span>
+                            <span id="price-display" class="total-price">₺0.00</span>
+                        </div>
+                        <span id="model-vol" data-raw="0" style="display:none"></span>
+                        
+                        <button id="add-to-cart" class="btn primary full-width" style="width:100%" disabled>
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+	
+	<section id="checkout-page" class="page">
+        <div class="container narrow">
+            <h2 style="text-align: center;">Your Order</h2>
+            
+            <div class="cart-list" id="cart-items-area">
+                </div>
+
+            <div class="summary-panel">
+                <div class="price-row"><span>Subtotal</span><span id="val-subtotal">₺0.00</span></div>
+                <div class="price-row"><span>Shipping & Handling</span><span id="shipping-display">₺50.00</span></div>
+                <div style="height:1px; background:var(--border); margin: 20px 0;"></div>
+                <div class="price-row">
+                    <span style="font-weight:700; font-size:1.2rem;">Total</span>
+                    <span id="val-total" style="font-weight:800; font-size:1.5rem; color:var(--primary);">₺50.00</span>
+                </div>
+                <button class="btn primary" style="width: 100%; margin-top: 20px;">Proceed to Secure Checkout</button>
+            </div>
+        </div>
+    </section>
+
+<section id="login-page" class="page">
+        <div class="login-container">
+            <div class="login-card">
+                
+                <div id="view-signin">
+                    <div class="login-header">
+                        <h2>Welcome Back</h2>
+                        <p>Sign in to access your projects.</p>
+                    </div>
+                    <form class="login-form">
+                        <div class="form-group">
+                            <input type="email" id="signin-email" class="login-input" placeholder="Email Address">
+                        </div>
+                        <div class="form-group">
+                            <input type="password" id="signin-password" class="login-input" placeholder="Password">
+                        </div>
+                        <button type="button" id="btn-signin" class="btn primary" style="width: 100%;">Sign In</button>
+                    </form>
+                    <div class="login-links">
+                        <span class="link-text" onclick="$('#view-signin').hide(); $('#view-reset').fadeIn();">Forgot password?</span>
+                        <span class="link-text" onclick="$('#view-signin').hide(); $('#view-signup').fadeIn();">Create account ↗</span>
+                    </div>
+                </div>
+
+                <div id="view-signup" style="display: none;">
+                    <div class="login-header">
+                        <h2>Create Account</h2>
+                        <p>Join Engrare today.</p>
+                    </div>
+                    <form class="login-form">
+                        <div class="form-group">
+                            <input type="text" id="signup-name" class="login-input" placeholder="Full Name">
+                        </div>
+                        <div class="form-group">
+                            <input type="email" id="signup-email" class="login-input" placeholder="Email Address">
+                        </div>
+                        <div class="form-group">
+                            <input type="password" id="signup-password" class="login-input" placeholder="Password">
+                        </div>
+                        <button type="button" id="btn-signup" class="btn primary" style="width: 100%;">Sign Up</button>
+                    </form>
+                    <div class="login-links" style="justify-content: center;">
+                        <span class="link-text" onclick="$('#view-signup').hide(); $('#view-signin').fadeIn();">Already have an account? Log In</span>
+                    </div>
+                </div>
+
+                <div id="view-reset" style="display: none;">
+                    <div class="login-header">
+                        <h2>Reset Password</h2>
+                        <p>Enter your email to receive a reset link.</p>
+                    </div>
+                    <form class="login-form">
+                        <div class="form-group">
+                            <input type="email" id="reset-email" class="login-input" placeholder="Email Address">
+                        </div>
+                        <button type="button" id="btn-reset" class="btn primary" style="width: 100%;">Send Link</button>
+                    </form>
+                    <div class="login-links" style="justify-content: center;">
+                        <span class="link-text" onclick="$('#view-reset').hide(); $('#view-signin').fadeIn();">Back to Log In</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+	<section id="dashboard-page" class="page">
+        <div class="container">
+            <h2 style="margin-bottom: 30px;">My Dashboard</h2>
+            <div class="dashboard-layout">
+                <div class="dash-sidebar">
+                    <div class="user-brief">
+                        <img id="dash-user-img" src="./content/default_user.png">
+                        <div style="font-weight: 700;" id="dash-user-name">User</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);" id="dash-user-email">email@example.com</div>
+                    </div>
+                    <ul class="dash-menu">
+                        <li class="active" data-tab="orders">My Orders</li>
+                        <li data-tab="favorites">Favorites</li>
+                        <li data-tab="addresses">My Addresses</li>
+                        <li data-tab="account">Account Info</li>
+                        <li data-tab="support">Support</li>
+                    </ul>
+                </div>
+
+                <div class="dash-content">
+                    <div id="tab-orders" class="dash-tab active">
+                        <h3>Order History</h3>
+                        <div id="orders-list" style="margin-top: 20px; color: var(--text-muted);">Loading orders...</div>
+                    </div>
+                    <div id="tab-favorites" class="dash-tab" style="display:none">
+                        <h3>Saved Models</h3>
+                        <p>Your favorite items will appear here.</p>
+                    </div>
+                    <div id="tab-addresses" class="dash-tab" style="display:none">
+                        <h3>Saved Addresses</h3>
+                        <div class="address-card">
+                            <strong>Home</strong>
+                            <p>123 Engineering Lane, Istanbul, TR</p>
+                        </div>
+                    </div>
+                    <div id="tab-account" class="dash-tab" style="display:none">
+                        <h3>Account Settings</h3>
+                        <div class="form-group" style="max-width: 400px;">
+                            <label>Display Name</label>
+                            <input type="text" class="input-box" id="update-display-name" placeholder="Update Name">
+                            <button class="btn btn-sm primary" id="btn-update-profile" style="margin-top: 10px;">Save Changes</button>
+                        </div>
+                    </div>
+                    <div id="tab-support" class="dash-tab" style="display:none">
+                        <h3>Support</h3>
+                        <p>Need help? Contact us at support@engrare.com</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script type="module" src="myScript.js"></script>
+</body>
+</html>
