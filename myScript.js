@@ -30,7 +30,7 @@ const auth = getAuth(app);
 const db = getDatabase(app);
 const storage = getStorage(app); // Storage servisini başlat
 let activeModelConfig = null;
-
+let currentLibraryModel = null;
 let scene, camera, renderer, mesh, controls;
 let cart = [];
 const BASE_PRICE_PER_CM3 = 15.00; 
@@ -38,56 +38,38 @@ const BUILD_VOLUME_X = 256;
 const BUILD_VOLUME_Y = 256;
 
 // --- MODEL DATABASE (Mock Data) ---
-const modelsData = [
+const initialMockData = [
     {
         id: 1,
         name: "Calibration Cube",
         desc: "The gold standard for calibrating 3D printers. Measure dimensions to ensure X, Y, and Z accuracy.",
         price: 150,
         img: "./content/product1.jpeg",
-        stl: "./assets/cube.stl"
+        stl: "./assets/cube.stl",
+        isCustomizable: false,
+        customConfig: null
     },
     {
         id: 2,
         name: "Modular Phone Stand",
-        desc: "A sleek, adjustable stand for smartphones. Features a sturdy base and variable viewing angles.",
+        desc: "A sleek, adjustable stand for smartphones. Features a sturdy base.",
         price: 350,
         img: "./content/product2.jpeg",
-        stl: "./assets/phone_stand.stl"
+        stl: "./assets/phone_stand.stl",
+        isCustomizable: false,
+        customConfig: null
     },
     {
         id: 3,
         name: "Planetary Gear Set",
-        desc: "A fully functional mechanical assembly demonstrating high-torque gear reduction concepts.",
+        desc: "A fully functional mechanical assembly demonstrating high-torque gear reduction.",
         price: 600,
         img: "./content/product3.avif",
-        stl: "./assets/gear.stl"
+        stl: "./assets/gear.stl",
+        isCustomizable: false,
+        customConfig: null
     },
     {
-        id: 4,
-        name: "Vase Mode Container",
-        desc: "Designed for spiralize outer contour mode. Perfect for aesthetic storage solutions.",
-        price: 200,
-        img: "https://images.unsplash.com/photo-1628194451659-335d5a782485?auto=format&fit=crop&q=80&w=600",
-        stl: "./assets/cube.stl" // Using placeholder stl
-    },
-    {
-        id: 5,
-        name: "Drone Frame Arms",
-        desc: "Lightweight and rigid arms for quadcopter builds. Optimized for strength-to-weight ratio.",
-        price: 450,
-        img: "https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&q=80&w=600",
-        stl: "./assets/phone_stand.stl" // Using placeholder stl
-    },
-    {
-        id: 6,
-        name: "Headphone Holder",
-        desc: "Desk-mountable holder to keep your workspace clean and organized.",
-        price: 280,
-        img: "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&q=80&w=600",
-        stl: "./content/desktop_writing_holder.stl" // Using placeholder stl
-    },
-	{
         id: 7,
         name: "Custom Name Plate",
         desc: "Personalized desk plate with editable 3D text.",
@@ -96,27 +78,30 @@ const modelsData = [
         stl: "./content/desktop_writing_holder.STL",
         isCustomizable: true,
         customConfig: {
+            // Virtual Scale (Only used if STL fails to load, creating a box)
             baseScale: { x: 5, y: 0.2, z: 2 }, 
             
-            // --- KOLAYLAŞTIRILMIŞ AYARLAR ---
+            // --- TEXT SETTINGS ---
             text: {
                 initialContent: "ENGRARE",
                 fontUrl: 'https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json',
                 
-                // --- BURASI DÜZENLENECEK KISIM ---
-                fontSize: 10,       // Yazının büyüklüğü
-                fontThickness: 4,   // Yazının kalınlığı (kabarıklığı)
+                // Text Dimensions
+                fontSize: 10,       
+                fontThickness: 4,   
                 
-                // Konum Ayarları (Otomatik Merkeze Göre)
-                offsetY: 0,         // 0 = Tam yüzeye yapışık. 1 = Havada. -1 = Gömülü.
-                shiftX: 0,          // Sağa/Sola kaydırma (Negatif = Sol)
-                shiftZ: 10,         // İleri/Geri kaydırma (Pozitif = Aşağı/Bize yakın)
+                // Positioning (Relative to the model center)
+                offsetY: 0,         // 0 = Surface, 1 = Floating, -1 = Embedded
+                shiftX: 0,          // Left/Right
+                shiftZ: 10,         // Forward/Backward (Positive = Closer to camera/bottom)
                 
                 color: "#FFFFFF"
             }
         }
     }
 ];
+
+let allFirebaseModels = [];
 
 // --- DOM READY ---
 $(document).ready(function() {
@@ -231,27 +216,57 @@ $(document).ready(function() {
     });
 
 // 3. Library Selection (Hem Home Hem Models Sayfası - HİBRİT ÇÖZÜM)
-    $(document).on('click', '.library-select-btn', function() {
-        const id = $(this).data('id'); // Home sayfasında bu 'undefined' gelir.
-        // 1. Önce ID ile aramayı dene
-        let model = modelsData.find(m => m.id == id);
+$(document).on('click', '.library-select-btn', function(e) {
+    const modelsRef = ref(db, 'models');
 
-        // 2. KİLİT NOKTA BURASI: 
-        // Eğer model 'undefined' ise (yani bulamadıysa), javascript aptallık yapmadı, sadece bulamadı.
-        // O zaman biz manuel olarak oluşturacağız.
-        if (!model) {
-            // Home sayfasındaki butonlarda ID yok, o yüzden stl ve name verisini direkt alıyoruz
-            model = {
-                id: null,
-                name: $(this).data('name'), // Butondan ismi al
-                stl: $(this).data('stl'),   // Butondan dosya yolunu al
-                isCustomizable: $(this).data('custom'), // Custom mı değil mi?
-                customConfig: null
-            };
+    // 1. Listen to Firebase 'models' node
+    onValue(modelsRef, (snapshot) => {
+        const data = snapshot.val();
+        
+        if (!data) {
+            // DATABASE IS EMPTY? Upload the Mock Data automatically!
+            console.log("Database empty. Uploading initial data...");
+            initialMockData.forEach(item => {
+                // Use the ID as the key
+                set(ref(db, 'models/' + item.id), item);
+            });
+        } else {
+            // Data exists! Convert object to array
+            allFirebaseModels = Object.values(data);
+            renderModelsPage(allFirebaseModels); // Render everything initially
         }
-        // Artık elimizde kesinlikle dolu bir 'model' var.
-        openInStudio(model);
     });
+
+    // 2. Search Bar Listener
+    $('#model-search-bar').on('input', function() {
+        const query = $(this).val().toLowerCase();
+        
+        // Filter the array locally (Fastest & most flexible method)
+        const filteredModels = allFirebaseModels.filter(model => 
+            model.name.toLowerCase().includes(query) || 
+            model.desc.toLowerCase().includes(query)
+        );
+        
+        renderModelsPage(filteredModels);
+    });
+    // STOP THE CLICK HERE so it doesn't bubble up to the card
+    e.stopPropagation(); 
+
+    const id = $(this).data('id'); 
+    let model = modelsData.find(m => m.id == id);
+
+    if (!model) {
+        model = {
+            id: null,
+            name: $(this).data('name'),
+            stl: $(this).data('stl'),
+            isCustomizable: $(this).data('custom'), 
+            customConfig: null
+        };
+    }
+    openInStudio(model);
+});
+
 // YENİ: Yazı Rengi (Yuvarlak Butonlar) Dinleyicisi
     $('.text-color-option').click(function() { 
         // 1. Görsel Seçimi Güncelle
@@ -371,34 +386,48 @@ $(document).on('click', '.model-card', function() {
         }
     });
 
-    // "Show in Studio" Button in Modal
+	// "Show in Studio" Button in Modal
 	$('#modal-show-studio-btn').click(function() {
-        $('#model-modal').removeClass('open');
-        
-        // 1. Önce hafızadaki ID ile gerçek modeli bulmaya çalış
-        let model = modelsData.find(m => m.id == currentModalId);
+		$('#model-modal').removeClass('open');
+		
+		// CHANGED: Look in 'allFirebaseModels' instead of 'modelsData'
+		let model = allFirebaseModels.find(m => m.id == currentModalId);
 
-        // 2. Eğer ID ile bulamazsa (veritabanında yoksa), eldeki bilgilerle manuel oluştur
-        if (!model) {
-             model = {
-                name: currentModalName,
-                stl: currentModalStl,
-                isCustomizable: false, // Manuel oluşturulanlarda bu false olsun
-                customConfig: null
-             };
-        }
-
-        // Artık 'model' objesi hazır, stüdyoya gönder
-        openInStudio(model);
-    });
+		if (!model) {
+			 model = {
+				name: currentModalName,
+				stl: currentModalStl,
+				isCustomizable: false,
+				customConfig: null
+			 };
+		}
+		openInStudio(model);
+	});
 });
 
 // --- HELPER FUNCTIONS ---
 
-function renderModelsPage() {
+function renderModelsPage(modelsList) {
+    // --- FIX: SAFETY CHECK ---
+    // If modelsList is undefined or null, use an empty array []
+    if (!modelsList) {
+        modelsList = [];
+    }
+    // -------------------------
+
     const $grid = $('#models-grid-container');
     $grid.empty();
-    modelsData.forEach(model => {
+    
+    if (modelsList.length === 0) {
+        // Only show "No models found" if we actually have a search active or data loaded
+        // You might want to hide this message if it's just the initial empty load
+        if (allFirebaseModels && allFirebaseModels.length > 0) {
+             $grid.html('<p style="grid-column: 1/-1; text-align: center; color: #94A3B8;">No models found matching your search.</p>');
+        }
+        return;
+    }
+
+    modelsList.forEach(model => {
         $grid.append(`
             <div class="model-card" data-id="${model.id}">
                 <div class="card-image"><img src="${model.img}" alt="${model.name}"/></div>
@@ -407,7 +436,11 @@ function renderModelsPage() {
                     <div class="model-desc">${model.desc.substring(0, 60)}...</div>
                     <div class="card-meta">
                         <span class="price-tag">₺${model.price.toFixed(2)}</span>
-                        <button class="btn-sm library-select-btn" data-id="${model.id}">
+                        <button class="btn-sm library-select-btn" 
+                            data-id="${model.id}" 
+                            data-name="${model.name}" 
+                            data-stl="${model.stl}" 
+                            data-custom="${model.isCustomizable || false}">
                             Customize
                         </button>
                     </div>
@@ -450,6 +483,7 @@ function openInStudio(model) {
     switchPage('#upload-page');
     $('#file-name-display').text(model.name);
     
+	currentLibraryModel = model; // Store the full model data to reference later
     activeModelConfig = model.customConfig || null;
 
     if (model.isCustomizable) {
@@ -559,12 +593,22 @@ function init3D() {
 
 function createBed() {
     const geometry = new THREE.PlaneGeometry(BUILD_VOLUME_X, BUILD_VOLUME_Y);
-    const material = new THREE.MeshPhongMaterial({ color: 0x222222, side: THREE.DoubleSide, shininess: 10 });
+    
+    // CHANGED:
+    // 1. color: 0x999999 (Grey)
+    // 2. side: THREE.FrontSide (Bottom becomes invisible/transparent)
+    const material = new THREE.MeshPhongMaterial({ 
+        color: 0x999999, 
+        side: THREE.FrontSide, 
+        shininess: 10 
+    });
+
     const plane = new THREE.Mesh(geometry, material);
     plane.rotation.x = -Math.PI / 2;
     plane.receiveShadow = true;
     scene.add(plane);
 
+    // Grid remains visible
     const gridHelper = new THREE.GridHelper(BUILD_VOLUME_X, 12, 0x444444, 0x555555);
     gridHelper.position.y = 0.1; 
     scene.add(gridHelper);
@@ -600,9 +644,13 @@ function handleFile(file) {
         return;
     }
     
-    // YENİ: Dışarıdan dosya yüklendiğinde custom modunu kapat
-    activeModelConfig = null; 
+    // --- FIX IS HERE ---
+    currentLibraryModel = null; 
+    activeModelConfig = null; // <--- ADD THIS LINE (This stops loadSTL from re-adding text)
+    // -------------------
+
     $('#custom-text-group').hide();
+    
     if (textMesh) {
          scene.remove(textMesh);
          textMesh = null;
@@ -871,82 +919,67 @@ function calculatePrice() {
 async function addToCart() {
     const $btn = $('#add-to-cart');
     
-    // 1. GÜVENLİK KONTROLÜ
-    const user = auth.currentUser;
-    if (!user) {
-        alert("Lütfen sepetinize ürün eklemek için giriş yapın veya kayıt olun.");
-        switchPage('#login-page');
-        return;
-    }
-
-    // Butonu Kilitle
-    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Dosya Hazırlanıyor...');
+    // REMOVED: Login check and Firebase Upload
+    
+    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Adding...');
 
     try {
-        // --- 2. STL EXPORT İŞLEMİ (DÜZELTİLDİ) ---
-        // Sadece modeli ve üzerindeki yazıyı export etmek için geçici grup
-        const exportGroup = new THREE.Group();
-        const meshClone = mesh.clone();
-        
-        // Eğer yazı varsa onu da meshClone içine (veya gruba) eklediğimizden emin olalım
-        // (Normalde mesh.add(textMesh) yaptığımız için clone alınca o da gelir)
-        exportGroup.add(meshClone);
-
-        const exporter = new STLExporter();
-        
-        // Dosya Adı (STL uzantılı)
-        const timestamp = Date.now();
-        const baseName = $('#file-name-display').text().replace(/\s+/g, '_').replace('.stl', '').replace('.STL', '');
-        const fileName = `projects/${user.uid}/${baseName}_${timestamp}.stl`;
-
-        // STL Binary formatında çıktı al (Dosya boyutu küçük olur ve BambuLab sever)
-        const result = exporter.parse(exportGroup, { binary: true });
-        
-        // Blob Oluştur
-        const blob = new Blob([result], { type: 'application/octet-stream' });
-
-        // --- 3. FIREBASE STORAGE UPLOAD ---
-        $btn.html('<i class="fas fa-cloud-upload-alt"></i> Buluta Yükleniyor...');
-        
-        const storageRef = sRef(storage, fileName);
-        const snapshot = await uploadBytes(storageRef, blob);
-        const downloadURL = await getDownloadURL(snapshot.ref);
-
-        console.log("Dosya yüklendi:", downloadURL);
-
-        // --- 4. SEPETE EKLEME ---
         const priceText = $('#price-display').text();
         const numericPrice = parseFloat(priceText.replace('₺', '').replace(/\./g, '').replace(',', '.').trim());
         const name = $('#file-name-display').text();
         const mode = $('.tab-btn.active').text();
-        
-        cart.push({ 
+
+        // 1. Capture Config (Color, Text, etc.)
+        const currentConfig = {
+            colorHex: $('.color-option.selected').data('hex'),
+            colorName: $('.color-option.selected').data('color'),
+            material: $('#material-select').val(),
+            infill: $('#infill-select').val(),
+            customText: (activeModelConfig && $('#custom-text-input').val()) ? $('#custom-text-input').val() : null,
+            customTextColor: (activeModelConfig) ? $('.text-color-option.selected').data('hex') : null
+        };
+
+        // 2. Create Cart Item
+        // If it is a user upload (currentLibraryModel is null), we do NOT save the configuration or ID.
+        const cartItem = { 
             name: name, 
             price: numericPrice, 
             mode: mode, 
             formattedPrice: priceText,
-            fileUrl: downloadURL,
-            date: new Date().toLocaleString()
-        });
+            date: new Date().toLocaleString(),
+            isLibrary: !!currentLibraryModel, // Flag for the save function
+            // Only attach config and ID if it's a library model we want to restore later
+            libraryId: currentLibraryModel ? currentLibraryModel.id : null,
+            configuration: currentLibraryModel ? currentConfig : null
+        };
+        
+        // 3. Add to Memory State
+        cart.push(cartItem);
         
         saveCart(); 
         renderCart();
         
-        $btn.text('Sepete Eklendi!').css('background-color', '#10B981');
-
+        $btn.text('Added!').css('background-color', '#10B981');
         setTimeout(() => {
             $btn.prop('disabled', false).text('Add to Cart').css('background-color', '');
-        }, 2000);
+        }, 1500);
 
     } catch (error) {
-        console.error("Export/Upload Hatası:", error);
-        alert("Dosya oluşturulurken bir hata oluştu: " + error.message);
+        console.error("Cart Error:", error);
         $btn.prop('disabled', false).text('Add to Cart');
     }
 }
 
 function saveCart() {
-    localStorage.setItem('engrare_cart', JSON.stringify(cart));
+    // 1. Filter: Create a new list that ONLY contains Library models
+    // We do NOT modify the main 'cart' variable, because we still want 
+    // the user to see their uploaded item while they are on the page.
+    const itemsToSave = cart.filter(item => item.isLibrary === true);
+
+    // 2. Save only the filtered list to LocalStorage
+    localStorage.setItem('engrare_cart', JSON.stringify(itemsToSave));
+
+    // 3. Update the badge count based on the current session cart (shows everything)
     $('#cart-badge').text(cart.length);
 }
 

@@ -193,10 +193,16 @@
 
     <section id="models-page" class="page">
         <div class="container">
-            <div class="model-gallery-header">
-                <h1 style="margin-bottom: 20px;">Discover Models.</h1>
-                <p>Explore our curated collection of high-performance 3D models. Click to view details or instantly load them into our Studio.</p>
-            </div>
+			<div class="model-gallery-header">
+				<h1 style="margin-bottom: 20px;">Discover Models.</h1>
+				<p>Explore our curated collection of high-performance 3D models.</p>
+				
+				<div style="margin-top: 30px; position: relative; max-width: 500px;">
+					<i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: #94A3B8;"></i>
+					<input type="text" id="model-search-bar" placeholder="Search for parts, gears, drones..." 
+						   style="width: 100%; padding: 16px 16px 16px 50px; border-radius: 50px; border: 1px solid #E2E8F0; font-size: 1rem; outline: none; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+				</div>
+			</div>
 
             <div class="grid-3" id="models-grid-container">
                 </div>
