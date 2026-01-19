@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail } from "firebase/auth";
 import { getDatabase, ref, set, push, onValue } from "firebase/database";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { STLLoader } from 'three/addons/loaders/STLLoader.js';
@@ -28,7 +29,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
-const storage = getStorage(app); // Storage servisini başlat
+const storage = getStorage(app);
+const functions = getFunctions(app, 'europe-west1');
 let activeModelConfig = null;
 let currentLibraryModel = null;
 let scene, camera, renderer, mesh, controls;
@@ -215,11 +217,8 @@ $(document).ready(function() {
         }, 800);
     });
 
-// 3. Library Selection (Hem Home Hem Models Sayfası - HİBRİT ÇÖZÜM)
-$(document).on('click', '.library-select-btn', function(e) {
+    // 2. Load Firebase Models
     const modelsRef = ref(db, 'models');
-
-    // 1. Listen to Firebase 'models' node
     onValue(modelsRef, (snapshot) => {
         const data = snapshot.val();
         
@@ -237,35 +236,47 @@ $(document).on('click', '.library-select-btn', function(e) {
         }
     });
 
-    // 2. Search Bar Listener
-    $('#model-search-bar').on('input', function() {
-        const query = $(this).val().toLowerCase();
+    // 3. Search Bar Listener - BACKEND SEARCH USING FIREBASE
+    $('#model-search-bar').on('input', async function() {
+        const query = $(this).val().trim();
         
-        // Filter the array locally (Fastest & most flexible method)
-        const filteredModels = allFirebaseModels.filter(model => 
-            model.name.toLowerCase().includes(query) || 
-            model.desc.toLowerCase().includes(query)
-        );
+        // If search is empty, show all models
+        if (query === "") {
+            renderModelsPage(allFirebaseModels);
+            return;
+        }
         
-        renderModelsPage(filteredModels);
+        // Show loading state
+        $('#models-grid-container').html('<p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">Searching...</p>');
+        
+        try {
+            // Call Firebase Cloud Function to perform backend search
+            const results = await performBackendSearch(query);
+            renderModelsPage(results);
+        } catch (error) {
+            console.error('Search error:', error);
+            $('#models-grid-container').html('<p style="text-align: center; color: red; grid-column: 1/-1;">Search failed. Please try again.</p>');
+        }
     });
-    // STOP THE CLICK HERE so it doesn't bubble up to the card
-    e.stopPropagation(); 
 
-    const id = $(this).data('id'); 
-    let model = modelsData.find(m => m.id == id);
+    // 4. Library Selection (Home & Models Page)
+    $(document).on('click', '.library-select-btn', function(e) {
+        e.stopPropagation(); // Stop the click here so it doesn't bubble up to the card
+        
+        const id = $(this).data('id'); 
+        let model = allFirebaseModels.find(m => m.id == id);
 
-    if (!model) {
-        model = {
-            id: null,
-            name: $(this).data('name'),
-            stl: $(this).data('stl'),
-            isCustomizable: $(this).data('custom'), 
-            customConfig: null
-        };
-    }
-    openInStudio(model);
-});
+        if (!model) {
+            model = {
+                id: null,
+                name: $(this).data('name'),
+                stl: $(this).data('stl'),
+                isCustomizable: $(this).data('custom'), 
+                customConfig: null
+            };
+        }
+        openInStudio(model);
+    });
 
 // YENİ: Yazı Rengi (Yuvarlak Butonlar) Dinleyicisi
     $('.text-color-option').click(function() { 
@@ -363,7 +374,7 @@ $(document).on('click', '.library-select-btn', function(e) {
     // Open Modal when Model Card clicked
 $(document).on('click', '.model-card', function() {
         const id = $(this).data('id');
-        const model = modelsData.find(m => m.id === id);
+        const model = allFirebaseModels.find(m => m.id === id);
         
         if(model) {
             $('#modal-img').attr('src', model.img);
@@ -404,6 +415,28 @@ $(document).on('click', '.model-card', function() {
 		openInStudio(model);
 	});
 });
+
+// --- BACKEND SEARCH FUNCTION ---
+async function performBackendSearch(query) {
+    try {
+        // Call the Firebase Cloud Function for backend search
+        const searchFunction = httpsCallable(functions, 'searchModels');
+        const result = await searchFunction({ query: query });
+        
+        // Return the results from the backend
+        return result.data.results || [];
+    } catch (error) {
+        console.error('Backend search error:', error);
+        
+        // Fallback: Perform local search if backend fails
+        console.log('Falling back to local search...');
+        const lowerQuery = query.toLowerCase();
+        return allFirebaseModels.filter(model =>
+            model.name.toLowerCase().includes(lowerQuery) ||
+            model.desc.toLowerCase().includes(lowerQuery)
+        );
+    }
+}
 
 // --- HELPER FUNCTIONS ---
 
