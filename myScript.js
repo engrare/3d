@@ -191,6 +191,13 @@ const allFirebaseModels = [
     }
 ];
 
+// --- MODAL VARIABLES ---
+let currentModalStl = "";
+let currentModalName = "";
+let currentModalId = null;
+let currentModalImages = [];
+let currentImageIndex = 0;
+
 // --- DOM READY ---
 $(document).ready(function() {
     
@@ -468,53 +475,114 @@ $(document).ready(function() {
         renderCart();
     });
 
-    // Reset Custom Parameters Button
-    $('#reset-custom-params').click(function(e) {
+    // Reset Custom Parameters Button - Using Event Delegation
+    $(document).on('click', '#reset-custom-params', function(e) {
         e.preventDefault();
-        if (!activeModelConfig || !currentLibraryModel) return;
+        e.stopPropagation();
+        
+        if (!activeModelConfig || !currentLibraryModel) {
+            return;
+        }
 
         const initialConfig = currentLibraryModel.customConfig;
-        if (!initialConfig) return;
+        if (!initialConfig || !initialConfig.text) {
+            return;
+        }
 
-        // Reset text content
-        $('#custom-text-input').val(initialConfig.text.initialContent);
-        updateCustomText(initialConfig.text.initialContent);
+        // Get initial values from the library model config
+        const initialPos = initialConfig.text.position;
+        const initialRot = initialConfig.text.rotation;
 
-        // Reset rotation
-        const rotXDeg = (initialConfig.text.rotation.x || 0) * (180 / Math.PI);
-        const rotYDeg = (initialConfig.text.rotation.y || 0) * (180 / Math.PI);
-        const rotZDeg = (initialConfig.text.rotation.z || 0) * (180 / Math.PI);
+        // Update rotation UI (convert radians to degrees)
+        const rotXDeg = (initialRot.x || 0) * (180 / Math.PI);
+        const rotYDeg = (initialRot.y || 0) * (180 / Math.PI);
+        const rotZDeg = (initialRot.z || 0) * (180 / Math.PI);
 
-        $('#text-rotation-x').val(rotXDeg);
+        // Step 1: Update 3D mesh position and rotation FIRST
+        if (textMesh) {
+            textMesh.position.set(
+                initialPos.x !== undefined ? initialPos.x : 0,
+                initialPos.y !== undefined ? initialPos.y : 0,
+                initialPos.z !== undefined ? initialPos.z : 0
+            );
+            textMesh.rotation.set(
+                initialRot.x !== undefined ? initialRot.x : 0,
+                initialRot.y !== undefined ? initialRot.y : 0,
+                initialRot.z !== undefined ? initialRot.z : 0
+            );
+        }
+
+        // Step 2: Update config
+        activeModelConfig.text.rotation = {
+            x: initialRot.x !== undefined ? initialRot.x : 0,
+            y: initialRot.y !== undefined ? initialRot.y : 0,
+            z: initialRot.z !== undefined ? initialRot.z : 0
+        };
+        activeModelConfig.text.position = {
+            x: initialPos.x !== undefined ? initialPos.x : 0,
+            y: initialPos.y !== undefined ? initialPos.y : 0,
+            z: initialPos.z !== undefined ? initialPos.z : 0
+        };
+
+        // Step 3: Temporarily remove listeners to prevent cascading updates
+        $('#text-rotation-x').off('input');
+        $('#text-rotation-y').off('input');
+        $('#text-rotation-z').off('input');
+        $('#text-pos-x').off('input');
+        $('#text-pos-y').off('input');
+        $('#text-pos-z').off('input');
+
+        // Step 4: Update UI values
+        const rotXVal = rotXDeg.toFixed(1);
+        const rotYVal = rotYDeg.toFixed(1);
+        const rotZVal = rotZDeg.toFixed(1);
+        
+        $('#text-rotation-x').val(rotXVal);
         $('#text-rotation-x-value').text(rotXDeg.toFixed(0) + '°');
-        $('#text-rotation-y').val(rotYDeg);
+
+        $('#text-rotation-y').val(rotYVal);
         $('#text-rotation-y-value').text(rotYDeg.toFixed(0) + '°');
-        $('#text-rotation-z').val(rotZDeg);
+
+        $('#text-rotation-z').val(rotZVal);
         $('#text-rotation-z-value').text(rotZDeg.toFixed(0) + '°');
 
-        // Reset position
-        $('#text-pos-x').val(initialConfig.text.position.x || 0);
-        $('#text-pos-y').val(initialConfig.text.position.y || 0);
-        $('#text-pos-z').val(initialConfig.text.position.z || 10);
+        $('#text-pos-x').val((initialPos.x !== undefined ? initialPos.x : 0).toFixed(2));
+        
+        $('#text-pos-y').val((initialPos.y !== undefined ? initialPos.y : 0).toFixed(2));
+        
+        $('#text-pos-z').val((initialPos.z !== undefined ? initialPos.z : 0).toFixed(2));
 
-        // Reset color
-        $('.text-color-option').removeClass('selected');
-        $(`.text-color-option[data-hex="${initialConfig.text.color}"]`).addClass('selected');
+        // Step 5: Re-attach listeners
+        $('#text-rotation-x').on('input', function() {
+            const rotation = parseFloat($(this).val());
+            $('#text-rotation-x-value').text(rotation + '°');
+            updateTextRotation();
+        });
 
-        // Reset font
-        $('#text-font-select').val('helvetiker_bold');
+        $('#text-rotation-y').on('input', function() {
+            const rotation = parseFloat($(this).val());
+            $('#text-rotation-y-value').text(rotation + '°');
+            updateTextRotation();
+        });
 
-        // Update mesh
-        updateTextRotation();
-        updateTextPosition();
+        $('#text-rotation-z').on('input', function() {
+            const rotation = parseFloat($(this).val());
+            $('#text-rotation-z-value').text(rotation + '°');
+            updateTextRotation();
+        });
+
+        $('#text-pos-x').on('input', function() {
+            updateTextPosition();
+        });
+
+        $('#text-pos-y').on('input', function() {
+            updateTextPosition();
+        });
+
+        $('#text-pos-z').on('input', function() {
+            updateTextPosition();
+        });
     });
-
-    // --- MODAL LOGIC ---
-    let currentModalStl = "";
-    let currentModalName = "";
-	let currentModalId = null;
-    let currentModalImages = [];
-    let currentImageIndex = 0;
 
     // Open Modal when Model Card clicked
     $(document).on('click', '.model-card', function() {
@@ -665,7 +733,8 @@ function openInStudio(model) {
     $('#file-name-display').text(model.name);
     
 	currentLibraryModel = model; // Store the full model data to reference later
-    activeModelConfig = model.customConfig || null;
+    // Deep copy the customConfig to prevent modifications from affecting the original
+    activeModelConfig = model.customConfig ? JSON.parse(JSON.stringify(model.customConfig)) : null;
 
     if (model.isCustomizable) {
         $('#custom-text-group').fadeIn(); 
@@ -1073,6 +1142,7 @@ function setupTextDragListener() {
     const mouse = new THREE.Vector2();
     let dragStartPos = new THREE.Vector3();
     let dragStartMouse = new THREE.Vector2();
+    let dragStartScreenPos = new THREE.Vector2();
 
     canvas.addEventListener('mousedown', (event) => {
         if (!textMesh) return;
@@ -1092,6 +1162,7 @@ function setupTextDragListener() {
             
             dragStartPos.copy(textMesh.position);
             dragStartMouse.copy(mouse);
+            dragStartScreenPos.set(event.clientX - rect.left, event.clientY - rect.top);
             event.preventDefault();
         }
     });
@@ -1108,31 +1179,33 @@ function setupTextDragListener() {
         const canEditPosY = activeModelConfig?.customizableParams?.textPositionY || false;
         const canEditPosZ = activeModelConfig?.customizableParams?.textPositionZ || false;
 
-        // Calculate mouse delta
-        const mouseDelta = new THREE.Vector2(
-            mouse.x - dragStartMouse.x,
-            mouse.y - dragStartMouse.y
-        );
+        // Get current screen position
+        const currentScreenPos = new THREE.Vector2(event.clientX - rect.left, event.clientY - rect.top);
+        const screenDelta = currentScreenPos.clone().sub(dragStartScreenPos);
 
-        // Create a plane perpendicular to camera view (for XY movement in screen space)
-        const cameraDir = new THREE.Vector3();
-        camera.getWorldDirection(cameraDir);
-        const dragPlane = new THREE.Plane(cameraDir, 0);
-        dragPlane.setFromNormalAndCoplanarPoint(cameraDir, dragStartPos);
+        // For X and Y: Use camera view plane
+        let worldDeltaXY = new THREE.Vector3(0, 0, 0);
+        if (canEditPosX || canEditPosY) {
+            const cameraDir = new THREE.Vector3();
+            camera.getWorldDirection(cameraDir);
+            const dragPlane = new THREE.Plane(cameraDir, 0);
+            dragPlane.setFromNormalAndCoplanarPoint(cameraDir, dragStartPos);
 
-        // Get the world position at the new mouse position
-        raycaster.setFromCamera(mouse, camera);
-        const newWorldPos = new THREE.Vector3();
-        raycaster.ray.intersectPlane(dragPlane, newWorldPos);
+            raycaster.setFromCamera(mouse, camera);
+            const newWorldPos = new THREE.Vector3();
+            raycaster.ray.intersectPlane(dragPlane, newWorldPos);
+            worldDeltaXY = newWorldPos.clone().sub(dragStartPos);
+        }
 
-        // Calculate delta in world space
-        const worldDelta = newWorldPos.clone().sub(dragStartPos);
+        // For Z: Use screen vertical movement (inverted)
+        // Increased multiplier from 100 to 150 for faster Z movement
+        const worldDeltaZ = canEditPosZ ? -(screenDelta.y / rect.height) * 150 : 0;
 
         // Build new position with axis locks
         const newPos = new THREE.Vector3(
-            canEditPosX ? dragStartPos.x + worldDelta.x : dragStartPos.x,
-            canEditPosY ? dragStartPos.y + worldDelta.y : dragStartPos.y,
-            canEditPosZ ? dragStartPos.z + worldDelta.z : dragStartPos.z
+            canEditPosX ? dragStartPos.x + worldDeltaXY.x : dragStartPos.x,
+            canEditPosY ? dragStartPos.y + worldDeltaXY.y : dragStartPos.y,
+            canEditPosZ ? dragStartPos.z + worldDeltaZ : dragStartPos.z
         );
 
         textMesh.position.copy(newPos);

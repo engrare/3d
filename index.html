@@ -271,11 +271,8 @@
                     <div class="sidebar-content">
 
                         <div id="panel-basic" class="config-panel">
-							<div class="form-group" id="custom-text-group" style="display:none; background: linear-gradient(135deg, #f0f9ff 0%, #eff6ff 100%); padding: 16px; border-radius: 12px; border: 1px solid #bfdbfe; margin-bottom: 20px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                                    <label style="color: #1e40af; display:block; font-weight: 700; font-size: 0.9rem; margin: 0;">Özel Metin</label>
-                                    <button type="button" id="reset-custom-params" class="btn-sm" style="padding: 4px 12px; font-size: 0.75rem; background: #ef4444; color: white; border: none;">Sıfırla</button>
-                                </div>
+							<div id="custom-text-group" style="display:none; background: linear-gradient(135deg, #f0f9ff 0%, #eff6ff 100%); padding: 16px; border-radius: 12px; border: 1px solid #bfdbfe; margin-bottom: 20px;">
+                                <label style="color: #1e40af; display:block; font-weight: 700; font-size: 0.9rem; margin-bottom: 12px;">Özel Metin</label>
                                 <input type="text" id="custom-text-input" class="input-box" value="ENGRARE" placeholder="Burada yazın..." style="border-color: #60a5fa; color: #1e3a8a; font-weight: 600; margin-bottom: 15px;">
                                 
                                 <!-- Font Selection -->
@@ -299,46 +296,60 @@
                                     <div class="text-color-option" style="background:#3b82f6;" data-hex="#3b82f6" title="Mavi"></div>
                                 </div>
                                 
-                                <!-- Text Rotation X -->
-                                <div class="form-group">
-                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Metin Dönüşü X (°)</label>
-                                    <div style="display: flex; gap: 8px; margin-bottom: 15px;">
-                                        <input type="range" id="text-rotation-x" class="slider-input" min="-180" max="180" value="0" style="flex: 1; cursor: pointer;">
-                                        <span id="text-rotation-x-value" style="color: #1e40af; font-weight: 700; min-width: 45px; text-align: right;">0°</span>
+                                <!-- Text Rotation Section -->
+                                <div style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 12px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Dönüş (°)</label>
+                                    
+                                    <!-- Text Rotation X -->
+                                    <div class="form-group" style="margin-bottom: 12px;">
+                                        <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 4px; font-weight: 600;">X</label>
+                                        <div style="display: flex; gap: 8px;">
+                                            <input type="range" id="text-rotation-x" class="slider-input" min="-180" max="180" value="0" style="flex: 1; cursor: pointer;">
+                                            <span id="text-rotation-x-value" style="color: #1e40af; font-weight: 700; min-width: 40px; text-align: right; font-size: 0.85rem;">0°</span>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <!-- Text Rotation Y -->
-                                <div class="form-group">
-                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Metin Dönüşü Y (°)</label>
-                                    <div style="display: flex; gap: 8px; margin-bottom: 15px;">
-                                        <input type="range" id="text-rotation-y" class="slider-input" min="-180" max="180" value="0" style="flex: 1; cursor: pointer;">
-                                        <span id="text-rotation-y-value" style="color: #1e40af; font-weight: 700; min-width: 45px; text-align: right;">0°</span>
+                                    <!-- Text Rotation Y -->
+                                    <div class="form-group" style="margin-bottom: 12px;">
+                                        <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 4px; font-weight: 600;">Y</label>
+                                        <div style="display: flex; gap: 8px;">
+                                            <input type="range" id="text-rotation-y" class="slider-input" min="-180" max="180" value="0" style="flex: 1; cursor: pointer;">
+                                            <span id="text-rotation-y-value" style="color: #1e40af; font-weight: 700; min-width: 40px; text-align: right; font-size: 0.85rem;">0°</span>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <!-- Text Rotation Z -->
-                                <div class="form-group">
-                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Metin Dönüşü Z (°)</label>
-                                    <div style="display: flex; gap: 8px; margin-bottom: 15px;">
-                                        <input type="range" id="text-rotation-z" class="slider-input" min="-180" max="180" value="0" style="flex: 1; cursor: pointer;">
-                                        <span id="text-rotation-z-value" style="color: #1e40af; font-weight: 700; min-width: 45px; text-align: right;">0°</span>
+                                    <!-- Text Rotation Z -->
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 4px; font-weight: 600;">Z</label>
+                                        <div style="display: flex; gap: 8px;">
+                                            <input type="range" id="text-rotation-z" class="slider-input" min="-180" max="180" value="0" style="flex: 1; cursor: pointer;">
+                                            <span id="text-rotation-z-value" style="color: #1e40af; font-weight: 700; min-width: 40px; text-align: right; font-size: 0.85rem;">0°</span>
+                                        </div>
                                     </div>
                                 </div>
                                 
-                                <!-- World Coordinates -->
-                                <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Konum (X, Y, Z) - Sürükleyerek de ayarlayabilirsiniz</label>
-                                <div class="form-group">
-                                    <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 4px;">X</label>
-                                    <input type="number" id="text-pos-x" class="input-box" value="0" step="0.5" style="border-color: #60a5fa; font-size: 0.85rem;">
-                                </div>
-                                <div class="form-group">
-                                    <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 4px;">Y</label>
-                                    <input type="number" id="text-pos-y" class="input-box" value="0" step="0.5" style="border-color: #60a5fa; font-size: 0.85rem;">
-                                </div>
-                                <div class="form-group">
-                                    <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 4px;">Z</label>
-                                    <input type="number" id="text-pos-z" class="input-box" value="10" step="0.5" style="border-color: #60a5fa; font-size: 0.85rem;">
+                                <!-- Position Section -->
+                                <div style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 12px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Konum (Sürükleyerek de ayarlayabilirsiniz)</label>
+                                    
+                                    <div class="form-group" style="margin-bottom: 8px;">
+                                        <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 3px; font-weight: 600;">X</label>
+                                        <input type="number" id="text-pos-x" class="input-box" value="0" step="0.5" style="border-color: #60a5fa; font-size: 0.85rem;">
+                                    </div>
+                                    
+                                    <div class="form-group" style="margin-bottom: 8px;">
+                                        <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 3px; font-weight: 600;">Y</label>
+                                        <input type="number" id="text-pos-y" class="input-box" value="0" step="0.5" style="border-color: #60a5fa; font-size: 0.85rem;">
+                                    </div>
+                                    
+                                    <div class="form-group" style="margin-bottom: 12px;">
+                                        <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 3px; font-weight: 600;">Z</label>
+                                        <input type="number" id="text-pos-z" class="input-box" value="10" step="0.5" style="border-color: #60a5fa; font-size: 0.85rem;">
+                                    </div>
+                                    
+                                    <button type="button" id="reset-custom-params" class="btn primary" style="width: 100%; padding: 8px 12px; font-size: 0.85rem; background: #ef4444;">
+                                        <i class="fa-solid fa-redo" style="margin-right: 6px;"></i> Sıfırla
+                                    </button>
                                 </div>
                             </div>
                             
