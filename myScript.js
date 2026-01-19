@@ -39,79 +39,164 @@ const BASE_PRICE_PER_CM3 = 15.00;
 const BUILD_VOLUME_X = 256;
 const BUILD_VOLUME_Y = 256;
 
-// --- MODEL DATABASE (Mock Data) ---
-const initialMockData = [
+// --- LOCAL MODELS DATA ---
+const allFirebaseModels = [
     {
         id: 1,
-        name: "Calibration Cube",
-        desc: "The gold standard for calibrating 3D printers. Measure dimensions to ensure X, Y, and Z accuracy.",
-        price: 150,
-        img: "./content/product1.jpeg",
-        stl: "./assets/cube.stl",
-        isCustomizable: false,
-        customConfig: null
-    },
-    {
-        id: 2,
-        name: "Modular Phone Stand",
-        desc: "A sleek, adjustable stand for smartphones. Features a sturdy base.",
-        price: 350,
-        img: "./content/product2.jpeg",
-        stl: "./assets/phone_stand.stl",
-        isCustomizable: false,
-        customConfig: null
-    },
-    {
-        id: 3,
-        name: "Planetary Gear Set",
-        desc: "A fully functional mechanical assembly demonstrating high-torque gear reduction.",
-        price: 600,
-        img: "./content/product3.avif",
-        stl: "./assets/gear.stl",
-        isCustomizable: false,
-        customConfig: null
-    },
-    {
-        id: 7,
-        name: "Custom Name Plate",
-        desc: "Personalized desk plate with editable 3D text.",
+        name: "Özel Ad Plakası 1",
+        desc: "Düzenlenebilir 3D metinli kişiselleştirilmiş masaüstü plakası.",
         price: 180,
-        img: "./content/product2.jpeg", 
+        images: ["./content/product2.jpeg", "./content/product2_alt.jpeg"], 
         stl: "./content/desktop_writing_holder.STL",
         isCustomizable: true,
         customConfig: {
-            // Virtual Scale (Only used if STL fails to load, creating a box)
-            baseScale: { x: 5, y: 0.2, z: 2 }, 
-            
-            // --- TEXT SETTINGS ---
+            baseScale: { x: 5, y: 0, z: 2 }, 
             text: {
                 initialContent: "ENGRARE",
                 fontUrl: 'https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json',
-                
-                // Text Dimensions
                 fontSize: 10,       
                 fontThickness: 4,   
-                
-                // Positioning (Relative to the model center)
-                offsetY: 0,         // 0 = Surface, 1 = Floating, -1 = Embedded
-                shiftX: 0,          // Left/Right
-                shiftZ: 10,         // Forward/Backward (Positive = Closer to camera/bottom)
-                
+                position: { x: 0, y: -22, z: 0 },
+                rotation: { x: Math.PI / 2, y: 0, z: 0 },
                 color: "#FFFFFF"
+            },
+            customizableParams: {
+                textContent: true,
+                textFont: true,
+                textColor: true,
+                textRotationX: false,
+                textRotationY: false,
+                textRotationZ: true,
+                textPositionX: true,
+                textPositionY: false,
+                textPositionZ: true,
+                modelColor: true,
+                material: true,
+                infill: true,
+                quantity: true,
+                delivery: true
+            }
+        }
+    },
+    {
+        id: 2,
+        name: "Özel Ad Plakası 2",
+        desc: "Düzenlenebilir 3D metinli kişiselleştirilmiş masaüstü plakası.",
+        price: 180,
+        images: ["./content/product2.jpeg"], 
+        stl: "./content/desktop_writing_holder.STL",
+        isCustomizable: true,
+        customConfig: {
+            baseScale: { x: 5, y: 0.2, z: 2 }, 
+            text: {
+                initialContent: "ENGRARE",
+                fontUrl: 'https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json',
+                fontSize: 10,       
+                fontThickness: 4,   
+                position: { x: 0, y: 0, z: 10 },
+                rotation: { x: 0, y: 0, z: 0 },
+                color: "#FFFFFF"
+            },
+            customizableParams: {
+                textContent: true,
+                textFont: true,
+                textColor: true,
+                textRotationX: false,
+                textRotationY: false,
+                textRotationZ: false,
+                textPositionX: false,
+                textPositionY: false,
+                textPositionZ: false,
+                modelColor: true,
+                material: true,
+                infill: true,
+                quantity: true,
+                delivery: true
+            }
+        }
+    },
+    {
+        id: 3,
+        name: "Özel Ad Plakası 3",
+        desc: "Düzenlenebilir 3D metinli kişiselleştirilmiş masaüstü plakası.",
+        price: 180,
+        images: ["./content/product2.jpeg", "./content/product2_alt.jpeg", "./content/product2_alt2.jpeg"], 
+        stl: "./content/desktop_writing_holder.STL",
+        isCustomizable: true,
+        customConfig: {
+            baseScale: { x: 5, y: 0.2, z: 2 }, 
+            text: {
+                initialContent: "ENGRARE",
+                fontUrl: 'https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json',
+                fontSize: 10,       
+                fontThickness: 4,   
+                position: { x: 0, y: 0, z: 10 },
+                rotation: { x: 0, y: 0, z: 0 },
+                color: "#FFFFFF"
+            },
+            customizableParams: {
+                textContent: true,
+                textFont: false,
+                textColor: true,
+                textRotationX: true,
+                textRotationY: false,
+                textRotationZ: true,
+                textPositionX: true,
+                textPositionY: true,
+                textPositionZ: false,
+                modelColor: false,
+                material: true,
+                infill: true,
+                quantity: true,
+                delivery: true
+            }
+        }
+    },
+    {
+        id: 4,
+        name: "Özel Ad Plakası 4",
+        desc: "Düzenlenebilir 3D metinli kişiselleştirilmiş masaüstü plakası.",
+        price: 180,
+        images: ["./content/product2.jpeg"], 
+        stl: "./content/desktop_writing_holder.STL",
+        isCustomizable: true,
+        customConfig: {
+            baseScale: { x: 5, y: 0.2, z: 2 }, 
+            text: {
+                initialContent: "ENGRARE",
+                fontUrl: 'https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json',
+                fontSize: 10,       
+                fontThickness: 4,   
+                position: { x: 0, y: 0, z: 10 },
+                rotation: { x: 0, y: 0, z: 0 },
+                color: "#FFFFFF"
+            },
+            customizableParams: {
+                textContent: true,
+                textFont: true,
+                textColor: true,
+                textRotationX: true,
+                textRotationY: true,
+                textRotationZ: true,
+                textPositionX: true,
+                textPositionY: true,
+                textPositionZ: true,
+                modelColor: true,
+                material: true,
+                infill: true,
+                quantity: true,
+                delivery: true
             }
         }
     }
 ];
-
-let allFirebaseModels = [];
 
 // --- DOM READY ---
 $(document).ready(function() {
     
     loadCart();
     init3D(); 
-    renderModelsPage(); // NEW: Populate the models grid
-// ... existing init code ...
+    renderModelsPage();
 
     // --- FIREBASE AUTH LISTENERS ---
     
@@ -129,10 +214,10 @@ $(document).ready(function() {
                 username: name,
                 email: email
             });
-            alert("Account created! Welcome " + name);
+            alert("Hesap oluşturuldu! Hoş geldiniz " + name);
             switchPage('#home-page');
         } catch (error) {
-            alert("Error: " + error.message);
+            alert("Hata: " + error.message);
         }
     });
 
@@ -145,7 +230,7 @@ $(document).ready(function() {
             // Alert removed for smoother UX, auth observer handles redirect
             switchPage('#home-page');
         } catch (error) {
-            alert("Login Failed: " + error.message);
+            alert("Giriş Başarısız: " + error.message);
         }
     });
 
@@ -153,7 +238,7 @@ $(document).ready(function() {
     $('#action-logout').click(() => {
         signOut(auth).then(() => {
             switchPage('#home-page');
-            alert("Logged out successfully.");
+            alert("Başarıyla çıkış yapıldı.");
         });
     });
 
@@ -162,11 +247,11 @@ $(document).ready(function() {
         const email = $('#reset-email').val();
         try {
             await sendPasswordResetEmail(auth, email);
-            alert("Password reset email sent!");
+            alert("Şifre sıfırlama e-postası gönderildi!");
             $('#view-reset').hide();
             $('#view-signin').fadeIn();
         } catch (error) {
-            alert("Error: " + error.message);
+            alert("Hata: " + error.message);
         }
     });
 
@@ -187,7 +272,7 @@ $(document).ready(function() {
             $('#nav-user-profile').css('display', 'flex');
             
             // Update Dashboard UI
-            $('#dash-user-name').text(user.displayName || "User");
+            $('#dash-user-name').text(user.displayName || "Kullanıcı");
             $('#dash-user-email').text(user.email);
             if(user.photoURL) {
                 $('#nav-user-img, #dash-user-img').attr('src', user.photoURL);
@@ -199,7 +284,7 @@ $(document).ready(function() {
             // User is signed out
             $('#nav-login-btn').show();
             $('#nav-user-profile').hide();
-            $('#dash-user-name').text("Guest");
+            $('#dash-user-name').text("Konuk");
         }
     });
     // 1. Navigation
@@ -217,27 +302,8 @@ $(document).ready(function() {
         }, 800);
     });
 
-    // 2. Load Firebase Models
-    const modelsRef = ref(db, 'models');
-    onValue(modelsRef, (snapshot) => {
-        const data = snapshot.val();
-        
-        if (!data) {
-            // DATABASE IS EMPTY? Upload the Mock Data automatically!
-            console.log("Database empty. Uploading initial data...");
-            initialMockData.forEach(item => {
-                // Use the ID as the key
-                set(ref(db, 'models/' + item.id), item);
-            });
-        } else {
-            // Data exists! Convert object to array
-            allFirebaseModels = Object.values(data);
-            renderModelsPage(allFirebaseModels); // Render everything initially
-        }
-    });
-
-    // 3. Search Bar Listener - BACKEND SEARCH USING FIREBASE
-    $('#model-search-bar').on('input', async function() {
+    // 3. Search Bar Listener - LOCAL SEARCH
+    $('#model-search-bar').on('input', function() {
         const query = $(this).val().trim();
         
         // If search is empty, show all models
@@ -246,17 +312,13 @@ $(document).ready(function() {
             return;
         }
         
-        // Show loading state
-        $('#models-grid-container').html('<p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">Searching...</p>');
-        
-        try {
-            // Call Firebase Cloud Function to perform backend search
-            const results = await performBackendSearch(query);
-            renderModelsPage(results);
-        } catch (error) {
-            console.error('Search error:', error);
-            $('#models-grid-container').html('<p style="text-align: center; color: red; grid-column: 1/-1;">Search failed. Please try again.</p>');
-        }
+        // Perform local search
+        const lowerQuery = query.toLowerCase();
+        const results = allFirebaseModels.filter(model =>
+            model.name.toLowerCase().includes(lowerQuery) ||
+            model.desc.toLowerCase().includes(lowerQuery)
+        );
+        renderModelsPage(results);
     });
 
     // 4. Library Selection (Home & Models Page)
@@ -278,25 +340,25 @@ $(document).ready(function() {
         openInStudio(model);
     });
 
-// YENİ: Yazı Rengi (Yuvarlak Butonlar) Dinleyicisi
+    // Text Color (Round Buttons) Listener
     $('.text-color-option').click(function() { 
-        // 1. Görsel Seçimi Güncelle
+        // 1. Update visual selection
         $('.text-color-option').removeClass('selected'); 
         $(this).addClass('selected');
         
-        // 2. Rengi Al ve Uygula
+        // 2. Get and apply color
         const hexColor = $(this).data('hex'); 
         
         if (textMesh && textMesh.material) {
             textMesh.material.color.set(hexColor);
         }
         
-        // 3. Config'e Kaydet
+        // 3. Save to config
         if (activeModelConfig && activeModelConfig.text) {
             activeModelConfig.text.color = hexColor;
         }
     });
-// NEW: Real-time Text Listener
+    // NEW: Real-time Text Listener
 
     $('#custom-text-input').on('input', function() {
         const text = $(this).val();
@@ -309,11 +371,23 @@ $(document).ready(function() {
         updateTextFont(fontName);
     });
 
-    // Text Rotation Listener
+    // Text Rotation Listeners - Updated for multiple axes
     $('#text-rotation-x').on('input', function() {
         const rotation = parseFloat($(this).val());
         $('#text-rotation-x-value').text(rotation + '°');
-        updateTextRotation(rotation);
+        updateTextRotation();
+    });
+
+    $('#text-rotation-y').on('input', function() {
+        const rotation = parseFloat($(this).val());
+        $('#text-rotation-y-value').text(rotation + '°');
+        updateTextRotation();
+    });
+
+    $('#text-rotation-z').on('input', function() {
+        const rotation = parseFloat($(this).val());
+        $('#text-rotation-z-value').text(rotation + '°');
+        updateTextRotation();
     });
 
     // Text Position X Listener
@@ -331,14 +405,14 @@ $(document).ready(function() {
         updateTextPosition();
     });
 
-    // YENİ: Yazı Rengi Değiştiğinde Tetiklenir
+    // Text Color change trigger
     $('#custom-text-color').on('input', function() {
         const color = $(this).val();
         if (textMesh && textMesh.material) {
-            // Sadece materyalin rengini değiştir (Yeniden mesh yaratmaya gerek yok, performans artar)
+            // Only change material color (no need to recreate mesh, better performance)
             textMesh.material.color.set(color);
         }
-        // Config'i güncelle ki yazı içeriği değişirse renk unutulmasın
+        // Update config so text color is not forgotten when content changes
         if (activeModelConfig && activeModelConfig.text) {
             activeModelConfig.text.color = color;
         }
@@ -394,25 +468,78 @@ $(document).ready(function() {
         renderCart();
     });
 
-    // --- NEW: MODAL LOGIC ---
+    // Reset Custom Parameters Button
+    $('#reset-custom-params').click(function(e) {
+        e.preventDefault();
+        if (!activeModelConfig || !currentLibraryModel) return;
+
+        const initialConfig = currentLibraryModel.customConfig;
+        if (!initialConfig) return;
+
+        // Reset text content
+        $('#custom-text-input').val(initialConfig.text.initialContent);
+        updateCustomText(initialConfig.text.initialContent);
+
+        // Reset rotation
+        const rotXDeg = (initialConfig.text.rotation.x || 0) * (180 / Math.PI);
+        const rotYDeg = (initialConfig.text.rotation.y || 0) * (180 / Math.PI);
+        const rotZDeg = (initialConfig.text.rotation.z || 0) * (180 / Math.PI);
+
+        $('#text-rotation-x').val(rotXDeg);
+        $('#text-rotation-x-value').text(rotXDeg.toFixed(0) + '°');
+        $('#text-rotation-y').val(rotYDeg);
+        $('#text-rotation-y-value').text(rotYDeg.toFixed(0) + '°');
+        $('#text-rotation-z').val(rotZDeg);
+        $('#text-rotation-z-value').text(rotZDeg.toFixed(0) + '°');
+
+        // Reset position
+        $('#text-pos-x').val(initialConfig.text.position.x || 0);
+        $('#text-pos-y').val(initialConfig.text.position.y || 0);
+        $('#text-pos-z').val(initialConfig.text.position.z || 10);
+
+        // Reset color
+        $('.text-color-option').removeClass('selected');
+        $(`.text-color-option[data-hex="${initialConfig.text.color}"]`).addClass('selected');
+
+        // Reset font
+        $('#text-font-select').val('helvetiker_bold');
+
+        // Update mesh
+        updateTextRotation();
+        updateTextPosition();
+    });
+
+    // --- MODAL LOGIC ---
     let currentModalStl = "";
     let currentModalName = "";
-	let currentModalId = null; // YENİ: ID'yi tutmak için
+	let currentModalId = null;
+    let currentModalImages = [];
+    let currentImageIndex = 0;
 
     // Open Modal when Model Card clicked
-$(document).on('click', '.model-card', function() {
+    $(document).on('click', '.model-card', function() {
         const id = $(this).data('id');
         const model = allFirebaseModels.find(m => m.id === id);
         
         if(model) {
-            $('#modal-img').attr('src', model.img);
+            currentModalImages = model.images || ["./content/product2.jpeg"];
+            currentImageIndex = 0;
+            updateModalImage();
+            
             $('#modal-title').text(model.name);
             $('#modal-desc').text(model.desc);
             $('#modal-price').text('₺' + model.price.toFixed(2));
             
             currentModalStl = model.stl;
             currentModalName = model.name;
-            currentModalId = model.id; // YENİ: ID'yi hafızaya atıyoruz
+            currentModalId = model.id;
+
+            // Show/hide carousel controls based on image count
+            if (currentModalImages.length > 1) {
+                $('.modal-carousel-controls').show();
+            } else {
+                $('.modal-carousel-controls').hide();
+            }
 
             $('#model-modal').addClass('open');
         }
@@ -425,11 +552,21 @@ $(document).on('click', '.model-card', function() {
         }
     });
 
+    // Image carousel navigation
+    $('#modal-prev-btn').click(function() {
+        currentImageIndex = (currentImageIndex - 1 + currentModalImages.length) % currentModalImages.length;
+        updateModalImage();
+    });
+
+    $('#modal-next-btn').click(function() {
+        currentImageIndex = (currentImageIndex + 1) % currentModalImages.length;
+        updateModalImage();
+    });
+
 	// "Show in Studio" Button in Modal
 	$('#modal-show-studio-btn').click(function() {
 		$('#model-modal').removeClass('open');
 		
-		// CHANGED: Look in 'allFirebaseModels' instead of 'modelsData'
 		let model = allFirebaseModels.find(m => m.id == currentModalId);
 
 		if (!model) {
@@ -444,54 +581,37 @@ $(document).on('click', '.model-card', function() {
 	});
 });
 
-// --- BACKEND SEARCH FUNCTION ---
-async function performBackendSearch(query) {
-    try {
-        // Call the Firebase Cloud Function for backend search
-        const searchFunction = httpsCallable(functions, 'searchModels');
-        const result = await searchFunction({ query: query });
-        
-        // Return the results from the backend
-        return result.data.results || [];
-    } catch (error) {
-        console.error('Backend search error:', error);
-        
-        // Fallback: Perform local search if backend fails
-        console.log('Falling back to local search...');
-        const lowerQuery = query.toLowerCase();
-        return allFirebaseModels.filter(model =>
-            model.name.toLowerCase().includes(lowerQuery) ||
-            model.desc.toLowerCase().includes(lowerQuery)
-        );
+// --- HELPER FUNCTIONS ---
+
+function updateModalImage() {
+    if (currentModalImages.length > 0) {
+        $('#modal-img').attr('src', currentModalImages[currentImageIndex]);
+        $('#modal-image-counter').text((currentImageIndex + 1) + ' / ' + currentModalImages.length);
     }
 }
 
-// --- HELPER FUNCTIONS ---
-
 function renderModelsPage(modelsList) {
-    // --- FIX: SAFETY CHECK ---
-    // If modelsList is undefined or null, use an empty array []
+    // Safety check
     if (!modelsList) {
         modelsList = [];
     }
-    // -------------------------
 
     const $grid = $('#models-grid-container');
     $grid.empty();
     
     if (modelsList.length === 0) {
-        // Only show "No models found" if we actually have a search active or data loaded
-        // You might want to hide this message if it's just the initial empty load
         if (allFirebaseModels && allFirebaseModels.length > 0) {
-             $grid.html('<p style="grid-column: 1/-1; text-align: center; color: #94A3B8;">No models found matching your search.</p>');
+             $grid.html('<p style="grid-column: 1/-1; text-align: center; color: #94A3B8;">Aramanızla eşleşen model bulunamadı.</p>');
         }
         return;
     }
 
     modelsList.forEach(model => {
+        const firstImage = (model.images && model.images.length > 0) ? model.images[0] : model.img || "./content/product2.jpeg";
+        
         $grid.append(`
             <div class="model-card" data-id="${model.id}">
-                <div class="card-image"><img src="${model.img}" alt="${model.name}"/></div>
+                <div class="card-image"><img src="${firstImage}" alt="${model.name}"/></div>
                 <div class="model-info">
                     <div class="model-title">${model.name}</div>
                     <div class="model-desc">${model.desc.substring(0, 60)}...</div>
@@ -502,7 +622,7 @@ function renderModelsPage(modelsList) {
                             data-name="${model.name}" 
                             data-stl="${model.stl}" 
                             data-custom="${model.isCustomizable || false}">
-                            Customize
+                            Özelleştir
                         </button>
                     </div>
                 </div>
@@ -519,11 +639,11 @@ function loadUserOrders(userId) {
         $list.empty();
         
         if (data) {
-            Object.values(data).forEach(order => {
+            Object.values(data).forEach((order) => {
                 $list.append(`
                     <div class="cart-item">
                         <div class="info">
-                            <div style="font-weight:600">Order #${order.id}</div>
+                            <div style="font-weight:600">Sipariş #${order.id}</div>
                             <div style="font-size:0.8rem">${order.date}</div>
                         </div>
                         <div style="font-weight:500">₺${order.total}</div>
@@ -532,13 +652,13 @@ function loadUserOrders(userId) {
                 `);
             });
         } else {
-            $list.html('<p>No past orders found.</p>');
+            $list.html('<p>Geçmiş sipariş bulunamadı.</p>');
         }
     });
 }
 
 function openInStudio(model) {
-    // --- INPUT TEMİZLEME ---
+    // --- CLEAR INPUT ---
     $('#real-file-input').val('');
 
     switchPage('#upload-page');
@@ -552,21 +672,49 @@ function openInStudio(model) {
         const initialText = activeModelConfig ? activeModelConfig.text.initialContent : "ENGRARE";
         $('#custom-text-input').val(initialText);
         
-        // Reset Font Selection
         $('#text-font-select').val('helvetiker_bold');
         
-        // Rengi Beyaza Sıfırla
         $('.text-color-option').removeClass('selected');
         $('.text-color-option[data-hex="#FFFFFF"]').addClass('selected');
         
-        // Reset Rotation
-        $('#text-rotation-x').val(0);
-        $('#text-rotation-x-value').text('0°');
+        // Update rotation controls - CONVERT FROM RADIANS TO DEGREES
+        const rotation = activeModelConfig ? activeModelConfig.text.rotation : { x: 0, y: 0, z: 0 };
+        const rotXDeg = (rotation.x || 0) * (180 / Math.PI);
+        const rotYDeg = (rotation.y || 0) * (180 / Math.PI);
+        const rotZDeg = (rotation.z || 0) * (180 / Math.PI);
         
-        // Reset Position to Default
-        $('#text-pos-x').val(0);
-        $('#text-pos-y').val(0);
-        $('#text-pos-z').val(10);
+        // Show/hide rotation controls based on individual axis flags
+        const canEditRotX = activeModelConfig?.customizableParams?.textRotationX || false;
+        const canEditRotY = activeModelConfig?.customizableParams?.textRotationY || false;
+        const canEditRotZ = activeModelConfig?.customizableParams?.textRotationZ || false;
+        
+        $('#text-rotation-x').closest('.form-group').toggle(canEditRotX);
+        $('#text-rotation-x').val(rotXDeg);
+        $('#text-rotation-x-value').text(rotXDeg.toFixed(0) + '°');
+        
+        $('#text-rotation-y').closest('.form-group').toggle(canEditRotY);
+        $('#text-rotation-y').val(rotYDeg);
+        $('#text-rotation-y-value').text(rotYDeg.toFixed(0) + '°');
+        
+        $('#text-rotation-z').closest('.form-group').toggle(canEditRotZ);
+        $('#text-rotation-z').val(rotZDeg);
+        $('#text-rotation-z-value').text(rotZDeg.toFixed(0) + '°');
+        
+        // Update position controls based on individual axis flags
+        const canEditPosX = activeModelConfig?.customizableParams?.textPositionX || false;
+        const canEditPosY = activeModelConfig?.customizableParams?.textPositionY || false;
+        const canEditPosZ = activeModelConfig?.customizableParams?.textPositionZ || false;
+        
+        const position = activeModelConfig ? activeModelConfig.text.position : { x: 0, y: 0, z: 10 };
+        
+        $('#text-pos-x').closest('.form-group').toggle(canEditPosX);
+        $('#text-pos-x').val(position.x || 0);
+        
+        $('#text-pos-y').closest('.form-group').toggle(canEditPosY);
+        $('#text-pos-y').val(position.y || 0);
+        
+        $('#text-pos-z').closest('.form-group').toggle(canEditPosZ);
+        $('#text-pos-z').val(position.z || 10);
         
     } else {
         $('#custom-text-group').hide();
@@ -617,7 +765,6 @@ function switchPage(targetId) {
     $('.nav-menu li').removeClass('active');
     $(`.nav-menu li[data-target="${targetId}"]`).addClass('active');
     
-    // NEW ADDITION HERE
     if (targetId === '#login-page' || targetId === '#dashboard-page') {
         $('#nav-user-container').addClass('active');
     }
@@ -667,9 +814,6 @@ function init3D() {
 function createBed() {
     const geometry = new THREE.PlaneGeometry(BUILD_VOLUME_X, BUILD_VOLUME_Y);
     
-    // CHANGED:
-    // 1. color: 0x999999 (Grey)
-    // 2. side: THREE.FrontSide (Bottom becomes invisible/transparent)
     const material = new THREE.MeshPhongMaterial({ 
         color: 0x999999, 
         side: THREE.FrontSide, 
@@ -713,14 +857,13 @@ function handleFile(file) {
     if (!file) return;
     const fileName = file.name.toLowerCase();
     if (!fileName.endsWith('.stl') && !fileName.endsWith('.3mf')) {
-        alert("Only .STL and .3MF files are supported.");
+        alert("Sadece .STL ve .3MF dosyaları desteklenmektedir.");
         return;
     }
     
-    // --- FIX IS HERE ---
+    // Clear library model reference and custom config
     currentLibraryModel = null; 
-    activeModelConfig = null; // <--- ADD THIS LINE (This stops loadSTL from re-adding text)
-    // -------------------
+    activeModelConfig = null;
 
     $('#custom-text-group').hide();
     
@@ -745,13 +888,12 @@ function loadLibrarySTL(url) {
         });
 }
 
-// CHANGED: Added 'isCustom' parameter to the function definition
 function loadSTL(data) {
     const loader = new STLLoader();
     let geometry = null;
     let isFileValid = false;
 
-    // 1. Dosya Okuma
+    // 1. Read File
     try {
         if (data) {
             geometry = loader.parse(data);
@@ -760,29 +902,24 @@ function loadSTL(data) {
                 if (isFinite(geometry.boundingBox.min.x)) isFileValid = true;
             }
         }
-    } catch (e) { console.warn("Veri okunamadı."); }
+    } catch (e) { console.warn("Could not read data."); }
 
-    // 2. Dosya Yoksa: Sanal Kutu Yarat
+    // 2. File not found: Create virtual box
     if (!isFileValid) {
-        console.log("Dosya yüklenemedi, Sanal Kutu kullanılıyor.");
-        // Standart küp
+        console.log("File could not be loaded, using Virtual Box.");
         geometry = new THREE.BoxGeometry(20, 20, 20);
     }
 
-    // 3. Geometriyi Merkezle
+    // 3. Center geometry
     geometry.center(); 
     
-    // --- 4. ÖLÇEKLENDİRME (DÜZELTME BURADA) ---
-    // Eğer gerçek dosya yüklendiyse (isFileValid: true), ASLA 'baseScale' uygulama!
-    // 'baseScale' sadece dosya bulunamadığında yaratılan küpü plakaya çevirmek içindir.
-    
+    // 4. SCALING
     if (!isFileValid && activeModelConfig && activeModelConfig.baseScale) {
         const s = activeModelConfig.baseScale;
         geometry.scale(s.x, s.y, s.z);
     }
-    // ------------------------------------------
 
-    // 5. Materyal
+    // 5. Material
     const initialColor = $('.color-option.selected').data('hex') || 0x333333;
     const material = new THREE.MeshPhongMaterial({ 
         color: initialColor, 
@@ -790,7 +927,7 @@ function loadSTL(data) {
         shininess: 30 
     });
 
-    // Sahne Temizliği
+    // Scene cleanup
     if (mesh) scene.remove(mesh);
     scene.children.forEach(child => {
         if (child.type === "BoxHelper" || child.type === "AxesHelper") scene.remove(child);
@@ -800,34 +937,26 @@ function loadSTL(data) {
          textMesh = null;
     }
 
-    // 6. Mesh Oluştur
+    // 6. Create mesh
     mesh = new THREE.Mesh(geometry, material);
     mesh.castShadow = true;
     
-    // Konumlandırma
+    // Positioning
     geometry.computeBoundingBox();
     const box = geometry.boundingBox;
     const size = new THREE.Vector3();
     box.getSize(size);
 
-    // Zemine Oturtma
+    // Rest on floor
     if (activeModelConfig) {
-        // Custom modeller (Sanal veya Gerçek) için rotasyon kontrolü
         if (!isFileValid) {
-            // Eğer sanal plakaysa yatıktır, döndürme
             mesh.rotation.x = 0;
             mesh.position.y = size.y / 2;
         } else {
-            // Eğer gerçek STL dosyasıysa (Writing Holder gibi), genelde dik gelir.
-            // Burayı dosyanızın durumuna göre ayarlayabilirsiniz.
-            // Genelde -90 derece çevirmek gerekir:
             mesh.rotation.x = -Math.PI / 2; 
-            
-            // Döndürünce Z boyutu yükseklik olur
             mesh.position.y = size.z / 2;
         }
     } else {
-        // Standart modeller
         mesh.rotation.x = -Math.PI / 2; 
         mesh.position.y = size.z / 2;
     }
@@ -836,13 +965,12 @@ function loadSTL(data) {
 
     scene.add(mesh);
 
-    // 7. Yazı Ekleme
-    // Not: Gerçek dosya yüklenince yazı konumu kayabilir, JSON'dan 'position' ayarını güncellemeniz gerekebilir.
+    // 7. Add text
     if (activeModelConfig) {
         try { updateCustomText(activeModelConfig.text.initialContent); } catch(e){}
     }
 
-    // 8. Panel Bilgileri
+    // 8. Panel Info
     const finalBox = new THREE.Box3().setFromObject(mesh);
     const finalSize = new THREE.Vector3();
     finalBox.getSize(finalSize);
@@ -852,10 +980,8 @@ function loadSTL(data) {
     $('#dim-z').text(finalSize.z.toFixed(1));
     $('.dimensions-box').fadeIn();
 
-    // 9. Kamera Odaklama (Auto-Focus)
+    // 9. Auto-Focus camera
     const maxDim = Math.max(finalSize.x, finalSize.y, finalSize.z);
-    
-    // Kamerayı objenin boyutuna göre ayarla (1.5 kat mesafe idealdir)
     let fitDistance = Math.max(maxDim * 1.5, 60);
 
     camera.position.set(fitDistance, fitDistance, fitDistance);
@@ -878,27 +1004,31 @@ function loadSTL(data) {
 }
 
 let textMesh = null;
+let isDraggingText = false;
+let dragPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+let dragPoint = new THREE.Vector3();
+let textDragListenerSetup = false;
 
 function updateCustomText(message) {
     if (!mesh || !activeModelConfig) return;
     
-    // Mesaj boşsa sil
+    // If message is empty, delete
     if (message === "") {
         if (textMesh) mesh.remove(textMesh);
-        textMesh = null; // Referansı temizle
+        textMesh = null;
         return;
     }
 
     const cfg = activeModelConfig.text;
     
-    // Rengi al
+    // Get color
     const selectedDiv = $('.text-color-option.selected');
     const currentColor = selectedDiv.length > 0 ? selectedDiv.data('hex') : (cfg.color || "#FFFFFF");
 
     const loader = new FontLoader();
     loader.load(cfg.fontUrl, function (font) {
         
-        // Eski yazıyı temizle
+        // Clean old text
         if (textMesh) {
             mesh.remove(textMesh);
             if(textMesh.geometry) textMesh.geometry.dispose();
@@ -906,47 +1036,128 @@ function updateCustomText(message) {
 
         const textGeo = new TextGeometry(message, {
             font: font,
-            size: cfg.fontSize,           // Config'den geliyor
-            height: cfg.fontThickness,    // Config'den geliyor
+            size: cfg.fontSize,
+            height: cfg.fontThickness,
             curveSegments: 12,
             bevelEnabled: false
         });
 
-        // Yazıyı kendi merkezine al (Ortalamak için şart)
         textGeo.center();
 
         const textMat = new THREE.MeshPhongMaterial({ color: currentColor });
         textMesh = new THREE.Mesh(textGeo, textMat);
 
-        // --- AKILLI KONUMLANDIRMA ---
-        // 1. Ana modelin (plakanın) sınırlarını ölç
-        mesh.geometry.computeBoundingBox();
-        const box = mesh.geometry.boundingBox;
-        
-        // 2. En üst yüzeyi bul (box.max.y)
-        // Eğer mesh döndürülmüşse (rotation.x = -90 gibi), dünya koordinatlarını kullanmalıyız.
-        // Ancak bu senaryoda mesh'in içine child olarak eklediğimiz için local koordinat yeterli.
-        
-        // Yükseklik = (Modelin Tavanı) + (Config'deki Ekstra Pay)
-        // Not: BoxGeometry merkezde olduğu için max.y modelin yarısıdır. 
-        // Eğer scale işlemi loadSTL'de yapıldıysa geometry sınırları günceldir.
-        
-        let targetY = box.max.y + (cfg.offsetY || 0);
+        // Use position directly from config
+        const pos = cfg.position || { x: 0, y: 0, z: 10 };
+        textMesh.position.set(pos.x, pos.y, pos.z);
 
-        // 3. Yazıyı Konumlandır
-        // X: Merkez + Kaydırma
-        // Y: Hesaplanan Tavan
-        // Z: Merkez + Kaydırma
-        textMesh.position.set(
-            0 + (cfg.shiftX || 0), 
-            targetY, 
-            0 + (cfg.shiftZ || 0)
-        );
-
-        // Yazıyı yatır (Çünkü plaka yatık, yazı da ona paralel olmalı)
-        textMesh.rotation.x = -Math.PI / 2; 
+        // Apply rotation
+        const rot = cfg.rotation || { x: 0, y: 0, z: 0 };
+        textMesh.rotation.x = rot.x || 0;
+        textMesh.rotation.y = rot.y || 0;
+        textMesh.rotation.z = rot.z || 0;
 
         mesh.add(textMesh);
+        
+        // Setup drag listener only once
+        if (!textDragListenerSetup) {
+            setupTextDragListener();
+            textDragListenerSetup = true;
+        }
+    });
+}
+
+function setupTextDragListener() {
+    const canvas = renderer.domElement;
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    let dragStartPos = new THREE.Vector3();
+    let dragStartMouse = new THREE.Vector2();
+
+    canvas.addEventListener('mousedown', (event) => {
+        if (!textMesh) return;
+
+        // Calculate mouse position in normalized device coordinates
+        const rect = canvas.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects([textMesh]);
+
+        if (intersects.length > 0) {
+            isDraggingText = true;
+            // Disable camera controls while dragging text
+            if (controls) controls.enabled = false;
+            
+            dragStartPos.copy(textMesh.position);
+            dragStartMouse.copy(mouse);
+            event.preventDefault();
+        }
+    });
+
+    canvas.addEventListener('mousemove', (event) => {
+        if (!isDraggingText || !textMesh) return;
+
+        const rect = canvas.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        // Get axis lock settings
+        const canEditPosX = activeModelConfig?.customizableParams?.textPositionX || false;
+        const canEditPosY = activeModelConfig?.customizableParams?.textPositionY || false;
+        const canEditPosZ = activeModelConfig?.customizableParams?.textPositionZ || false;
+
+        // Calculate mouse delta
+        const mouseDelta = new THREE.Vector2(
+            mouse.x - dragStartMouse.x,
+            mouse.y - dragStartMouse.y
+        );
+
+        // Create a plane perpendicular to camera view (for XY movement in screen space)
+        const cameraDir = new THREE.Vector3();
+        camera.getWorldDirection(cameraDir);
+        const dragPlane = new THREE.Plane(cameraDir, 0);
+        dragPlane.setFromNormalAndCoplanarPoint(cameraDir, dragStartPos);
+
+        // Get the world position at the new mouse position
+        raycaster.setFromCamera(mouse, camera);
+        const newWorldPos = new THREE.Vector3();
+        raycaster.ray.intersectPlane(dragPlane, newWorldPos);
+
+        // Calculate delta in world space
+        const worldDelta = newWorldPos.clone().sub(dragStartPos);
+
+        // Build new position with axis locks
+        const newPos = new THREE.Vector3(
+            canEditPosX ? dragStartPos.x + worldDelta.x : dragStartPos.x,
+            canEditPosY ? dragStartPos.y + worldDelta.y : dragStartPos.y,
+            canEditPosZ ? dragStartPos.z + worldDelta.z : dragStartPos.z
+        );
+
+        textMesh.position.copy(newPos);
+
+        // Update UI inputs (only for unlocked axes)
+        if (activeModelConfig && activeModelConfig.text) {
+            activeModelConfig.text.position = {
+                x: newPos.x,
+                y: newPos.y,
+                z: newPos.z
+            };
+            if (canEditPosX) $('#text-pos-x').val(newPos.x.toFixed(2));
+            if (canEditPosY) $('#text-pos-y').val(newPos.y.toFixed(2));
+            if (canEditPosZ) $('#text-pos-z').val(newPos.z.toFixed(2));
+        }
+        
+        event.preventDefault();
+    });
+
+    canvas.addEventListener('mouseup', () => {
+        if (isDraggingText) {
+            isDraggingText = false;
+            // Re-enable camera controls
+            if (controls) controls.enabled = true;
+        }
     });
 }
 
@@ -977,17 +1188,25 @@ function updateTextFont(fontName) {
 }
 
 // UPDATE TEXT ROTATION (in degrees)
-function updateTextRotation(rotationDegrees) {
+function updateTextRotation() {
     if (!textMesh) return;
 
-    const rotationRadians = (rotationDegrees * Math.PI) / 180;
+    // Convert degrees from UI to radians for Three.js
+    const rotX = (parseFloat($('#text-rotation-x').val()) * Math.PI) / 180;
+    const rotY = (parseFloat($('#text-rotation-y').val()) * Math.PI) / 180;
+    const rotZ = (parseFloat($('#text-rotation-z').val()) * Math.PI) / 180;
     
-    // Combine with the base rotation (-90 degrees for laying flat)
-    textMesh.rotation.x = (-Math.PI / 2) + rotationRadians;
+    textMesh.rotation.x = rotX;
+    textMesh.rotation.y = rotY;
+    textMesh.rotation.z = rotZ;
 
-    // Store in config
     if (activeModelConfig && activeModelConfig.text) {
-        activeModelConfig.text.rotation = rotationDegrees;
+        // Store as RADIANS in config
+        activeModelConfig.text.rotation = {
+            x: rotX,
+            y: rotY,
+            z: rotZ
+        };
     }
 }
 
@@ -1001,11 +1220,12 @@ function updateTextPosition() {
 
     textMesh.position.set(posX, posY, posZ);
 
-    // Store in config
     if (activeModelConfig && activeModelConfig.text) {
-        activeModelConfig.text.shiftX = posX;
-        activeModelConfig.text.offsetY = posY;
-        activeModelConfig.text.shiftZ = posZ;
+        activeModelConfig.text.position = {
+            x: posX,
+            y: posY,
+            z: posZ
+        };
     }
 }
 
@@ -1051,9 +1271,7 @@ function calculatePrice() {
 async function addToCart() {
     const $btn = $('#add-to-cart');
     
-    // REMOVED: Login check and Firebase Upload
-    
-    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Adding...');
+    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Ekleniyor...');
 
     try {
         const priceText = $('#price-display').text();
@@ -1072,15 +1290,13 @@ async function addToCart() {
         };
 
         // 2. Create Cart Item
-        // If it is a user upload (currentLibraryModel is null), we do NOT save the configuration or ID.
         const cartItem = { 
             name: name, 
             price: numericPrice, 
             mode: mode, 
             formattedPrice: priceText,
-            date: new Date().toLocaleString(),
-            isLibrary: !!currentLibraryModel, // Flag for the save function
-            // Only attach config and ID if it's a library model we want to restore later
+            date: new Date().toLocaleString('tr-TR'),
+            isLibrary: !!currentLibraryModel,
             libraryId: currentLibraryModel ? currentLibraryModel.id : null,
             configuration: currentLibraryModel ? currentConfig : null
         };
@@ -1091,27 +1307,25 @@ async function addToCart() {
         saveCart(); 
         renderCart();
         
-        $btn.text('Added!').css('background-color', '#10B981');
+        $btn.text('Eklendi!').css('background-color', '#10B981');
         setTimeout(() => {
-            $btn.prop('disabled', false).text('Add to Cart').css('background-color', '');
+            $btn.prop('disabled', false).text('Sepete Ekle').css('background-color', '');
         }, 1500);
 
     } catch (error) {
         console.error("Cart Error:", error);
-        $btn.prop('disabled', false).text('Add to Cart');
+        $btn.prop('disabled', false).text('Sepete Ekle');
     }
 }
 
 function saveCart() {
     // 1. Filter: Create a new list that ONLY contains Library models
-    // We do NOT modify the main 'cart' variable, because we still want 
-    // the user to see their uploaded item while they are on the page.
     const itemsToSave = cart.filter(item => item.isLibrary === true);
 
     // 2. Save only the filtered list to LocalStorage
     localStorage.setItem('engrare_cart', JSON.stringify(itemsToSave));
 
-    // 3. Update the badge count based on the current session cart (shows everything)
+    // 3. Update the badge count
     $('#cart-badge').text(cart.length);
 }
 
@@ -1133,7 +1347,7 @@ function renderCart() {
     $area.empty();
     
     if(cart.length === 0) {
-        $area.html('<div style="text-align:center; padding:20px; color:#999">Cart is empty.</div>');
+        $area.html('<div style="text-align:center; padding:20px; color:#999">Sepet boş.</div>');
         $('#val-subtotal').text(formatTL(0));
         $('#val-total').text(formatTL(50)); 
         return;
