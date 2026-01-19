@@ -266,17 +266,53 @@
                     <div class="sidebar-content">
 
                         <div id="panel-basic" class="config-panel">
-							<div class="form-group" id="custom-text-group" style="display:none; background: #eff6ff; padding: 12px; border-radius: 8px; border: 1px solid #bfdbfe; margin-bottom: 20px;">
-                                <label style="color: #1e40af; display:block; margin-bottom:5px;">Custom Text</label>
+							<div class="form-group" id="custom-text-group" style="display:none; background: linear-gradient(135deg, #f0f9ff 0%, #eff6ff 100%); padding: 16px; border-radius: 12px; border: 1px solid #bfdbfe; margin-bottom: 20px;">
+                                <label style="color: #1e40af; display:block; margin-bottom:8px; font-weight: 700; font-size: 0.9rem;">Custom Text</label>
                                 <input type="text" id="custom-text-input" class="input-box" value="ENGRARE" placeholder="Type here..." style="border-color: #60a5fa; color: #1e3a8a; font-weight: 600; margin-bottom: 15px;">
                                 
-                                <label style="color: #1e40af; font-size: 0.85rem; margin-bottom: 8px; display:block;">Text Color</label>
-                                <div class="color-grid">
+                                <!-- Font Selection -->
+                                <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Font Style</label>
+                                <select id="text-font-select" class="select-box" style="margin-bottom: 15px; border-color: #60a5fa; background: white;">
+                                    <option value="helvetiker_bold">Helvetica Bold</option>
+                                    <option value="helvetiker_regular">Helvetica Regular</option>
+                                    <option value="optimer_bold">Optimer Bold</option>
+                                    <option value="optimer_regular">Optimer Regular</option>
+                                    <option value="droid_sans_bold">Droid Sans Bold</option>
+                                    <option value="droid_sans_regular">Droid Sans Regular</option>
+                                </select>
+                                
+                                <!-- Text Color -->
+                                <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Text Color</label>
+                                <div class="color-grid" style="margin-bottom: 15px;">
                                     <div class="text-color-option" style="background:#111;" data-hex="#111111" title="Black"></div>
                                     <div class="text-color-option selected" style="background:#fff;" data-hex="#FFFFFF" title="White"></div>
                                     <div class="text-color-option" style="background:#9ca3af;" data-hex="#9ca3af" title="Grey"></div>
                                     <div class="text-color-option" style="background:#ef4444;" data-hex="#ef4444" title="Red"></div>
                                     <div class="text-color-option" style="background:#3b82f6;" data-hex="#3b82f6" title="Blue"></div>
+                                </div>
+                                
+                                <!-- Text Rotation -->
+                                <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Text Rotation (°)</label>
+                                <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+                                    <input type="range" id="text-rotation-x" class="slider-input" min="-180" max="180" value="0" style="flex: 1; cursor: pointer;">
+                                    <span id="text-rotation-x-value" style="color: #1e40af; font-weight: 700; min-width: 45px; text-align: right;">0°</span>
+                                </div>
+                                
+                                <!-- World Coordinates -->
+                                <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Position (X, Y, Z)</label>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+                                    <div>
+                                        <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 4px;">X</label>
+                                        <input type="number" id="text-pos-x" class="input-box" value="0" step="0.5" style="border-color: #60a5fa; font-size: 0.85rem;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 4px;">Y</label>
+                                        <input type="number" id="text-pos-y" class="input-box" value="0" step="0.5" style="border-color: #60a5fa; font-size: 0.85rem;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 4px;">Z</label>
+                                        <input type="number" id="text-pos-z" class="input-box" value="10" step="0.5" style="border-color: #60a5fa; font-size: 0.85rem;">
+                                    </div>
                                 </div>
                             </div>
                             <div class="form-group">

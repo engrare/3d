@@ -303,6 +303,34 @@ $(document).ready(function() {
         updateCustomText(text);
     });
 
+    // Font Selection Listener
+    $('#text-font-select').on('change', function() {
+        const fontName = $(this).val();
+        updateTextFont(fontName);
+    });
+
+    // Text Rotation Listener
+    $('#text-rotation-x').on('input', function() {
+        const rotation = parseFloat($(this).val());
+        $('#text-rotation-x-value').text(rotation + '°');
+        updateTextRotation(rotation);
+    });
+
+    // Text Position X Listener
+    $('#text-pos-x').on('input', function() {
+        updateTextPosition();
+    });
+
+    // Text Position Y Listener
+    $('#text-pos-y').on('input', function() {
+        updateTextPosition();
+    });
+
+    // Text Position Z Listener
+    $('#text-pos-z').on('input', function() {
+        updateTextPosition();
+    });
+
     // YENİ: Yazı Rengi Değiştiğinde Tetiklenir
     $('#custom-text-color').on('input', function() {
         const color = $(this).val();
@@ -524,9 +552,21 @@ function openInStudio(model) {
         const initialText = activeModelConfig ? activeModelConfig.text.initialContent : "ENGRARE";
         $('#custom-text-input').val(initialText);
         
+        // Reset Font Selection
+        $('#text-font-select').val('helvetiker_bold');
+        
         // Rengi Beyaza Sıfırla
         $('.text-color-option').removeClass('selected');
         $('.text-color-option[data-hex="#FFFFFF"]').addClass('selected');
+        
+        // Reset Rotation
+        $('#text-rotation-x').val(0);
+        $('#text-rotation-x-value').text('0°');
+        
+        // Reset Position to Default
+        $('#text-pos-x').val(0);
+        $('#text-pos-y').val(0);
+        $('#text-pos-z').val(10);
         
     } else {
         $('#custom-text-group').hide();
@@ -908,6 +948,65 @@ function updateCustomText(message) {
 
         mesh.add(textMesh);
     });
+}
+
+// UPDATE TEXT FONT
+function updateTextFont(fontName) {
+    if (!textMesh || !mesh) return;
+
+    // Font URLs mapping
+    const fontUrls = {
+        'helvetiker_bold': 'https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json',
+        'helvetiker_regular': 'https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_regular.typeface.json',
+        'optimer_bold': 'https://unpkg.com/three@0.160.0/examples/fonts/optimer_bold.typeface.json',
+        'optimer_regular': 'https://unpkg.com/three@0.160.0/examples/fonts/optimer_regular.typeface.json',
+        'droid_sans_bold': 'https://unpkg.com/three@0.160.0/examples/fonts/droid_sans_bold.typeface.json',
+        'droid_sans_regular': 'https://unpkg.com/three@0.160.0/examples/fonts/droid_sans_regular.typeface.json'
+    };
+
+    const fontUrl = fontUrls[fontName] || fontUrls['helvetiker_bold'];
+    const currentText = $('#custom-text-input').val();
+
+    if (!currentText || currentText === "") return;
+
+    const cfg = activeModelConfig.text;
+    cfg.fontUrl = fontUrl;
+
+    // Re-render text with new font
+    updateCustomText(currentText);
+}
+
+// UPDATE TEXT ROTATION (in degrees)
+function updateTextRotation(rotationDegrees) {
+    if (!textMesh) return;
+
+    const rotationRadians = (rotationDegrees * Math.PI) / 180;
+    
+    // Combine with the base rotation (-90 degrees for laying flat)
+    textMesh.rotation.x = (-Math.PI / 2) + rotationRadians;
+
+    // Store in config
+    if (activeModelConfig && activeModelConfig.text) {
+        activeModelConfig.text.rotation = rotationDegrees;
+    }
+}
+
+// UPDATE TEXT POSITION (World Coordinates)
+function updateTextPosition() {
+    if (!textMesh) return;
+
+    const posX = parseFloat($('#text-pos-x').val()) || 0;
+    const posY = parseFloat($('#text-pos-y').val()) || 0;
+    const posZ = parseFloat($('#text-pos-z').val()) || 0;
+
+    textMesh.position.set(posX, posY, posZ);
+
+    // Store in config
+    if (activeModelConfig && activeModelConfig.text) {
+        activeModelConfig.text.shiftX = posX;
+        activeModelConfig.text.offsetY = posY;
+        activeModelConfig.text.shiftZ = posZ;
+    }
 }
 
 function getVolume(geometry) {
