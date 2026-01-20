@@ -9,6 +9,8 @@ import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { STLExporter } from 'three/addons/exporters/STLExporter.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
 
 // --- STATE ---
 
@@ -31,6 +33,17 @@ const auth = getAuth(app);
 const db = getDatabase(app);
 const storage = getStorage(app);
 const functions = getFunctions(app, 'europe-west1');
+
+const ENGRARE_LOGO_SVG = `<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+<svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M12.0196 14.9374C11.7284 14.9374 11.4307 14.9818 11.1784 15.0796C11.0546 15.1275 10.9032 15.2031 10.7699 15.3252C10.6361 15.4479 10.4632 15.6749 10.4632 15.9999C10.4632 16.3249 10.6361 16.5519 10.7699 16.6745C10.9032 16.7967 11.0546 16.8722 11.1784 16.9202C11.4307 17.018 11.7284 17.0624 12.0196 17.0624C12.3109 17.0624 12.6085 17.018 12.8609 16.9202C12.9846 16.8722 13.136 16.7967 13.2693 16.6745C13.4032 16.5519 13.5761 16.3249 13.5761 15.9999C13.5761 15.6749 13.4032 15.4479 13.2693 15.3252C13.136 15.2031 12.9846 15.1275 12.8609 15.0796C12.6085 14.9818 12.3109 14.9374 12.0196 14.9374Z" fill="#1C274C"/>
+<path d="M14.0365 12.6464C14.2015 12.38 14.5274 12.0625 15.0163 12.0625C15.5051 12.0625 15.831 12.38 15.996 12.6464C16.1681 12.9243 16.2501 13.2612 16.2501 13.5938C16.2501 13.9263 16.1681 14.2632 15.996 14.5411C15.831 14.8075 15.5051 15.125 15.0163 15.125C14.5274 15.125 14.2015 14.8075 14.0365 14.5411C13.8644 14.2632 13.7824 13.9263 13.7824 13.5938C13.7824 13.2612 13.8644 12.9243 14.0365 12.6464Z" fill="#1C274C"/>
+<path d="M9.01634 12.0625C8.52751 12.0625 8.20161 12.38 8.03658 12.6464C7.86445 12.9243 7.78247 13.2612 7.78247 13.5938C7.78247 13.9263 7.86445 14.2632 8.03658 14.5411C8.20161 14.8075 8.52751 15.125 9.01634 15.125C9.50518 15.125 9.83108 14.8075 9.9961 14.5411C10.1682 14.2632 10.2502 13.9263 10.2502 13.5938C10.2502 13.2612 10.1682 12.9243 9.9961 12.6464C9.83108 12.38 9.50518 12.0625 9.01634 12.0625Z" fill="#1C274C"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M6.09485 4.25C5.48148 4.25 4.77463 4.42871 4.20882 4.91616C3.62226 5.4215 3.27004 6.18781 3.27004 7.1875V9.0625L3.27005 9.06545C3.2712 9.35941 3.3211 9.94757 3.4888 10.4392C3.54365 10.6001 3.63129 10.8134 3.77764 11.0058C3.49364 11.5688 3.35904 12.1495 3.29787 12.7095C3.2468 13.1771 3.24611 13.6679 3.25424 14.1211C2.5932 14.3507 1.90877 14.6349 1.5932 14.8387C1.24524 15.0634 1.14534 15.5277 1.37006 15.8756C1.59478 16.2236 2.05903 16.3235 2.40698 16.0988C2.5234 16.0236 2.86686 15.8664 3.31867 15.6939C3.38755 16.173 3.52716 16.6095 3.7221 17.0063C3.56621 17.1035 3.42847 17.1935 3.31889 17.2652C3.27694 17.2926 3.23912 17.3173 3.20599 17.3387C2.85803 17.5634 2.75813 18.0277 2.98285 18.3756C3.20757 18.7236 3.67182 18.8235 4.01978 18.5988C4.0609 18.5722 4.10473 18.5436 4.15098 18.5134C4.28216 18.4278 4.43287 18.3294 4.59701 18.2288C5.18653 18.8313 5.91865 19.2964 6.67916 19.6462C8.45998 20.4654 10.569 20.75 12.0001 20.75C13.4311 20.75 15.5402 20.4654 17.321 19.6462C18.0815 19.2964 18.8136 18.8313 19.4031 18.2288C19.5673 18.3294 19.718 18.4278 19.8491 18.5134C19.8954 18.5436 19.9392 18.5722 19.9803 18.5988C20.3283 18.8235 20.7925 18.7236 21.0173 18.3756C21.242 18.0277 21.1421 17.5634 20.7941 17.3387C20.761 17.3173 20.7232 17.2926 20.6812 17.2652C20.5716 17.1935 20.4339 17.1035 20.2781 17.0063C20.473 16.6095 20.6127 16.173 20.6815 15.6938C21.1335 15.8663 21.4771 16.0236 21.5936 16.0988C21.9415 16.3235 22.4058 16.2236 22.6305 15.8756C22.8552 15.5277 22.7553 15.0634 22.4074 14.8387C22.0917 14.6349 21.4071 14.3506 20.7459 14.121C20.7541 13.6678 20.7534 13.177 20.7023 12.7095C20.6412 12.1495 20.5065 11.5688 20.2225 11.0058C20.3689 10.8134 20.4565 10.6001 20.5114 10.4392C20.6791 9.94758 20.729 9.35941 20.7301 9.06545L20.7302 9.0625V7.18761C20.7302 6.18792 20.3779 5.42162 19.7914 4.91628C19.2256 4.42882 18.5187 4.25011 17.9054 4.25011C17.4969 4.25011 17.0744 4.40685 16.7337 4.56076C16.3726 4.72392 15.9952 4.9359 15.6558 5.13136C15.5828 5.17339 15.5119 5.21444 15.443 5.25432L15.441 5.25548C15.177 5.4084 14.9427 5.5441 14.7339 5.65167C14.6042 5.7185 14.5035 5.7643 14.4285 5.79206C14.3969 5.80377 14.3767 5.80966 14.3663 5.81242C14.1129 5.81102 13.9514 5.79033 13.7181 5.76044C13.6681 5.75403 13.6147 5.74719 13.5564 5.74003C13.2098 5.69743 12.7722 5.65636 12.0001 5.65636C11.228 5.65636 10.7905 5.69743 10.4438 5.74003C10.3855 5.74719 10.3322 5.75403 10.2821 5.76044C10.0489 5.79033 9.88738 5.81102 9.63388 5.81242C9.62352 5.80966 9.60332 5.80376 9.57174 5.79206C9.49678 5.7643 9.39604 5.71849 9.26633 5.65166C9.05755 5.54408 8.82331 5.40842 8.55926 5.25548C8.48975 5.21523 8.41818 5.17377 8.34446 5.13132C8.00502 4.93584 7.62764 4.72384 7.26652 4.56067C6.92587 4.40675 6.50329 4.25 6.09485 4.25ZM6.16192 17.6138C6.49595 17.8657 6.8808 18.0879 7.30604 18.2835C8.83694 18.9877 10.7179 19.25 12.0001 19.25C13.2823 19.25 15.1632 18.9877 16.6941 18.2835C17.1194 18.0879 17.5042 17.8657 17.8382 17.6138C17.4858 17.5524 17.2179 17.245 17.2179 16.875C17.2179 16.4608 17.5537 16.125 17.9679 16.125C18.2951 16.125 18.6295 16.2068 18.9399 16.3204C19.0985 15.9885 19.1959 15.625 19.2226 15.2271C18.9249 15.1544 18.7193 15.125 18.6134 15.125C18.1992 15.125 17.8634 14.7892 17.8634 14.375C17.8634 13.9608 18.1992 13.625 18.6134 13.625C18.8081 13.625 19.0284 13.6542 19.2504 13.6974C19.2505 13.4213 19.2415 13.1502 19.2112 12.8724C19.1407 12.227 18.958 11.6541 18.5269 11.1447C18.3727 10.9625 18.1809 10.7813 17.9402 10.6045C17.6063 10.3594 17.5344 9.88999 17.7796 9.55611C18.0247 9.22224 18.4941 9.15031 18.828 9.39546C18.9471 9.48292 19.0597 9.57282 19.1659 9.66506C19.2099 9.43686 19.2295 9.19817 19.2302 9.06087V7.18761C19.2302 6.56231 19.0238 6.23486 18.8123 6.0527C18.5801 5.85266 18.2496 5.75011 17.9054 5.75011C17.835 5.75011 17.659 5.78868 17.3513 5.92771C17.064 6.0575 16.7432 6.23612 16.4043 6.43125C16.3407 6.4679 16.2759 6.50544 16.2106 6.54328C15.9428 6.69843 15.666 6.85883 15.4209 6.98509C15.2663 7.06473 15.1052 7.14099 14.9495 7.19867C14.8058 7.25192 14.607 7.3125 14.3941 7.3125C14.0223 7.3125 13.7617 7.27877 13.5115 7.2464C13.4654 7.24043 13.4196 7.23449 13.3735 7.22883C13.0848 7.19336 12.7084 7.15636 12.0001 7.15636C11.2919 7.15636 10.9154 7.19336 10.6267 7.22883C10.5807 7.23449 10.5349 7.24042 10.4887 7.24649C10.2386 7.27877 9.97796 7.3125 9.6061 7.3125C9.39326 7.3125 9.19445 7.25191 9.05069 7.19866C8.89497 7.14098 8.73386 7.06471 8.57928 6.98506C8.33423 6.8588 8.05742 6.69839 7.78968 6.54325C7.72435 6.50539 7.65955 6.46784 7.59589 6.43118C7.25702 6.23603 6.93614 6.05741 6.64888 5.92761C6.34115 5.78856 6.16522 5.75 6.09485 5.75C5.75062 5.75 5.42007 5.85254 5.18787 6.05259C4.97643 6.23475 4.77004 6.56219 4.77004 7.1875V9.06088C4.7707 9.19819 4.79025 9.43686 4.83425 9.66506C4.94053 9.57281 5.05309 9.48292 5.1722 9.39546C5.50608 9.15031 5.97547 9.22224 6.22062 9.55612C6.46577 9.88999 6.39385 10.3594 6.05997 10.6045C5.81926 10.7813 5.62748 10.9625 5.47331 11.1447C5.04223 11.6541 4.85949 12.227 4.789 12.8724C4.75865 13.1502 4.74966 13.4213 4.74975 13.6975C4.97192 13.6543 5.19231 13.625 5.38719 13.625C5.80141 13.625 6.13719 13.9608 6.13719 14.375C6.13719 14.7892 5.80141 15.125 5.38719 15.125C5.28121 15.125 5.07549 15.1544 4.77758 15.2271C4.80434 15.625 4.90168 15.9885 5.06027 16.3203C5.37069 16.2068 5.70504 16.125 6.03224 16.125C6.44646 16.125 6.78224 16.4608 6.78224 16.875C6.78224 17.245 6.51433 17.5524 6.16192 17.6138Z" fill="#1C274C"/>
+</svg>`;
+
+const DEFAULT_LOGO_SVG = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor"/></svg>`;
+
 let activeModelConfig = null;
 let currentLibraryModel = null;
 let originalModelConfig = null; // NEW: Store original config for reset
@@ -51,38 +64,62 @@ const BUILD_VOLUME_Y = 256;
 const allFirebaseModels = [
     {
         id: 1,
-        name: "Özel Ad Plakası 1",
+        name: "Özel Ad Plakaası 1",
         desc: "Düzenlenebilir 3D metinli kişiselleştirilmiş masaüstü plakası.",
         price: 180,
-        images: ["./content/product2.jpeg", "./content/product2_alt.jpeg"], 
+        images: ["./content/products/1/1.jpg", "./content/products/1/2.jpg", "./content/products/1/3.jpg"],
         stl: "./content/desktop_writing_holder.STL",
+        sellCount: 10,
         isCustomizable: true,
         customConfig: {
-            baseScale: { x: 5, y: 0, z: 2 }, 
+            baseScale: { x: 5, y: 0, z: 2 },
+            alignmentConfig: { axis: 'x', min: -100, max: 100 }, 
             text: {
                 initialContent: "ENGRARE",
                 fontUrl: 'https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json',
-                fontSize: 10,       
-                fontThickness: 4,   
-                position: { x: 0, y: -22, z: 0 },
+                fontSize: 19,       
+                fontThickness: 4,
+                letterSpacing: 3,
+                alignment: "Right",   
+                position: { x: -35, y: -20, z: 0 },
                 rotation: { x: Math.PI / 2, y: 0, z: 0 },
                 color: "#FFFFFF"
             },
-            customizableParams: {
-                textContent: true,
-                textFont: true,
-                textColor: true,
-                textRotationX: false,
-                textRotationY: false,
-                textRotationZ: true,
-                textPositionX: true,
-                textPositionY: false,
-                textPositionZ: true,
-                modelColor: true,
-                material: true,
-                infill: true,
-                quantity: true,
-                delivery: true
+            logo: {
+                content: ENGRARE_LOGO_SVG,
+                scale: 2.1,
+                depth: 4,
+                position: { x: -75, y: -20, z: 0 },
+                rotation: { x: Math.PI / 2, y: 0, z: 0 }
+            },
+            customizableParams: { //0: Never visible. 1: Always visible (Basic & Pro). 2: Visible only in 'advanced' (Pro) mode.
+                textContent: 1,
+                textFont: 1,
+                textSize: 1,
+                textDepth: 2,
+                letterSpacing: 2,
+                textAlignment: 1,
+                textColor: 1,
+                textRotationX: 0,
+                textRotationY: 0,
+                textRotationZ: 2,
+                textPositionX: 2,
+                textPositionY: 0,
+                textPositionZ: 2,
+                logo: 1,
+                logoSize: 1,
+                logoDepth: 2,
+                logoRotationX: 0,
+                logoRotationY: 0,
+                logoRotationZ: 2,
+                logoPositionX: 2,
+                logoPositionY: 0,
+                logoPositionZ: 2,
+                modelColor: 1,
+                material: 2,
+                infill: 2,
+                quantity: 1,
+                delivery: 1
             }
         }
     },
@@ -93,6 +130,7 @@ const allFirebaseModels = [
         price: 180,
         images: ["./content/product2.jpeg"], 
         stl: "./content/desktop_writing_holder.STL",
+        sellCount: 50,
         isCustomizable: true,
         customConfig: {
             baseScale: { x: 5, y: 0.2, z: 2 }, 
@@ -100,26 +138,48 @@ const allFirebaseModels = [
                 initialContent: "ENGRARE",
                 fontUrl: 'https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json',
                 fontSize: 10,       
-                fontThickness: 4,   
+                fontThickness: 4,
+                letterSpacing: 0,
+                alignment: "center",   
                 position: { x: 0, y: 0, z: 10 },
                 rotation: { x: 0, y: 0, z: 0 },
                 color: "#FFFFFF"
             },
+            logo: {
+                content: ENGRARE_LOGO_SVG,
+                scale: 1,
+                depth: 2,
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 }
+            },
             customizableParams: {
-                textContent: true,
-                textFont: true,
-                textColor: true,
-                textRotationX: false,
-                textRotationY: false,
-                textRotationZ: false,
-                textPositionX: false,
-                textPositionY: false,
-                textPositionZ: false,
-                modelColor: true,
-                material: true,
-                infill: true,
-                quantity: true,
-                delivery: true
+                textContent: 1,
+                textFont: 1,
+                textSize: 1,
+                textDepth: 1,
+                letterSpacing: 0,
+                textAlignment: 1,
+                textColor: 1,
+                textRotationX: 0,
+                textRotationY: 0,
+                textRotationZ: 0,
+                textPositionX: 0,
+                textPositionY: 0,
+                textPositionZ: 0,
+                logo: 0,
+                logoSize: 0,
+                logoDepth: 0,
+                logoRotationX: 0,
+                logoRotationY: 0,
+                logoRotationZ: 0,
+                logoPositionX: 0,
+                logoPositionY: 0,
+                logoPositionZ: 0,
+                modelColor: 1,
+                material: 1,
+                infill: 1,
+                quantity: 1,
+                delivery: 1
             }
         }
     },
@@ -130,6 +190,7 @@ const allFirebaseModels = [
         price: 180,
         images: ["./content/product2.jpeg", "./content/product2_alt.jpeg", "./content/product2_alt2.jpeg"], 
         stl: "./content/desktop_writing_holder.STL",
+        sellCount: 5,
         isCustomizable: true,
         customConfig: {
             baseScale: { x: 5, y: 0.2, z: 2 }, 
@@ -137,26 +198,48 @@ const allFirebaseModels = [
                 initialContent: "ENGRARE",
                 fontUrl: 'https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json',
                 fontSize: 10,       
-                fontThickness: 4,   
+                fontThickness: 4,
+                letterSpacing: 0,
+                alignment: "center",   
                 position: { x: 0, y: 0, z: 10 },
                 rotation: { x: 0, y: 0, z: 0 },
                 color: "#FFFFFF"
             },
+            logo: {
+                content: ENGRARE_LOGO_SVG,
+                scale: 1,
+                depth: 2,
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 }
+            },
             customizableParams: {
-                textContent: true,
-                textFont: false,
-                textColor: true,
-                textRotationX: true,
-                textRotationY: false,
-                textRotationZ: true,
-                textPositionX: true,
-                textPositionY: true,
-                textPositionZ: false,
-                modelColor: false,
-                material: true,
-                infill: true,
-                quantity: true,
-                delivery: true
+                textContent: 1,
+                textFont: 0,
+                textSize: 1,
+                textDepth: 1,
+                letterSpacing: 0,
+                textAlignment: 0,
+                textColor: 1,
+                textRotationX: 1,
+                textRotationY: 0,
+                textRotationZ: 1,
+                textPositionX: 1,
+                textPositionY: 1,
+                textPositionZ: 0,
+                logo: 0,
+                logoSize: 0,
+                logoDepth: 0,
+                logoRotationX: 0,
+                logoRotationY: 0,
+                logoRotationZ: 0,
+                logoPositionX: 0,
+                logoPositionY: 0,
+                logoPositionZ: 0,
+                modelColor: 0,
+                material: 1,
+                infill: 1,
+                quantity: 1,
+                delivery: 1
             }
         }
     },
@@ -167,6 +250,7 @@ const allFirebaseModels = [
         price: 180,
         images: ["./content/product2.jpeg"], 
         stl: "./content/desktop_writing_holder.STL",
+        sellCount: 20,
         isCustomizable: true,
         customConfig: {
             baseScale: { x: 5, y: 0.2, z: 2 }, 
@@ -174,37 +258,110 @@ const allFirebaseModels = [
                 initialContent: "ENGRARE",
                 fontUrl: 'https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json',
                 fontSize: 10,       
-                fontThickness: 4,   
+                fontThickness: 4,
+                letterSpacing: 0,
+                alignment: "center",   
                 position: { x: 0, y: 0, z: 10 },
                 rotation: { x: 0, y: 0, z: 0 },
                 color: "#FFFFFF"
             },
+            logo: {
+                content: ENGRARE_LOGO_SVG,
+                scale: 1,
+                depth: 2,
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 }
+            },
             customizableParams: {
-                textContent: true,
-                textFont: true,
-                textColor: true,
-                textRotationX: true,
-                textRotationY: true,
-                textRotationZ: true,
-                textPositionX: true,
-                textPositionY: true,
-                textPositionZ: true,
-                modelColor: true,
-                material: true,
-                infill: true,
-                quantity: true,
-                delivery: true
+                textContent: 1,
+                textFont: 1,
+                textColor: 1,
+                textRotationX: 1,
+                textRotationY: 1,
+                textRotationZ: 1,
+                textPositionX: 1,
+                textPositionY: 1,
+                textPositionZ: 1,
+                logo: 0,
+                logoSize: 0,
+                logoDepth: 0,
+                logoRotationX: 0,
+                logoRotationY: 0,
+                logoRotationZ: 0,
+                logoPositionX: 0,
+                logoPositionY: 0,
+                logoPositionZ: 0,
+                modelColor: 1,
+                material: 1,
+                infill: 1,
+                quantity: 1,
+                delivery: 1
             }
         }
     }
 ];
+
+const USER_UPLOAD_CONFIG = {
+    baseScale: { x: 1, y: 1, z: 1 }, 
+    text: {
+        initialContent: "",
+        fontUrl: 'https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json',
+        fontSize: 10,
+        fontThickness: 4,
+        letterSpacing: 0,
+        alignment: "center",
+        position: { x: 0, y: 0, z: 10 },
+        rotation: { x: 0, y: 0, z: 0 },
+        color: "#FFFFFF"
+    },
+    logo: {
+        content: null,
+        scale: 1,
+        depth: 2,
+        position: { x: 0, y: 0, z: 0 },
+        rotation: { x: 0, y: 0, z: 0 }
+    },
+    customizableParams: {
+        // 1: Basic, 2: Pro, 0: Hidden
+        modelColor: 1,
+        material: 1,
+        infill: 1,
+        quantity: 1,
+        delivery: 1,
+        
+        textContent: 1,
+        textFont: 1,
+        textSize: 1,
+        textDepth: 1,
+        letterSpacing: 1,
+        textAlignment: 1,
+        textColor: 1,
+        textRotationX: 1,
+        textRotationY: 1,
+        textRotationZ: 1,
+        textPositionX: 1,
+        textPositionY: 1,
+        textPositionZ: 1,
+
+        logo: 1,
+        logoSize: 1,
+        logoDepth: 1,
+        logoRotationX: 1,
+        logoRotationY: 1,
+        logoRotationZ: 1,
+        logoPositionX: 1,
+        logoPositionY: 1,
+        logoPositionZ: 1
+    }
+};
 
 // --- DOM READY ---
 $(document).ready(function() {
     
     loadCart();
     init3D(); 
-    renderModelsPage();
+    renderModelsPage(allFirebaseModels);
+    renderHomeLibrary();
 
     // --- FIREBASE AUTH LISTENERS ---
     
@@ -413,14 +570,191 @@ $(document).ready(function() {
         updateTextPosition();
     });
 
-    // Text Color change trigger
+    // --- NEW TEXT CONTROLS LISTENERS ---
+
+    // Text Size
+    $('#text-size-slider, #text-size-input').on('input', function() {
+        const val = parseFloat($(this).val());
+        $('#text-size-slider, #text-size-input').val(val); // Sync
+        if (activeModelConfig && activeModelConfig.text) {
+            activeModelConfig.text.fontSize = val;
+            updateCustomText( $('#custom-text-input').val() );
+        }
+    });
+
+    // Text Depth (SYNCED WITH LOGO)
+    $('#text-depth-slider, #text-depth-input').on('input', function() {
+        const val = parseFloat($(this).val());
+        $('#text-depth-slider, #text-depth-input').val(val);
+        
+        // Sync to Logo UI
+        $('#logo-depth-slider, #logo-depth-input').val(val);
+
+        if (activeModelConfig) {
+            if (activeModelConfig.text) {
+                activeModelConfig.text.fontThickness = val;
+                updateCustomText( $('#custom-text-input').val() );
+            }
+            if (activeModelConfig.logo) {
+                activeModelConfig.logo.depth = val;
+                if (activeModelConfig.logo._lastSvg) {
+                    updateCustomLogo(activeModelConfig.logo._lastSvg);
+                }
+            }
+        }
+    });
+
+    // Letter Spacing (Note: TextGeometry does not support spacing natively. 
+    // We will store it but might not see effect unless we implement complex mesh gen. 
+    // For now, we update config)
+    $('#letter-spacing-slider, #letter-spacing-input').on('input', function() {
+        const val = parseFloat($(this).val());
+        $('#letter-spacing-slider, #letter-spacing-input').val(val);
+        if (activeModelConfig && activeModelConfig.text) {
+            activeModelConfig.text.letterSpacing = val;
+            // Re-render if we find a way to support it, currently standard
+            updateCustomText( $('#custom-text-input').val() );
+        }
+    });
+
+    // Text Alignment
+    // Use click on the container label to allow re-triggering the same alignment
+    // (e.g. if user moved text manually and wants to snap back to center)
+    $('.delivery-option:has(input[name="text-align"])').click(function(e) {
+        // Prevent double-firing if clicking child elements triggers parent click
+        // But we want the logic to run.
+        
+        const $input = $(this).find('input');
+        const val = $input.val();
+        
+        // Ensure checked (visual and logical)
+        $input.prop('checked', true);
+        
+        if (activeModelConfig && activeModelConfig.text) {
+            activeModelConfig.text.alignment = val;
+            
+            // Handle Position Reset based on Limits
+            if (activeModelConfig && activeModelConfig.alignmentConfig) {
+                const conf = activeModelConfig.alignmentConfig;
+                const axis = conf.axis || 'x';
+                let newPos = 0;
+                
+                if (val === 'left') newPos = conf.min;
+                else if (val === 'right') newPos = conf.max;
+                else newPos = (conf.min + conf.max) / 2;
+                
+                activeModelConfig.text.position[axis] = newPos;
+                
+                // Update UI Input
+                $(`#text-pos-${axis}`).val(newPos);
+                
+                // Update Mesh Position
+                updateTextPosition(); 
+            }
+            
+            // Update UI class
+            $('.delivery-option:has(input[name="text-align"])').removeClass('active');
+            $(this).addClass('active');
+            
+            updateCustomText( $('#custom-text-input').val() );
+        }
+    });
+
+    // --- LOGO CONTROLS LISTENERS ---
+    
+    $('#logo-file-input').change(handleLogoUpload);
+
+    $('#logo-size-slider, #logo-size-input').on('input', function() {
+        const val = parseFloat($(this).val());
+        $('#logo-size-slider, #logo-size-input').val(val);
+        if (activeModelConfig && activeModelConfig.logo) {
+            activeModelConfig.logo.scale = val;
+            if (activeModelConfig.logo._lastSvg) {
+                updateCustomLogo(activeModelConfig.logo._lastSvg);
+            }
+        }
+    });
+
+    // Logo Depth (SYNCED WITH TEXT)
+    $('#logo-depth-slider, #logo-depth-input').on('input', function() {
+        const val = parseFloat($(this).val());
+        $('#logo-depth-slider, #logo-depth-input').val(val);
+        
+        // Sync to Text UI
+        $('#text-depth-slider, #text-depth-input').val(val);
+
+        if (activeModelConfig) {
+             if (activeModelConfig.logo) {
+                activeModelConfig.logo.depth = val;
+                if (activeModelConfig.logo._lastSvg) {
+                    updateCustomLogo(activeModelConfig.logo._lastSvg);
+                }
+            }
+            if (activeModelConfig.text) {
+                activeModelConfig.text.fontThickness = val;
+                updateCustomText( $('#custom-text-input').val() );
+            }
+        }
+    });
+
+    // Logo Rotation
+    $('#logo-rotation-x').on('input', function() {
+        const val = (parseFloat($(this).val()) * Math.PI) / 180;
+        $('#logo-rotation-x-value').text($(this).val() + '°');
+        if (activeModelConfig && activeModelConfig.logo && logoMesh) {
+            activeModelConfig.logo.rotation.x = val;
+            logoMesh.rotation.x = val;
+        }
+    });
+    $('#logo-rotation-y').on('input', function() {
+        const val = (parseFloat($(this).val()) * Math.PI) / 180;
+        $('#logo-rotation-y-value').text($(this).val() + '°');
+        if (activeModelConfig && activeModelConfig.logo && logoMesh) {
+            activeModelConfig.logo.rotation.y = val;
+            logoMesh.rotation.y = val;
+        }
+    });
+    $('#logo-rotation-z').on('input', function() {
+        const val = (parseFloat($(this).val()) * Math.PI) / 180;
+        $('#logo-rotation-z-value').text($(this).val() + '°');
+        if (activeModelConfig && activeModelConfig.logo && logoMesh) {
+            activeModelConfig.logo.rotation.z = val;
+            logoMesh.rotation.z = val;
+        }
+    });
+
+    // Logo Position
+    $('#logo-pos-x').on('input', function() {
+        const val = parseFloat($(this).val());
+        if (activeModelConfig && activeModelConfig.logo && logoMesh) {
+            activeModelConfig.logo.position.x = val;
+            logoMesh.position.x = val;
+        }
+    });
+    $('#logo-pos-y').on('input', function() {
+        const val = parseFloat($(this).val());
+        if (activeModelConfig && activeModelConfig.logo && logoMesh) {
+            activeModelConfig.logo.position.y = val;
+            logoMesh.position.y = val;
+        }
+    });
+    $('#logo-pos-z').on('input', function() {
+        const val = parseFloat($(this).val());
+        if (activeModelConfig && activeModelConfig.logo && logoMesh) {
+            activeModelConfig.logo.position.z = val;
+            logoMesh.position.z = val;
+        }
+    });
+
+    // Text Color change trigger (Updated to also color Logo)
     $('#custom-text-color').on('input', function() {
         const color = $(this).val();
-        if (textMesh && textMesh.material) {
-            // Only change material color (no need to recreate mesh, better performance)
-            textMesh.material.color.set(color);
+        if (textMesh && textMesh.material) textMesh.material.color.set(color);
+        if (logoMesh) {
+            logoMesh.children.forEach(child => {
+                if(child.material) child.material.color.set(color);
+            });
         }
-        // Update config so text color is not forgotten when content changes
         if (activeModelConfig && activeModelConfig.text) {
             activeModelConfig.text.color = color;
         }
@@ -438,8 +772,21 @@ $(document).ready(function() {
         $('.tab-btn').removeClass('active');
         $(this).addClass('active');
         const mode = $(this).data('mode'); 
-        $('.config-panel').hide();
-        $(`#panel-${mode}`).fadeIn(200);
+        
+        // --- UPDATED VISIBILITY LOGIC ---
+        // Basic Mode: Show only basic panel, hide advanced panel. Show only 'basic' items.
+        // Pro Mode: Show basic panel AND advanced panel. Show 'basic' AND 'pro' items.
+
+        if (mode === 'basic') {
+            $('#panel-basic').fadeIn(200);
+            $('#panel-advanced').hide();
+        } else if (mode === 'advanced') {
+            $('#panel-basic').show(); // Keep basic visible
+            $('#panel-advanced').fadeIn(200);
+        }
+
+        // Re-run visibility check for individual controls
+        updateControlsVisibility(mode);
     });
 
     // 7. Color Selection
@@ -456,7 +803,7 @@ $(document).ready(function() {
     });
 
     // 8. Price Sync
-    $('#material-select, #infill-select, #quantity-input, input[name="delivery"]').on('input change', function() {
+    $('#material-select, #infill-select, #quantity-input').on('input change', function() {
         calculatePrice();
         syncBasicToPro();
     });
@@ -476,8 +823,8 @@ $(document).ready(function() {
         renderCart();
     });
 
-    // Reset Custom Parameters Button - Using Event Delegation
-    $(document).on('click', '#reset-custom-params', function(e) {
+    // Reset Custom Parameters Button - Using Event Delegation (Both buttons)
+    $(document).on('click', '#reset-custom-params, #btn-reset-basic', function(e) {
         e.preventDefault();
         e.stopPropagation();
         
@@ -495,6 +842,12 @@ $(document).ready(function() {
         // Get ORIGINAL initial values (not the modified activeModelConfig)
         const initialPos = originalModelConfig.text.position;
         const initialRot = originalModelConfig.text.rotation;
+        
+        // New params reset
+        const initialSize = originalModelConfig.text.fontSize || 10;
+        const initialDepth = originalModelConfig.text.fontThickness || 4;
+        const initialSpacing = originalModelConfig.text.letterSpacing || 0;
+        const initialAlign = originalModelConfig.text.alignment || "center";
 
         console.log("Original Position:", initialPos);
         console.log("Original Rotation (radians):", initialRot);
@@ -531,6 +884,13 @@ $(document).ready(function() {
             y: initialPos.y || 0,
             z: initialPos.z || 10
         };
+        
+        // Reset New Params in Config
+        activeModelConfig.text.fontSize = initialSize;
+        activeModelConfig.text.fontThickness = initialDepth;
+        activeModelConfig.text.letterSpacing = initialSpacing;
+        activeModelConfig.text.alignment = initialAlign;
+
         console.log("✓ Configs updated");
         console.log("Updated position:", activeModelConfig.text.position);
         console.log("Updated rotation:", activeModelConfig.text.rotation);
@@ -568,6 +928,12 @@ $(document).ready(function() {
         
         $('#text-pos-z').val((initialPos.z || 10).toFixed(2));
         console.log("✓ Position Z updated:", (initialPos.z || 10).toFixed(2));
+        
+        // Reset New UI Controls
+        $('#text-size-slider, #text-size-input').val(initialSize);
+        $('#text-depth-slider, #text-depth-input').val(initialDepth);
+        $('#letter-spacing-slider, #letter-spacing-input').val(initialSpacing);
+        $(`input[name="text-align"][value="${initialAlign}"]`).prop('checked', true).trigger('change');
 
         // Step 5: Re-attach listeners
         console.log("Step 5: Re-attaching event listeners...");
@@ -601,8 +967,26 @@ $(document).ready(function() {
             updateTextPosition();
         });
         
+        // Re-render text to reflect changes
+        updateCustomText( $('#custom-text-input').val() );
+
         console.log("✓ Event listeners re-attached");
         console.log("=== RESET COMPLETE ===");
+    });
+
+    // Delivery Priority Click Handler (to fix focus/active state issue)
+    $('.delivery-list .delivery-option').click(function() {
+        // 1. Visually update active state
+        $('.delivery-list .delivery-option').removeClass('active');
+        $(this).addClass('active');
+
+        // 2. Ensure radio input is checked
+        const $input = $(this).find('input[type="radio"]');
+        $input.prop('checked', true);
+
+        // 3. Trigger calculation (since we manually changed it)
+        calculatePrice();
+        syncBasicToPro();
     });
 
     // --- MODAL LOGIC ---
@@ -674,11 +1058,130 @@ $(document).ready(function() {
 
 // --- HELPER FUNCTIONS ---
 
+function syncUIWithConfig(config) {
+    if (!config) return;
+    const txtConfig = config.text || {};
+
+    // 1. Text Content
+    const initialText = txtConfig.initialContent || ""; // Empty default for uploads
+    $('#custom-text-input').val(initialText);
+    
+    // 2. Font Selection
+    const fontUrl = txtConfig.fontUrl || 'https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json';
+    let fontId = 'helvetiker_bold';
+    if(fontUrl.includes('helvetiker_regular')) fontId = 'helvetiker_regular';
+    else if(fontUrl.includes('optimer_bold')) fontId = 'optimer_bold';
+    else if(fontUrl.includes('optimer_regular')) fontId = 'optimer_regular';
+    else if(fontUrl.includes('droid_sans_bold')) fontId = 'droid_sans_bold';
+    else if(fontUrl.includes('droid_sans_regular')) fontId = 'droid_sans_regular';
+    $('#text-font-select').val(fontId);
+    
+    // 3. Text Size
+    const fSize = txtConfig.fontSize || 10;
+    $('#text-size-slider, #text-size-input').val(fSize);
+
+    // 4. Text Depth
+    const fDepth = txtConfig.fontThickness || 4;
+    $('#text-depth-slider, #text-depth-input').val(fDepth);
+
+    // 5. Letter Spacing
+    const fSpace = txtConfig.letterSpacing || 0;
+    $('#letter-spacing-slider, #letter-spacing-input').val(fSpace);
+
+    // 6. Alignment
+    const fAlign = txtConfig.alignment || "center";
+    $(`input[name="text-align"][value="${fAlign}"]`).prop('checked', true);
+    $('.delivery-option:has(input[name="text-align"])').removeClass('active');
+    $(`.delivery-option:has(input[name="text-align"][value="${fAlign}"])`).addClass('active');
+
+    // 7. Text Color
+    const fColor = txtConfig.color || "#FFFFFF";
+    $('.text-color-option').removeClass('selected');
+    let $colorOption = $(`.text-color-option[data-hex="${fColor}"]`);
+    if(!$colorOption.length) $colorOption = $(`.text-color-option[data-hex="${fColor.toUpperCase()}"]`);
+    if($colorOption.length) $colorOption.addClass('selected');
+    else $(`.text-color-option[data-hex="#FFFFFF"]`).addClass('selected');
+    
+    // 8. Rotation
+    const rotation = txtConfig.rotation || { x: 0, y: 0, z: 0 };
+    const rotXDeg = (rotation.x || 0) * (180 / Math.PI);
+    const rotYDeg = (rotation.y || 0) * (180 / Math.PI);
+    const rotZDeg = (rotation.z || 0) * (180 / Math.PI);
+    
+    $('#text-rotation-x').val(rotXDeg.toFixed(1));
+    $('#text-rotation-x-value').text(rotXDeg.toFixed(0) + '°');
+    
+    $('#text-rotation-y').val(rotYDeg.toFixed(1));
+    $('#text-rotation-y-value').text(rotYDeg.toFixed(0) + '°');
+    
+    $('#text-rotation-z').val(rotZDeg.toFixed(1));
+    $('#text-rotation-z-value').text(rotZDeg.toFixed(0) + '°');
+    
+    // 9. Position
+    const position = txtConfig.position || { x: 0, y: 0, z: 10 };
+    $('#text-pos-x').val(position.x || 0);
+    $('#text-pos-y').val(position.y || 0);
+    $('#text-pos-z').val(position.z || 10);
+
+    // 10. Logo UI
+    const logoConfig = config.logo || {};
+    $('#logo-size-slider, #logo-size-input').val(logoConfig.scale || 1);
+    $('#logo-depth-slider, #logo-depth-input').val(logoConfig.depth || 4);
+    
+    const lr = logoConfig.rotation || { x: 0, y: 0, z: 0 };
+    const lp = logoConfig.position || { x: 0, y: 0, z: 0 };
+    
+    $('#logo-rotation-x').val(((lr.x || 0) * 180 / Math.PI).toFixed(0)); 
+    $('#logo-rotation-x-value').text(((lr.x || 0) * 180 / Math.PI).toFixed(0) + '°');
+    $('#logo-rotation-y').val(((lr.y || 0) * 180 / Math.PI).toFixed(0));
+    $('#logo-rotation-y-value').text(((lr.y || 0) * 180 / Math.PI).toFixed(0) + '°');
+    $('#logo-rotation-z').val(((lr.z || 0) * 180 / Math.PI).toFixed(0));
+    $('#logo-rotation-z-value').text(((lr.z || 0) * 180 / Math.PI).toFixed(0) + '°');
+    
+    $('#logo-pos-x').val(lp.x || 0);
+    $('#logo-pos-y').val(lp.y || 0);
+    $('#logo-pos-z').val(lp.z || 0);
+}
+
 function updateModalImage() {
     if (currentModalImages.length > 0) {
         $('#modal-img').attr('src', currentModalImages[currentImageIndex]);
         $('#modal-image-counter').text((currentImageIndex + 1) + ' / ' + currentModalImages.length);
     }
+}
+
+function renderHomeLibrary() {
+    const $grid = $('#home-models-grid');
+    $grid.empty();
+
+    // Sort by sellCount descending and take top 3
+    const topModels = [...allFirebaseModels]
+        .sort((a, b) => (b.sellCount || 0) - (a.sellCount || 0))
+        .slice(0, 3);
+
+    topModels.forEach(model => {
+        const firstImage = (model.images && model.images.length > 0) ? model.images[0] : (model.img || "./content/product2.jpeg");
+        
+        $grid.append(`
+            <div class="model-card" data-id="${model.id}">
+                <div class="card-image"><img src="${firstImage}" alt="${model.name}"/></div>
+                <div class="model-info">
+                    <div class="model-title">${model.name}</div>
+                    <div class="model-desc">${model.desc.substring(0, 60)}...</div>
+                    <div class="card-meta">
+                        <span class="price-tag">₺${model.price.toFixed(2)}</span>
+                        <button class="btn-sm library-select-btn" 
+                            data-id="${model.id}" 
+                            data-name="${model.name}" 
+                            data-stl="${model.stl}" 
+                            data-custom="${model.isCustomizable || false}">
+                            Özelleştir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `);
+    });
 }
 
 function renderModelsPage(modelsList) {
@@ -748,9 +1251,129 @@ function loadUserOrders(userId) {
     });
 }
 
+function checkParamVisibility(paramName, currentMode) {
+    const configVal = activeModelConfig?.customizableParams?.[paramName] || 0;
+    
+    // Case 1: Param is 0 ('none') -> Never visible
+    if (configVal === 0) return false;
+
+    // Case 2: Param is 1 ('basic') -> Always visible (Basic implies Pro)
+    if (configVal === 1) return true; 
+
+    // Case 3: Param is 2 ('pro') -> Only visible in 'advanced' (Pro) mode
+    if (configVal === 2) return currentMode === 'advanced';
+
+    return false; // Fallback
+}
+
+function updateControlsVisibility(mode) {
+    if (!activeModelConfig || !activeModelConfig.customizableParams) return;
+
+    // 1. Text Content
+    const showTextContent = checkParamVisibility('textContent', mode);
+    $('#custom-text-input').closest('.form-group, #custom-text-group > label + input').toggle(showTextContent);
+
+    // 2. Text Font
+    const showFont = checkParamVisibility('textFont', mode);
+    $('#text-font-select').prev('label').toggle(showFont);
+    $('#text-font-select').toggle(showFont);
+
+    // 3. Text Color
+    const showTextColor = checkParamVisibility('textColor', mode);
+    $('#custom-text-group .color-grid').first().prev('label').toggle(showTextColor);
+    $('#custom-text-group .color-grid').toggle(showTextColor);
+    
+    // 4. Rotations
+    const showRotX = checkParamVisibility('textRotationX', mode);
+    $('#text-rotation-x').closest('.form-group').toggle(showRotX);
+    
+    const showRotY = checkParamVisibility('textRotationY', mode);
+    $('#text-rotation-y').closest('.form-group').toggle(showRotY);
+    
+    const showRotZ = checkParamVisibility('textRotationZ', mode);
+    $('#text-rotation-z').closest('.form-group').toggle(showRotZ);
+
+    // Toggle Rotation Container
+    const anyRotVisible = showRotX || showRotY || showRotZ;
+    $('#text-rotation-x').closest('.form-group').parent().toggle(anyRotVisible);
+    
+    // 5. Positions
+    const showPosX = checkParamVisibility('textPositionX', mode);
+    $('#text-pos-x').closest('.form-group').toggle(showPosX);
+    
+    const showPosY = checkParamVisibility('textPositionY', mode);
+    $('#text-pos-y').closest('.form-group').toggle(showPosY);
+    
+    const showPosZ = checkParamVisibility('textPositionZ', mode);
+    $('#text-pos-z').closest('.form-group').toggle(showPosZ);
+
+    // Toggle Position Container
+    const anyPosVisible = showPosX || showPosY || showPosZ;
+    $('#text-pos-x').closest('.form-group').parent().toggle(anyPosVisible);
+
+    // 6. Other Params (Model Color, Material, etc.)
+    // Model Color (second .color-grid in #panel-basic, or the one not in #custom-text-group)
+    const showModelColor = checkParamVisibility('modelColor', mode);
+    $('#panel-basic > .form-group:has(.color-grid)').toggle(showModelColor);
+
+    // Material
+    const showMaterial = checkParamVisibility('material', mode);
+    $('#material-select').closest('.form-group').toggle(showMaterial);
+
+    // Infill
+    const showInfill = checkParamVisibility('infill', mode);
+    $('#infill-select').closest('.form-group').toggle(showInfill);
+
+    // Quantity
+    const showQuantity = checkParamVisibility('quantity', mode);
+    $('#quantity-input').closest('.form-group').toggle(showQuantity);
+
+    // 11. Logo Section
+    const showLogo = checkParamVisibility('logo', mode);
+    $('#custom-logo-container').toggle(showLogo);
+
+    if (showLogo) {
+        // Logo Size
+        const showLogoSize = checkParamVisibility('logoSize', mode);
+        $('#logo-size-slider').closest('.form-group').toggle(showLogoSize);
+
+        // Logo Depth
+        const showLogoDepth = checkParamVisibility('logoDepth', mode);
+        $('#logo-depth-slider').closest('.form-group').toggle(showLogoDepth);
+
+        // Logo Rotations
+        const showLogoRotX = checkParamVisibility('logoRotationX', mode);
+        $('#logo-rotation-x').closest('.form-group').toggle(showLogoRotX);
+        const showLogoRotY = checkParamVisibility('logoRotationY', mode);
+        $('#logo-rotation-y').closest('.form-group').toggle(showLogoRotY);
+        const showLogoRotZ = checkParamVisibility('logoRotationZ', mode);
+        $('#logo-rotation-z').closest('.form-group').toggle(showLogoRotZ);
+
+        // Toggle Logo Rotation Container
+        const anyLogoRotVisible = showLogoRotX || showLogoRotY || showLogoRotZ;
+        $('#logo-rotation-x').closest('.form-group').parent().toggle(anyLogoRotVisible);
+
+        // Logo Positions
+        const showLogoPosX = checkParamVisibility('logoPositionX', mode);
+        $('#logo-pos-x').closest('.form-group').toggle(showLogoPosX);
+        const showLogoPosY = checkParamVisibility('logoPositionY', mode);
+        $('#logo-pos-y').closest('.form-group').toggle(showLogoPosY);
+        const showLogoPosZ = checkParamVisibility('logoPositionZ', mode);
+        $('#logo-pos-z').closest('.form-group').toggle(showLogoPosZ);
+
+        // Toggle Logo Position Container
+        const anyLogoPosVisible = showLogoPosX || showLogoPosY || showLogoPosZ;
+        $('#logo-pos-x').closest('.form-group').parent().toggle(anyLogoPosVisible);
+    }
+}
+
 function openInStudio(model) {
     // --- CLEAR INPUT ---
     $('#real-file-input').val('');
+    $('#logo-file-input').val(''); // Clear logo input
+
+    // Force switch to 'basic' tab initially
+    $('.tab-btn[data-mode="basic"]').click(); 
 
     switchPage('#upload-page');
     $('#file-name-display').text(model.name);
@@ -761,54 +1384,48 @@ function openInStudio(model) {
     // NEW: Deep copy the original config for reset functionality
     originalModelConfig = JSON.parse(JSON.stringify(model.customConfig || null));
 
+    // Clear Logo Mesh
+    if (logoMesh) {
+        if (mesh) mesh.remove(logoMesh);
+        logoMesh = null;
+    }
+    
+    // Reset Logo Config Defaults in UI if present
+    if (activeModelConfig && activeModelConfig.logo) {
+        // LOAD DEFAULT LOGO
+        if (activeModelConfig.customizableParams && activeModelConfig.customizableParams.logo > 0) {
+            if (activeModelConfig.logo && activeModelConfig.logo.content) {
+                updateCustomLogo(activeModelConfig.logo.content);
+            } else {
+                updateCustomLogo(DEFAULT_LOGO_SVG);
+            }
+        } else {
+             activeModelConfig.logo._lastSvg = null; 
+        }
+        
+        $('#logo-size-slider, #logo-size-input').val(activeModelConfig.logo.scale || 1);
+        $('#logo-depth-slider, #logo-depth-input').val(activeModelConfig.logo.depth || 4);
+        
+        const r = activeModelConfig.logo.rotation || { x: 0, y: 0, z: 0 };
+        const p = activeModelConfig.logo.position || { x: 0, y: 0, z: 0 };
+        
+        $('#logo-rotation-x').val((r.x * 180 / Math.PI) || 0); $('#logo-rotation-x-value').text(((r.x * 180 / Math.PI) || 0).toFixed(0) + '°');
+        $('#logo-rotation-y').val((r.y * 180 / Math.PI) || 0); $('#logo-rotation-y-value').text(((r.y * 180 / Math.PI) || 0).toFixed(0) + '°');
+        $('#logo-rotation-z').val((r.z * 180 / Math.PI) || 0); $('#logo-rotation-z-value').text(((r.z * 180 / Math.PI) || 0).toFixed(0) + '°');
+        
+        $('#logo-pos-x').val(p.x || 0);
+        $('#logo-pos-y').val(p.y || 0);
+        $('#logo-pos-z').val(p.z || 0);
+    }
+
     if (model.isCustomizable) {
         $('#custom-text-group').fadeIn(); 
-        const initialText = activeModelConfig ? activeModelConfig.text.initialContent : "ENGRARE";
-        $('#custom-text-input').val(initialText);
         
-        $('#text-font-select').val('helvetiker_bold');
+        // Use helper to sync UI
+        syncUIWithConfig(activeModelConfig);
         
-        $('.text-color-option').removeClass('selected');
-        $('.text-color-option[data-hex="#FFFFFF"]').addClass('selected');
-        
-        // Update rotation controls - CONVERT FROM RADIANS TO DEGREES
-        const rotation = activeModelConfig ? activeModelConfig.text.rotation : { x: 0, y: 0, z: 0 };
-        const rotXDeg = (rotation.x || 0) * (180 / Math.PI);
-        const rotYDeg = (rotation.y || 0) * (180 / Math.PI);
-        const rotZDeg = (rotation.z || 0) * (180 / Math.PI);
-        
-        // Show/hide rotation controls based on individual axis flags
-        const canEditRotX = activeModelConfig?.customizableParams?.textRotationX || false;
-        const canEditRotY = activeModelConfig?.customizableParams?.textRotationY || false;
-        const canEditRotZ = activeModelConfig?.customizableParams?.textRotationZ || false;
-        
-        $('#text-rotation-x').closest('.form-group').toggle(canEditRotX);
-        $('#text-rotation-x').val(rotXDeg);
-        $('#text-rotation-x-value').text(rotXDeg.toFixed(0) + '°');
-        
-        $('#text-rotation-y').closest('.form-group').toggle(canEditRotY);
-        $('#text-rotation-y').val(rotYDeg);
-        $('#text-rotation-y-value').text(rotYDeg.toFixed(0) + '°');
-        
-        $('#text-rotation-z').closest('.form-group').toggle(canEditRotZ);
-        $('#text-rotation-z').val(rotZDeg);
-        $('#text-rotation-z-value').text(rotZDeg.toFixed(0) + '°');
-        
-        // Update position controls based on individual axis flags
-        const canEditPosX = activeModelConfig?.customizableParams?.textPositionX || false;
-        const canEditPosY = activeModelConfig?.customizableParams?.textPositionY || false;
-        const canEditPosZ = activeModelConfig?.customizableParams?.textPositionZ || false;
-        
-        const position = activeModelConfig ? activeModelConfig.text.position : { x: 0, y: 0, z: 10 };
-        
-        $('#text-pos-x').closest('.form-group').toggle(canEditPosX);
-        $('#text-pos-x').val(position.x || 0);
-        
-        $('#text-pos-y').closest('.form-group').toggle(canEditPosY);
-        $('#text-pos-y').val(position.y || 0);
-        
-        $('#text-pos-z').closest('.form-group').toggle(canEditPosZ);
-        $('#text-pos-z').val(position.z || 10);
+        // Initial visibility update
+        updateControlsVisibility('basic');
         
     } else {
         $('#custom-text-group').hide();
@@ -955,11 +1572,23 @@ function handleFile(file) {
         return;
     }
     
-    // Clear library model reference and custom config
+    // Clear library model reference
     currentLibraryModel = null; 
-    activeModelConfig = null;
+    
+    // Assign default config for user uploads
+    activeModelConfig = JSON.parse(JSON.stringify(USER_UPLOAD_CONFIG));
+    originalModelConfig = JSON.parse(JSON.stringify(USER_UPLOAD_CONFIG));
 
-    $('#custom-text-group').hide();
+    // Show text group (since USER_UPLOAD_CONFIG has params enabled)
+    $('#custom-text-group').fadeIn();
+    
+    // Sync UI with Default Config
+    syncUIWithConfig(activeModelConfig);
+    
+    // Update Visibility (defaults to basic mode)
+    // Ensure basic mode is active visually
+    $('.tab-btn[data-mode="basic"]').click(); 
+    // updateControlsVisibility('basic'); // Click above handles this
     
     if (textMesh) {
          scene.remove(textMesh);
@@ -1062,6 +1691,10 @@ function loadSTL(data) {
     // 7. Add text
     if (activeModelConfig) {
         try { updateCustomText(activeModelConfig.text.initialContent); } catch(e){}
+        // Add Logo
+        if (activeModelConfig.logo && (activeModelConfig.logo._lastSvg || activeModelConfig.logo.content)) {
+             try { updateCustomLogo(activeModelConfig.logo._lastSvg || activeModelConfig.logo.content); } catch(e){}
+        }
     }
 
     // 8. Panel Info
@@ -1098,10 +1731,120 @@ function loadSTL(data) {
 }
 
 let textMesh = null;
+let logoMesh = null;
 let isDraggingText = false;
+let isDraggingLogo = false; // New for Logo Dragging
 let dragPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 let dragPoint = new THREE.Vector3();
 let textDragListenerSetup = false;
+
+// ... (existing updateCustomText function) ...
+
+function handleLogoUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.type !== 'image/svg+xml') {
+        alert("Lütfen geçerli bir SVG dosyası yükleyin.");
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const svgContent = event.target.result;
+        updateCustomLogo(svgContent);
+    };
+    reader.readAsText(file);
+}
+
+function updateCustomLogo(svgContent) {
+    if (!mesh || !activeModelConfig || !activeModelConfig.logo) return;
+
+    // Remove existing logo mesh
+    if (logoMesh) {
+        mesh.remove(logoMesh);
+        if (logoMesh.geometry) logoMesh.geometry.dispose();
+        logoMesh = null;
+    }
+
+    // If just clearing or empty content
+    if (!svgContent) return;
+
+    const loader = new SVGLoader();
+    const data = loader.parse(svgContent);
+    const paths = data.paths;
+    const group = new THREE.Group();
+
+    const cfg = activeModelConfig.logo;
+    const depth = cfg.depth || 2;
+    const scale = cfg.scale || 1;
+
+    // Material for Logo (using Text Color or a separate one? Using Text Color for consistency for now)
+    const selectedDiv = $('.text-color-option.selected');
+    const currentColor = selectedDiv.length > 0 ? selectedDiv.data('hex') : 0xFFFFFF;
+    const material = new THREE.MeshPhongMaterial({ color: currentColor });
+
+    for (let i = 0; i < paths.length; i++) {
+        const path = paths[i];
+        const shapes = SVGLoader.createShapes(path);
+
+        for (let j = 0; j < shapes.length; j++) {
+            const shape = shapes[j];
+            const geometry = new THREE.ExtrudeGeometry(shape, {
+                depth: depth,
+                bevelEnabled: false
+            });
+            
+            // Center the geometry roughly
+            geometry.center();
+            
+            // Move it so the bottom face is at Z=0 (instead of Z=-depth/2)
+            geometry.translate(0, 0, depth / 2);
+
+            const meshPart = new THREE.Mesh(geometry, material);
+            
+            // SVG Y coordinates are inverted relative to Three.js
+            meshPart.scale.y = -1;
+            
+            group.add(meshPart);
+        }
+    }
+
+    // Scale the entire group
+    // Note: SVGs can be huge or tiny. We might need normalization, 
+    // but relying on user slider 'scale' is safer for flexibility.
+    // However, SVG units are pixels usually. 
+    // Let's normalize to a standard size (e.g., 20 units width) then apply scale.
+    const bbox = new THREE.Box3().setFromObject(group);
+    const size = new THREE.Vector3();
+    bbox.getSize(size);
+    
+    const baseSize = 20; // Target base size
+    const normFactor = baseSize / Math.max(size.x, size.y);
+    
+    // Apply scale ONLY to X and Y. Z should be controlled by 'depth' parameter directly.
+    // We keep 'normFactor' on Z to keep units consistent, but NOT 'scale' (user size slider).
+    group.scale.set(normFactor * scale, normFactor * scale, normFactor);
+
+    logoMesh = group;
+
+    // Position
+    const pos = cfg.position || { x: 0, y: 0, z: 0 };
+    logoMesh.position.set(pos.x, pos.y, pos.z);
+
+    // Rotation
+    const rot = cfg.rotation || { x: 0, y: 0, z: 0 };
+    logoMesh.rotation.set(rot.x, rot.y, rot.z);
+
+    mesh.add(logoMesh);
+    
+    // Store content for re-updates (e.g. scale change)
+    // We attach it to the config temporarily or closure? 
+    // Better: Store lastSVGContent globally or in a specialized state
+    activeModelConfig.logo._lastSvg = svgContent;
+}
+
+// ... (rest of code) ...
 
 function updateCustomText(message) {
     if (!mesh || !activeModelConfig) return;
@@ -1128,18 +1871,80 @@ function updateCustomText(message) {
             if(textMesh.geometry) textMesh.geometry.dispose();
         }
 
-        const textGeo = new TextGeometry(message, {
-            font: font,
-            size: cfg.fontSize,
-            height: cfg.fontThickness,
-            curveSegments: 12,
-            bevelEnabled: false
+        const size = cfg.fontSize || 10;
+        const height = cfg.fontThickness || 4;
+        const spacing = cfg.letterSpacing || 0;
+        const align = cfg.alignment || "center";
+        const lineSpacing = 1.4; // 40% extra space between lines
+
+        const lines = message.split('\n');
+        const allGeometries = [];
+
+        lines.forEach((lineText, lineIdx) => {
+            if (lineText.trim() === "" && lines.length > 1) {
+                // Skip completely empty lines but maybe handle them for spacing later
+                return;
+            }
+
+            const charGeos = [];
+            let xOffset = 0;
+
+            for (let i = 0; i < lineText.length; i++) {
+                const char = lineText[i];
+                const charGeo = new TextGeometry(char, {
+                    font: font,
+                    size: size,
+                    height: height,
+                    curveSegments: 12,
+                    bevelEnabled: false
+                });
+
+                charGeo.computeBoundingBox();
+                const charWidth = charGeo.boundingBox.max.x - charGeo.boundingBox.min.x;
+                
+                charGeo.translate(xOffset, 0, 0);
+                charGeos.push(charGeo);
+                
+                xOffset += charWidth + spacing;
+            }
+
+            if (charGeos.length > 0) {
+                let lineGeo = mergeGeometries(charGeos);
+                lineGeo.computeBoundingBox();
+                const lineWidth = lineGeo.boundingBox.max.x - lineGeo.boundingBox.min.x;
+
+                // Horizontal Alignment within the line relative to X=0
+                let xShift = 0;
+                if (align === "center") xShift = -lineWidth / 2;
+                else if (align === "right") xShift = -lineWidth;
+                // Left is 0
+
+                // Vertical shift (Line 0 is top, Line 1 is below, etc.)
+                const yShift = -lineIdx * size * lineSpacing;
+
+                lineGeo.translate(xShift, yShift, 0);
+                allGeometries.push(lineGeo);
+            } else if (lineText === "") {
+                // Optional: handle empty lines to preserve spacing if needed
+            }
         });
 
-        textGeo.center();
+        if (allGeometries.length === 0) return;
+
+        let finalGeo = mergeGeometries(allGeometries);
+        
+        // Final vertical centering of the entire block
+        finalGeo.computeBoundingBox();
+        const bCenter = new THREE.Vector3();
+        finalGeo.boundingBox.getCenter(bCenter);
+        
+        // Translate block so its center is at (0,0,0) locally
+        // We only center Y and X if needed, but X alignment is already relative to 0.
+        // If alignment is 'left', bCenter.x will be positive. We should only center Y.
+        finalGeo.translate(0, -bCenter.y, 0);
 
         const textMat = new THREE.MeshPhongMaterial({ color: currentColor });
-        textMesh = new THREE.Mesh(textGeo, textMat);
+        textMesh = new THREE.Mesh(finalGeo, textMat);
 
         // Use position directly from config
         const pos = cfg.position || { x: 0, y: 0, z: 10 };
@@ -1166,49 +1971,68 @@ function setupTextDragListener() {
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     let dragStartPos = new THREE.Vector3();
-    let dragStartMouse = new THREE.Vector2();
     let dragStartScreenPos = new THREE.Vector2();
 
     canvas.addEventListener('mousedown', (event) => {
-        if (!textMesh) return;
-
-        // Calculate mouse position in normalized device coordinates
         const rect = canvas.getBoundingClientRect();
         mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
         mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
         raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects([textMesh]);
+        
+        // 1. Check Text
+        let textIntersected = false;
+        if (textMesh) {
+            const intersects = raycaster.intersectObjects([textMesh]);
+            if (intersects.length > 0) textIntersected = true;
+        }
 
-        if (intersects.length > 0) {
+        // 2. Check Logo (Recursive for Group)
+        let logoIntersected = false;
+        if (logoMesh) {
+            const intersects = raycaster.intersectObjects(logoMesh.children, true);
+            if (intersects.length > 0) logoIntersected = true;
+        }
+
+        // Prioritize Text if both clicked (rare) or logic to pick closest
+        if (textIntersected) {
             isDraggingText = true;
-            // Disable camera controls while dragging text
-            if (controls) controls.enabled = false;
-            
             dragStartPos.copy(textMesh.position);
-            dragStartMouse.copy(mouse);
             dragStartScreenPos.set(event.clientX - rect.left, event.clientY - rect.top);
+            if (controls) controls.enabled = false;
+            event.preventDefault();
+        } else if (logoIntersected) {
+            isDraggingLogo = true;
+            dragStartPos.copy(logoMesh.position);
+            dragStartScreenPos.set(event.clientX - rect.left, event.clientY - rect.top);
+            if (controls) controls.enabled = false;
             event.preventDefault();
         }
     });
 
     canvas.addEventListener('mousemove', (event) => {
-        if (!isDraggingText || !textMesh) return;
+        if (!isDraggingText && !isDraggingLogo) return;
 
         const rect = canvas.getBoundingClientRect();
         mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
         mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
-        // Get axis lock settings
-        const canEditPosX = activeModelConfig?.customizableParams?.textPositionX || false;
-        const canEditPosY = activeModelConfig?.customizableParams?.textPositionY || false;
-        const canEditPosZ = activeModelConfig?.customizableParams?.textPositionZ || false;
+        const isText = isDraggingText;
+        const targetMesh = isText ? textMesh : logoMesh;
+        
+        if (!targetMesh) return;
 
-        // Get current screen position
+        const paramPrefix = isText ? 'text' : 'logo';
+        const getParamVal = (name) => activeModelConfig?.customizableParams?.[name] || 0;
+        
+        const canEditPosX = getParamVal(paramPrefix + 'PositionX') > 0;
+        const canEditPosY = getParamVal(paramPrefix + 'PositionY') > 0;
+        const canEditPosZ = getParamVal(paramPrefix + 'PositionZ') > 0;
+
         const currentScreenPos = new THREE.Vector2(event.clientX - rect.left, event.clientY - rect.top);
         const screenDelta = currentScreenPos.clone().sub(dragStartScreenPos);
 
-        // For X and Y: Use camera view plane
+        // XY Movement (Camera Plane)
         let worldDeltaXY = new THREE.Vector3(0, 0, 0);
         if (canEditPosX || canEditPosY) {
             const cameraDir = new THREE.Vector3();
@@ -1219,43 +2043,40 @@ function setupTextDragListener() {
             raycaster.setFromCamera(mouse, camera);
             const newWorldPos = new THREE.Vector3();
             raycaster.ray.intersectPlane(dragPlane, newWorldPos);
-            worldDeltaXY = newWorldPos.clone().sub(dragStartPos);
+            if (newWorldPos) {
+                worldDeltaXY = newWorldPos.clone().sub(dragStartPos);
+            }
         }
 
-        // For Z: Use screen vertical movement (inverted)
-        // Increased multiplier from 100 to 150 for faster Z movement
+        // Z Movement (Screen Vertical)
         const worldDeltaZ = canEditPosZ ? -(screenDelta.y / rect.height) * 150 : 0;
 
-        // Build new position with axis locks
         const newPos = new THREE.Vector3(
             canEditPosX ? dragStartPos.x + worldDeltaXY.x : dragStartPos.x,
             canEditPosY ? dragStartPos.y + worldDeltaXY.y : dragStartPos.y,
             canEditPosZ ? dragStartPos.z + worldDeltaZ : dragStartPos.z
         );
 
-        textMesh.position.copy(newPos);
+        targetMesh.position.copy(newPos);
 
-        // Update UI inputs (only for unlocked axes)
-        if (activeModelConfig && activeModelConfig.text) {
-            activeModelConfig.text.position = {
-                x: newPos.x,
-                y: newPos.y,
-                z: newPos.z
-            };
-            if (canEditPosX) $('#text-pos-x').val(newPos.x.toFixed(2));
-            if (canEditPosY) $('#text-pos-y').val(newPos.y.toFixed(2));
-            if (canEditPosZ) $('#text-pos-z').val(newPos.z.toFixed(2));
+        // Sync UI
+        const configTarget = isText ? activeModelConfig.text : activeModelConfig.logo;
+        const uiPrefix = isText ? '#text-pos-' : '#logo-pos-';
+        
+        if (activeModelConfig && configTarget) {
+            configTarget.position = { x: newPos.x, y: newPos.y, z: newPos.z };
+            if (canEditPosX) $(uiPrefix + 'x').val(newPos.x.toFixed(2));
+            if (canEditPosY) $(uiPrefix + 'y').val(newPos.y.toFixed(2));
+            if (canEditPosZ) $(uiPrefix + 'z').val(newPos.z.toFixed(2));
         }
         
         event.preventDefault();
     });
 
     canvas.addEventListener('mouseup', () => {
-        if (isDraggingText) {
-            isDraggingText = false;
-            // Re-enable camera controls
-            if (controls) controls.enabled = true;
-        }
+        isDraggingText = false;
+        isDraggingLogo = false;
+        if (controls) controls.enabled = true;
     });
 }
 

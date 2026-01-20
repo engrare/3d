@@ -915,3 +915,28 @@ p { color: var(--text-muted); }
         grid-template-columns: 1fr;
     }
 }
+
+/* Custom File Upload Box */
+.custom-file-upload {
+    background: white;
+    border: 2px dashed #bfdbfe;
+    border-radius: 12px;
+    padding: 24px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.custom-file-upload:hover {
+    border-color: #3b82f6;
+    background: #f0f9ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
+}
+
+.custom-file-upload:active {
+    transform: translateY(0);
+}

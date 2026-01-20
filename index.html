@@ -10,7 +10,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NLSV32JMM2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
 
+  gtag('config', 'G-NLSV32JMM2');
+</script>
 <script type="importmap">
         {
             "imports": {
@@ -70,47 +78,12 @@
 
         <div id="library-section" class="container">
             <div class="section-header">
-                <span class="section-subtitle">Ticari Kütüphane</span>
-                <h3>Mühendislik Bileşenleri</h3>
+                <span class="section-subtitle">Baskıya Hazır Ürünler</span>
+                <h3>En Popüler Ürünler</h3>
                 <p>Anında üretime hazır doğrulanmış tasarımlar.</p>
             </div>
             
-            <div class="grid-3">
-                <div class="product-card">
-                    <div class="card-image"><img src="./content/product1.jpeg" alt="Kalibrasyon Küpü"/></div>
-                    <div class="card-info">
-                        <h4>Kalibrasyon Küpü</h4>
-                        <p class="text-sm">Doğruluk testi standardı.</p>
-                        <div class="card-meta">
-                            <span class="price-tag">₺150.00</span>
-                            <button class="btn-sm library-select-btn" data-stl="./assets/cube.stl" data-name="Kalibrasyon Küpü">Özelleştir</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="product-card">
-                    <div class="card-image"><img src="./content/product2.jpeg" alt="Telefon Standı"/></div>
-                    <div class="card-info">
-                        <h4>Modüler Telefon Standı</h4>
-                        <p class="text-sm">Ayarlanabilir görüş açıları.</p>
-                        <div class="card-meta">
-                            <span class="price-tag">₺350.00</span>
-                            <button class="btn-sm library-select-btn" data-stl="./assets/phone_stand.stl" data-name="Telefon Standı">Özelleştir</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="product-card">
-                    <div class="card-image"><img src="./content/product3.avif" alt="Dişli Seti"/></div>
-                    <div class="card-info">
-                        <h4>Gezegensel Dişli Seti</h4>
-                        <p class="text-sm">Yüksek torkullu mekanik montajı.</p>
-                        <div class="card-meta">
-                            <span class="price-tag">₺600.00</span>
-                            <button class="btn-sm library-select-btn" data-stl="./assets/gear.stl" data-name="Gezegensel Dişli">Özelleştir</button>
-                        </div>
-                    </div>
-                </div>
+            <div class="grid-3" id="home-models-grid">
             </div>
         </div>
 
@@ -273,7 +246,7 @@
                         <div id="panel-basic" class="config-panel">
 							<div id="custom-text-group" style="display:none; background: linear-gradient(135deg, #f0f9ff 0%, #eff6ff 100%); padding: 16px; border-radius: 12px; border: 1px solid #bfdbfe; margin-bottom: 20px;">
                                 <label style="color: #1e40af; display:block; font-weight: 700; font-size: 0.9rem; margin-bottom: 12px;">Özel Metin</label>
-                                <input type="text" id="custom-text-input" class="input-box" value="ENGRARE" placeholder="Burada yazın..." style="border-color: #60a5fa; color: #1e3a8a; font-weight: 600; margin-bottom: 15px;">
+                                <textarea id="custom-text-input" class="input-box" placeholder="Burada yazın..." style="border-color: #60a5fa; color: #1e3a8a; font-weight: 600; margin-bottom: 15px; min-height: 80px; resize: vertical; padding: 12px; line-height: 1.4;">ENGRARE</textarea>
                                 
                                 <!-- Font Selection -->
                                 <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Yazı Tipi</label>
@@ -285,6 +258,44 @@
                                     <option value="droid_sans_bold">Droid Sans Kalın</option>
                                     <option value="droid_sans_regular">Droid Sans Normal</option>
                                 </select>
+
+                                <!-- Text Size -->
+                                <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Yazı Boyutu</label>
+                                <div class="form-group" style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center;">
+                                    <input type="range" id="text-size-slider" class="slider-input" min="1" max="100" value="10" style="flex: 1; cursor: pointer;">
+                                    <input type="number" id="text-size-input" class="input-box" value="10" min="1" max="100" style="width: 60px; padding: 4px; text-align: center; border-color: #60a5fa;">
+                                </div>
+
+                                <!-- Text Depth -->
+                                <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Yazı Derinliği</label>
+                                <div class="form-group" style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center;">
+                                    <input type="range" id="text-depth-slider" class="slider-input" min="1" max="50" value="4" style="flex: 1; cursor: pointer;">
+                                    <input type="number" id="text-depth-input" class="input-box" value="4" min="1" max="50" style="width: 60px; padding: 4px; text-align: center; border-color: #60a5fa;">
+                                </div>
+
+                                <!-- Letter Spacing -->
+                                <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Harf Aralığı</label>
+                                <div class="form-group" style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center;">
+                                    <input type="range" id="letter-spacing-slider" class="slider-input" min="0" max="10" step="0.1" value="0" style="flex: 1; cursor: pointer;">
+                                    <input type="number" id="letter-spacing-input" class="input-box" value="0" min="0" max="10" step="0.1" style="width: 60px; padding: 4px; text-align: center; border-color: #60a5fa;">
+                                </div>
+
+                                <!-- Text Alignment -->
+                                <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Hizalama</label>
+                                <div class="form-group" style="margin-bottom: 15px; display: flex; gap: 10px;">
+                                    <label class="delivery-option" style="flex:1; justify-content:center; padding: 8px; margin-bottom:0;" title="Sola Yasla">
+                                        <i class="fa-solid fa-align-left"></i>
+                                        <input type="radio" name="text-align" value="left">
+                                    </label>
+                                    <label class="delivery-option active" style="flex:1; justify-content:center; padding: 8px; margin-bottom:0;" title="Ortala">
+                                        <i class="fa-solid fa-align-center"></i>
+                                        <input type="radio" name="text-align" value="center" checked>
+                                    </label>
+                                    <label class="delivery-option" style="flex:1; justify-content:center; padding: 8px; margin-bottom:0;" title="Sağa Yasla">
+                                        <i class="fa-solid fa-align-right"></i>
+                                        <input type="radio" name="text-align" value="right">
+                                    </label>
+                                </div>
                                 
                                 <!-- Text Color -->
                                 <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Metin Rengi</label>
@@ -351,6 +362,83 @@
                                         <i class="fa-solid fa-redo" style="margin-right: 6px;"></i> Sıfırla
                                     </button>
                                 </div>
+
+                                <!-- CUSTOM LOGO SECTION MERGED HERE -->
+                                <div id="custom-logo-container" style="border-top: 1px dashed #bfdbfe; padding-top: 20px; margin-top: 20px;">
+                                    <label style="color: #1e40af; display:block; font-weight: 700; font-size: 0.9rem; margin-bottom: 12px;">Özel Logo (SVG)</label>
+                                    
+                                    <div class="form-group" style="margin-bottom: 15px;">
+                                        <div id="logo-upload-box" class="custom-file-upload" onclick="document.getElementById('logo-file-input').click();">
+                                            <i class="fa-solid fa-cloud-arrow-up" style="font-size: 1.5rem; color: #3b82f6; margin-bottom: 8px;"></i>
+                                            <span style="font-weight: 600; color: #1e40af; font-size: 0.9rem;">SVG Logo Yükle</span>
+                                            <span style="font-size: 0.75rem; color: #64748B;">veya sürükleyip bırakın</span>
+                                            <input type="file" id="logo-file-input" accept=".svg" hidden>
+                                        </div>
+                                    </div>
+
+                                    <!-- Logo Size -->
+                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Logo Boyutu</label>
+                                    <div class="form-group" style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center;">
+                                        <input type="range" id="logo-size-slider" class="slider-input" min="0.1" max="5" step="0.1" value="1" style="flex: 1; cursor: pointer;">
+                                        <input type="number" id="logo-size-input" class="input-box" value="1" min="0.1" max="5" step="0.1" style="width: 60px; padding: 4px; text-align: center; border-color: #60a5fa;">
+                                    </div>
+
+                                    <!-- Logo Depth -->
+                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:none; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Logo Derinliği</label>
+                                    <div class="form-group" style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center;">
+                                        <input type="range" id="logo-depth-slider" class="slider-input" min="1" max="50" value="4" style="flex: 1; cursor: pointer;">
+                                        <input type="number" id="logo-depth-input" class="input-box" value="4" min="1" max="50" style="width: 60px; padding: 4px; text-align: center; border-color: #60a5fa;">
+                                    </div>
+
+                                    <!-- Logo Rotation Section -->
+                                    <div style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                                        <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 12px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Dönüş (°)</label>
+                                        
+                                        <div class="form-group" style="margin-bottom: 12px;">
+                                            <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 4px; font-weight: 600;">X</label>
+                                            <div style="display: flex; gap: 8px;">
+                                                <input type="range" id="logo-rotation-x" class="slider-input" min="-180" max="180" value="0" style="flex: 1; cursor: pointer;">
+                                                <span id="logo-rotation-x-value" style="color: #1e40af; font-weight: 700; min-width: 40px; text-align: right; font-size: 0.85rem;">0°</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 12px;">
+                                            <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 4px; font-weight: 600;">Y</label>
+                                            <div style="display: flex; gap: 8px;">
+                                                <input type="range" id="logo-rotation-y" class="slider-input" min="-180" max="180" value="0" style="flex: 1; cursor: pointer;">
+                                                <span id="logo-rotation-y-value" style="color: #1e40af; font-weight: 700; min-width: 40px; text-align: right; font-size: 0.85rem;">0°</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 4px; font-weight: 600;">Z</label>
+                                            <div style="display: flex; gap: 8px;">
+                                                <input type="range" id="logo-rotation-z" class="slider-input" min="-180" max="180" value="0" style="flex: 1; cursor: pointer;">
+                                                <span id="logo-rotation-z-value" style="color: #1e40af; font-weight: 700; min-width: 40px; text-align: right; font-size: 0.85rem;">0°</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Logo Position Section -->
+                                    <div style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                                        <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 12px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Konum</label>
+                                        
+                                        <div class="form-group" style="margin-bottom: 8px;">
+                                            <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 3px; font-weight: 600;">X</label>
+                                            <input type="number" id="logo-pos-x" class="input-box" value="0" step="0.5" style="border-color: #60a5fa; font-size: 0.85rem;">
+                                        </div>
+                                        
+                                        <div class="form-group" style="margin-bottom: 8px;">
+                                            <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 3px; font-weight: 600;">Y</label>
+                                            <input type="number" id="logo-pos-y" class="input-box" value="0" step="0.5" style="border-color: #60a5fa; font-size: 0.85rem;">
+                                        </div>
+                                        
+                                        <div class="form-group" style="margin-bottom: 12px;">
+                                            <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 3px; font-weight: 600;">Z</label>
+                                            <input type="number" id="logo-pos-z" class="input-box" value="10" step="0.5" style="border-color: #60a5fa; font-size: 0.85rem;">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             
                             <div class="form-group">
@@ -394,13 +482,25 @@
                                 <label>Teslimat Önceliği</label>
                                 <div class="delivery-list">
                                     <label class="delivery-option active">
-                                        <div><span class="del-title">Standart</span></div><input type="radio" name="delivery" value="1" checked>
+                                        <div>
+                                            <span class="del-title">Standart</span>
+                                            <span class="del-desc" style="font-size: 0.75rem; color: #64748B;">3-5 Gün</span>
+                                        </div>
+                                        <input type="radio" name="delivery" value="1" checked>
                                     </label>
                                     <label class="delivery-option">
-                                        <div><span class="del-title">Hızlı</span></div><input type="radio" name="delivery" value="1.5">
+                                        <div>
+                                            <span class="del-title">Hızlı</span>
+                                            <span class="del-desc" style="font-size: 0.75rem; color: #64748B;">1-2 Gün</span>
+                                        </div>
+                                        <input type="radio" name="delivery" value="1.5">
                                     </label>
                                 </div>
                             </div>
+                            
+                            <button type="button" id="btn-reset-basic" class="btn secondary" style="width: 100%; margin-top: 10px; border-color: #ef4444; color: #ef4444;">
+                                <i class="fa-solid fa-rotate-left" style="margin-right: 8px;"></i> Ayarları Sıfırla
+                            </button>
                         </div>
 
                         <div id="panel-advanced" class="config-panel" style="display: none;">
@@ -476,7 +576,7 @@
                     <span style="font-weight:700; font-size:1.2rem;">Toplam</span>
                     <span id="val-total" style="font-weight:800; font-size:1.5rem; color:var(--primary);">₺50.00</span>
                 </div>
-                <button class="btn primary" style="width: 100%; margin-top: 20px;">Güvenli Ödemeye Devam Et</button>
+                <button class="btn primary" style="width: 100%; margin-top: 20px;">Hata: Ödeme Sistemi Çalışmıyor.</button>
             </div>
         </div>
     </section>
