@@ -33,8 +33,16 @@ const storage = getStorage(app);
 const functions = getFunctions(app, 'europe-west1');
 let activeModelConfig = null;
 let currentLibraryModel = null;
+let originalModelConfig = null; // NEW: Store original config for reset
 let scene, camera, renderer, mesh, controls;
 let cart = [];
+// --- MODAL STATE ---
+let currentModalStl = "";
+let currentModalName = "";
+let currentModalId = null;
+let currentModalImages = [];
+let currentImageIndex = 0;
+
 const BASE_PRICE_PER_CM3 = 15.00; 
 const BUILD_VOLUME_X = 256;
 const BUILD_VOLUME_Y = 256;
@@ -190,13 +198,6 @@ const allFirebaseModels = [
         }
     }
 ];
-
-// --- MODAL VARIABLES ---
-let currentModalStl = "";
-let currentModalName = "";
-let currentModalId = null;
-let currentModalImages = [];
-let currentImageIndex = 0;
 
 // --- DOM READY ---
 $(document).ready(function() {
@@ -480,79 +481,96 @@ $(document).ready(function() {
         e.preventDefault();
         e.stopPropagation();
         
-        if (!activeModelConfig || !currentLibraryModel) {
+        console.log("=== RESET BUTTON CLICKED ===");
+        
+        if (!originalModelConfig || !originalModelConfig.text) {
+            console.warn("❌ No original model config found");
+            console.log("originalModelConfig:", originalModelConfig);
             return;
         }
 
-        const initialConfig = currentLibraryModel.customConfig;
-        if (!initialConfig || !initialConfig.text) {
-            return;
-        }
+        console.log("✓ Original config found");
+        console.log("originalModelConfig:", originalModelConfig);
 
-        // Get initial values from the library model config
-        const initialPos = initialConfig.text.position;
-        const initialRot = initialConfig.text.rotation;
+        // Get ORIGINAL initial values (not the modified activeModelConfig)
+        const initialPos = originalModelConfig.text.position;
+        const initialRot = originalModelConfig.text.rotation;
+
+        console.log("Original Position:", initialPos);
+        console.log("Original Rotation (radians):", initialRot);
 
         // Update rotation UI (convert radians to degrees)
         const rotXDeg = (initialRot.x || 0) * (180 / Math.PI);
         const rotYDeg = (initialRot.y || 0) * (180 / Math.PI);
         const rotZDeg = (initialRot.z || 0) * (180 / Math.PI);
 
+        console.log("Converted to degrees - X:", rotXDeg, "Y:", rotYDeg, "Z:", rotZDeg);
+
         // Step 1: Update 3D mesh position and rotation FIRST
+        console.log("Step 1: Updating 3D mesh...");
         if (textMesh) {
-            textMesh.position.set(
-                initialPos.x !== undefined ? initialPos.x : 0,
-                initialPos.y !== undefined ? initialPos.y : 0,
-                initialPos.z !== undefined ? initialPos.z : 0
-            );
-            textMesh.rotation.set(
-                initialRot.x !== undefined ? initialRot.x : 0,
-                initialRot.y !== undefined ? initialRot.y : 0,
-                initialRot.z !== undefined ? initialRot.z : 0
-            );
+            console.log("textMesh exists, updating position and rotation");
+            textMesh.position.set(initialPos.x || 0, initialPos.y || 0, initialPos.z || 10);
+            textMesh.rotation.set(initialRot.x || 0, initialRot.y || 0, initialRot.z || 0);
+            console.log("✓ 3D mesh updated");
+            console.log("textMesh position:", textMesh.position);
+            console.log("textMesh rotation:", textMesh.rotation);
+        } else {
+            console.warn("⚠️ textMesh is null or undefined");
         }
 
-        // Step 2: Update config
+        // Step 2: Update BOTH configs to original values
+        console.log("Step 2: Updating configs...");
         activeModelConfig.text.rotation = {
-            x: initialRot.x !== undefined ? initialRot.x : 0,
-            y: initialRot.y !== undefined ? initialRot.y : 0,
-            z: initialRot.z !== undefined ? initialRot.z : 0
+            x: initialRot.x || 0,
+            y: initialRot.y || 0,
+            z: initialRot.z || 0
         };
         activeModelConfig.text.position = {
-            x: initialPos.x !== undefined ? initialPos.x : 0,
-            y: initialPos.y !== undefined ? initialPos.y : 0,
-            z: initialPos.z !== undefined ? initialPos.z : 0
+            x: initialPos.x || 0,
+            y: initialPos.y || 0,
+            z: initialPos.z || 10
         };
+        console.log("✓ Configs updated");
+        console.log("Updated position:", activeModelConfig.text.position);
+        console.log("Updated rotation:", activeModelConfig.text.rotation);
 
-        // Step 3: Temporarily remove listeners to prevent cascading updates
+        // Step 3: Temporarily remove listeners
+        console.log("Step 3: Removing event listeners...");
         $('#text-rotation-x').off('input');
         $('#text-rotation-y').off('input');
         $('#text-rotation-z').off('input');
         $('#text-pos-x').off('input');
         $('#text-pos-y').off('input');
         $('#text-pos-z').off('input');
+        console.log("✓ Event listeners removed");
 
         // Step 4: Update UI values
-        const rotXVal = rotXDeg.toFixed(1);
-        const rotYVal = rotYDeg.toFixed(1);
-        const rotZVal = rotZDeg.toFixed(1);
+        console.log("Step 4: Updating UI values...");
         
-        $('#text-rotation-x').val(rotXVal);
+        $('#text-rotation-x').val(rotXDeg.toFixed(1));
         $('#text-rotation-x-value').text(rotXDeg.toFixed(0) + '°');
+        console.log("✓ Rotation X updated:", rotXDeg.toFixed(1));
 
-        $('#text-rotation-y').val(rotYVal);
+        $('#text-rotation-y').val(rotYDeg.toFixed(1));
         $('#text-rotation-y-value').text(rotYDeg.toFixed(0) + '°');
+        console.log("✓ Rotation Y updated:", rotYDeg.toFixed(1));
 
-        $('#text-rotation-z').val(rotZVal);
+        $('#text-rotation-z').val(rotZDeg.toFixed(1));
         $('#text-rotation-z-value').text(rotZDeg.toFixed(0) + '°');
+        console.log("✓ Rotation Z updated:", rotZDeg.toFixed(1));
 
-        $('#text-pos-x').val((initialPos.x !== undefined ? initialPos.x : 0).toFixed(2));
+        $('#text-pos-x').val((initialPos.x || 0).toFixed(2));
+        console.log("✓ Position X updated:", (initialPos.x || 0).toFixed(2));
         
-        $('#text-pos-y').val((initialPos.y !== undefined ? initialPos.y : 0).toFixed(2));
+        $('#text-pos-y').val((initialPos.y || 0).toFixed(2));
+        console.log("✓ Position Y updated:", (initialPos.y || 0).toFixed(2));
         
-        $('#text-pos-z').val((initialPos.z !== undefined ? initialPos.z : 0).toFixed(2));
+        $('#text-pos-z').val((initialPos.z || 10).toFixed(2));
+        console.log("✓ Position Z updated:", (initialPos.z || 10).toFixed(2));
 
         // Step 5: Re-attach listeners
+        console.log("Step 5: Re-attaching event listeners...");
         $('#text-rotation-x').on('input', function() {
             const rotation = parseFloat($(this).val());
             $('#text-rotation-x-value').text(rotation + '°');
@@ -582,7 +600,12 @@ $(document).ready(function() {
         $('#text-pos-z').on('input', function() {
             updateTextPosition();
         });
+        
+        console.log("✓ Event listeners re-attached");
+        console.log("=== RESET COMPLETE ===");
     });
+
+    // --- MODAL LOGIC ---
 
     // Open Modal when Model Card clicked
     $(document).on('click', '.model-card', function() {
@@ -733,8 +756,10 @@ function openInStudio(model) {
     $('#file-name-display').text(model.name);
     
 	currentLibraryModel = model; // Store the full model data to reference later
-    // Deep copy the customConfig to prevent modifications from affecting the original
-    activeModelConfig = model.customConfig ? JSON.parse(JSON.stringify(model.customConfig)) : null;
+    activeModelConfig = model.customConfig || null;
+    
+    // NEW: Deep copy the original config for reset functionality
+    originalModelConfig = JSON.parse(JSON.stringify(model.customConfig || null));
 
     if (model.isCustomizable) {
         $('#custom-text-group').fadeIn(); 
