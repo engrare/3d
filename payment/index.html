@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engrare Ödeme</title>
+    <link rel="icon" type="image/png" href="https://www.engrare.com/files/photos/title_icon.png" sizes="48x48">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Using shared style plus specific overrides -->
+    <link rel="stylesheet" href="../myStyle.css">
+    <link rel="stylesheet" href="myStyle.css">
+
+    <script type="importmap">
+        {
+            "imports": {
+                "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+                "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+                "firebase/database": "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js",
+                "firebase/functions": "https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div class="checkout-wrapper">
+        <!-- LEFT: FORM -->
+        <div class="checkout-form-section">
+            <div class="checkout-header">
+                <img src="../content/engrare_logo_elegant.png" alt="ENGRARE" height="50" style="margin-bottom: 20px;">
+                <div class="breadcrumb">
+                    <a href="../index.html">Sepet</a> <i class="fa-solid fa-chevron-right"></i> <span>Ödeme</span>
+                </div>
+            </div>
+
+            <!-- LOGGED IN USER HEADER -->
+            <div id="user-profile-header" style="display:none; align-items:center; gap:15px; margin-bottom:30px; padding:15px; background:#F8FAFC; border-radius:12px; border:1px solid var(--border);">
+                <img id="checkout-user-img" src="../content/default_user.png" style="width:50px; height:50px; border-radius:50%; object-fit:cover;">
+                <div>
+                    <div id="checkout-user-name" style="font-weight:700; color:var(--primary);">Kullanıcı Adı</div>
+                    <div id="checkout-user-email" style="font-size:0.85rem; color:var(--text-muted);">email@example.com</div>
+                </div>
+            </div>
+
+            <!-- GUEST INFO FORM (Visible if Guest) -->
+            <div id="guest-info-section" style="display:none;">
+                <h3>İletişim Bilgileri</h3>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label>E-Posta</label>
+                        <input type="email" id="contact-email" class="input-box" placeholder="ornek@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Telefon</label>
+                        <input type="tel" id="contact-phone" class="input-box" placeholder="05xx..." required>
+                    </div>
+                </div>
+                
+                <h3>Teslimat Adresi</h3>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <input type="text" id="ship-name" class="input-box" placeholder="Ad" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="ship-surname" class="input-box" placeholder="Soyad" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <input type="text" id="ship-address" class="input-box" placeholder="Adres" required>
+                </div>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <input type="text" id="ship-city" class="input-box" placeholder="Şehir" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="ship-zip" class="input-box" placeholder="Posta Kodu">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SAVED ADDRESS (Visible if User) -->
+            <div id="user-address-section" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3>Teslimat Adresi</h3>
+                    <button id="btn-add-address" class="btn-sm secondary" style="font-size:0.75rem;">+ Yeni Ekle</button>
+                </div>
+                <select id="saved-address-select" class="select-box" style="margin-bottom: 15px;">
+                    <option value="" disabled selected>Adres Seçin</option>
+                </select>
+                
+                <!-- Hidden New Address Form -->
+                <div id="new-address-form" style="display:none; margin-top: 15px; background: #f8fafc; padding: 15px; border-radius: 8px;">
+                    <input type="text" id="new-addr-title" class="input-box mb-2" placeholder="Adres Başlığı (Örn: Ev)">
+                    <div class="form-grid-2">
+                        <input type="text" id="new-addr-name" class="input-box mb-2" placeholder="Ad">
+                        <input type="text" id="new-addr-surname" class="input-box mb-2" placeholder="Soyad">
+                    </div>
+                    <input type="text" id="new-addr-full" class="input-box mb-2" placeholder="Tam Adres">
+                    <div class="form-grid-2">
+                        <input type="text" id="new-addr-city" class="input-box mb-2" placeholder="Şehir">
+                        <input type="tel" id="new-addr-phone" class="input-box" placeholder="Telefon">
+                    </div>
+                    <button id="btn-save-address" class="btn primary full-width mt-2">Kaydet ve Kullan</button>
+                </div>
+            </div>
+
+            <h3>Kargo Seçenekleri</h3>
+            <div class="shipping-options">
+                <label class="delivery-option active">
+                    <div style="display:flex; align-items:center; width:100%">
+                        <div style="flex:1">
+                            <span class="del-title">Standart Kargo</span>
+                            <span class="del-desc">3-5 İş Günü</span>
+                        </div>
+                        <span style="font-weight:700">₺50.00</span>
+                    </div>
+                    <input type="radio" name="shipping-method" value="standard" data-price="50" checked>
+                </label>
+                <label class="delivery-option">
+                    <div style="display:flex; align-items:center; width:100%">
+                        <div style="flex:1">
+                            <span class="del-title">Hızlı Kargo</span>
+                            <span class="del-desc">1-2 İş Günü</span>
+                        </div>
+                        <span style="font-weight:700">₺120.00</span>
+                    </div>
+                    <input type="radio" name="shipping-method" value="express" data-price="120">
+                </label>
+            </div>
+
+            <h3>Ödeme Yöntemi</h3>
+            <div class="payment-tabs">
+                <button class="pay-tab active" data-method="iyzico">
+                    <i class="fa-solid fa-credit-card"></i> Kredi Kartı (Iyzico)
+                </button>
+                <button class="pay-tab" data-method="iban">
+                    <i class="fa-solid fa-money-bill-transfer"></i> Havale / FAST
+                </button>
+            </div>
+
+            <div id="pay-iyzico" class="payment-content">
+                <div style="background: #FFFBEB; border: 1px solid #F59E0B; padding: 12px; border-radius: 8px; color: #92400E; font-size: 0.85rem; margin-bottom: 15px; display: flex; gap: 10px; align-items: center;">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.1rem;"></i>
+                    <span><strong>Dikkat:</strong> Kredi kartı ile ödeme sistemi henüz aktif değildir. Lütfen Havale / FAST yöntemini kullanın.</span>
+                </div>
+                <p style="margin-bottom: 15px; font-size: 0.9rem;">Güvenli ödeme sayfasına yönlendirileceksiniz.</p>
+                <div class="secure-badge"><i class="fa-solid fa-lock"></i> 256-bit SSL Güvenli Ödeme</div>
+            </div>
+
+            <div id="pay-iban" class="payment-content" style="display:none;">
+                <div class="iban-box">
+                    <div class="iban-label">Alıcı</div>
+                    <div class="iban-value">ENGRARE MÜHENDİSLİK A.Ş.</div>
+                    <div class="iban-label">IBAN</div>
+                    <div class="iban-value" style="font-family:monospace; font-size:1.1rem;">TR12 0006 4000 0012 3456 7890 01</div>
+                    <div class="iban-label">Açıklama</div>
+                    <div class="iban-value">Sipariş No: <span id="order-ref-num">...</span></div>
+                </div>
+                <p style="font-size:0.8rem; margin-top:10px; color:#ef4444;">* Lütfen açıklama kısmına sipariş numaranızı yazmayı unutmayınız.</p>
+            </div>
+
+            <button id="btn-complete-order" class="btn primary full-width" style="margin-top: 30px; padding: 18px; font-size: 1.1rem;">
+                <span id="final-price-btn">₺0.00</span> Öde
+            </button>
+            
+            <div style="margin-top: 20px; font-size: 0.8rem; color: #94A3B8; text-align: center;">
+                Devam ederek <a href="sozlesme.html" target="_blank">Mesafeli Satış Sözleşmesi</a> ve <a href="kvkk.html" target="_blank">KVKK Metni</a>'ni kabul etmiş olursunuz.
+            </div>
+        </div>
+
+        <!-- RIGHT: SUMMARY -->
+        <div class="checkout-summary">
+            <h3 style="padding-bottom: 20px; border-bottom: 1px solid var(--border);">Sipariş Özeti</h3>
+            <div id="order-items-list" class="summary-list">
+                <!-- Items injected here -->
+            </div>
+            
+            <div class="summary-totals">
+                <div class="price-row"><span>Ara Toplam</span><span id="summ-subtotal">₺0.00</span></div>
+                <div class="price-row"><span>Kargo</span><span id="summ-shipping">₺50.00</span></div>
+                <div class="price-row total">
+                    <span>Toplam</span>
+                    <span id="summ-total">₺50.00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+    <script type="module" src="myScript.js"></script>
+</body>
+</html>

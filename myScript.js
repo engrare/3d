@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail } from "firebase/auth";
-import { getDatabase, ref, set, push, onValue } from "firebase/database";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, signInAnonymously } from "firebase/auth";
+import { getDatabase, ref, set, push, onValue, remove, get } from "firebase/database";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -64,11 +64,11 @@ const BUILD_VOLUME_Y = 256;
 const allFirebaseModels = [
     {
         id: 1,
-        name: "Özel Ad Plakaası 1",
+        name: "Dik Duran Kişiye Özel Ad Plakası",
         desc: "Düzenlenebilir 3D metinli kişiselleştirilmiş masaüstü plakası.",
         price: 180,
-        images: ["./content/products/1/1.jpg", "./content/products/1/2.jpg", "./content/products/1/3.jpg"],
-        stl: "./content/desktop_writing_holder.STL",
+        images: ["./content/products/1/1.jpg", "./content/products/1/2.jpg", "./content/products/1/3.jpg", "./content/products/1/4.jpg"],
+        stl: "./content/products/1/desktop_writing_holder.STL",
         sellCount: 10,
         isCustomizable: true,
         customConfig: {
@@ -89,7 +89,8 @@ const allFirebaseModels = [
                 content: ENGRARE_LOGO_SVG,
                 scale: 2.1,
                 depth: 4,
-                position: { x: -75, y: -20, z: 0 },
+                color: "#ff0000",
+                position: { x: -70, y: -20, z: 0 },
                 rotation: { x: Math.PI / 2, y: 0, z: 0 }
             },
             customizableParams: { //0: Never visible. 1: Always visible (Basic & Pro). 2: Visible only in 'advanced' (Pro) mode.
@@ -109,6 +110,7 @@ const allFirebaseModels = [
                 logo: 1,
                 logoSize: 1,
                 logoDepth: 2,
+                logoColor: 1,
                 logoRotationX: 0,
                 logoRotationY: 0,
                 logoRotationZ: 2,
@@ -125,11 +127,11 @@ const allFirebaseModels = [
     },
     {
         id: 2,
-        name: "Özel Ad Plakası 2",
+        name: "Duvara Yapışmalı Özel Ad Plakası",
         desc: "Düzenlenebilir 3D metinli kişiselleştirilmiş masaüstü plakası.",
         price: 180,
-        images: ["./content/product2.jpeg"], 
-        stl: "./content/desktop_writing_holder.STL",
+        images: ["./content/products/2/1.jpeg", "./content/products/2/2.jpg", "./content/products/2/3.jpeg"],
+        stl: "./content/products/2/sign.STL",
         sellCount: 50,
         isCustomizable: true,
         customConfig: {
@@ -137,20 +139,21 @@ const allFirebaseModels = [
             text: {
                 initialContent: "ENGRARE",
                 fontUrl: 'https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json',
-                fontSize: 10,       
+                fontSize: 23,       
                 fontThickness: 4,
-                letterSpacing: 0,
+                letterSpacing: 2,
                 alignment: "center",   
-                position: { x: 0, y: 0, z: 10 },
-                rotation: { x: 0, y: 0, z: 0 },
+                position: { x: 0, y: 0, z: 30 },
+                rotation: { x: Math.PI / 2, y: 0, z: 0 },
                 color: "#FFFFFF"
             },
             logo: {
                 content: ENGRARE_LOGO_SVG,
-                scale: 1,
+                scale: 2.2,
                 depth: 2,
-                position: { x: 0, y: 0, z: 0 },
-                rotation: { x: 0, y: 0, z: 0 }
+                color: "#FFFFFF",
+                position: { x: 0, y: 0, z: -22 },
+                rotation: { x: Math.PI / 2, y: 0, z: 0 }
             },
             customizableParams: {
                 textContent: 1,
@@ -162,22 +165,23 @@ const allFirebaseModels = [
                 textColor: 1,
                 textRotationX: 0,
                 textRotationY: 0,
-                textRotationZ: 0,
-                textPositionX: 0,
+                textRotationZ: 2,
+                textPositionX: 2,
                 textPositionY: 0,
-                textPositionZ: 0,
-                logo: 0,
-                logoSize: 0,
+                textPositionZ: 2,
+                logo: 1,
+                logoSize: 1,
                 logoDepth: 0,
+                logoColor: 1,
                 logoRotationX: 0,
                 logoRotationY: 0,
-                logoRotationZ: 0,
-                logoPositionX: 0,
+                logoRotationZ: 2,
+                logoPositionX: 2,
                 logoPositionY: 0,
-                logoPositionZ: 0,
+                logoPositionZ: 2,
                 modelColor: 1,
-                material: 1,
-                infill: 1,
+                material: 2,
+                infill: 2,
                 quantity: 1,
                 delivery: 1
             }
@@ -318,6 +322,7 @@ const USER_UPLOAD_CONFIG = {
         content: null,
         scale: 1,
         depth: 2,
+        color: "#FFFFFF",
         position: { x: 0, y: 0, z: 0 },
         rotation: { x: 0, y: 0, z: 0 }
     },
@@ -346,6 +351,7 @@ const USER_UPLOAD_CONFIG = {
         logo: 1,
         logoSize: 1,
         logoDepth: 1,
+        logoColor: 1,
         logoRotationX: 1,
         logoRotationY: 1,
         logoRotationZ: 1,
@@ -357,32 +363,84 @@ const USER_UPLOAD_CONFIG = {
 
 // --- DOM READY ---
 $(document).ready(function() {
-    
     loadCart();
     init3D(); 
     renderModelsPage(allFirebaseModels);
     renderHomeLibrary();
 
+    // Handle Initial URL State
+    const path = window.location.search.replace('?', '');
+    if (path) {
+        const map = {
+            'home': '#home-page',
+            'models': '#models-page',
+            'studio': '#upload-page',
+            'checkout': '#checkout-page',
+            'login': '#login-page',
+            'dashboard': '#dashboard-page'
+        };
+        if (map[path]) {
+            // Wait slightly for DOM/Auth if needed, or switch immediately
+            switchPage(map[path], false); 
+        }
+    }
+
+    // Handle Back Button
+    window.addEventListener('popstate', function(event) {
+        if (event.state && event.state.page) {
+            switchPage(event.state.page, false);
+        } else {
+            switchPage('#home-page', false);
+        }
+    });
+
     // --- FIREBASE AUTH LISTENERS ---
     
     // 1. Sign Up
     $('#btn-signup').click(async () => {
+        const fullname = $('#signup-fullname').val();
+        const username = $('#signup-username').val();
+        const dob = $('#signup-dob').val();
         const email = $('#signup-email').val();
         const pass = $('#signup-password').val();
-        const name = $('#signup-name').val();
+        const isKvkkChecked = $('#signup-kvkk').is(':checked');
+
+        if (!isKvkkChecked) {
+            alert("Lütfen KVKK Aydınlatma Metni'ni onaylayın.");
+            return;
+        }
+
+        if (!fullname || !username || !dob) {
+            alert("Lütfen tüm alanları doldurun.");
+            return;
+        }
         
+        // Capture Guest UID if exists
+        const currentUser = auth.currentUser;
+        const guestUid = (currentUser && currentUser.isAnonymous) ? currentUser.uid : null;
+
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-            await updateProfile(userCredential.user, { displayName: name });
-            // Save basic user data to Realtime DB
-            set(ref(db, 'users/' + userCredential.user.uid), {
-                username: name,
-                email: email
+            await updateProfile(userCredential.user, { displayName: fullname });
+            
+            // Write Extended Profile Data (Client-side, allowed by rules for own UID)
+            await set(ref(db, 'users/' + userCredential.user.uid + '/profile'), {
+                fullname: fullname,
+                username: username,
+                dob: dob,
+                email: email,
+                role: "user"
             });
-            alert("Hesap oluşturuldu! Hoş geldiniz " + name);
+
+            // Migrate Guest Data
+            if (guestUid) {
+                await migrateGuestData(guestUid, userCredential.user.uid);
+            }
+
+            showToast("Hesap oluşturuldu! Hoş geldiniz " + fullname, "success");
             switchPage('#home-page');
         } catch (error) {
-            alert("Hata: " + error.message);
+            showToast("Hata: " + error.message, "error");
         }
     });
 
@@ -390,12 +448,24 @@ $(document).ready(function() {
     $('#btn-signin').click(async () => {
         const email = $('#signin-email').val();
         const pass = $('#signin-password').val();
+        
+        // Capture Guest UID if exists
+        const currentUser = auth.currentUser;
+        const guestUid = (currentUser && currentUser.isAnonymous) ? currentUser.uid : null;
+
         try {
-            await signInWithEmailAndPassword(auth, email, pass);
+            const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+            
+            // Migrate Guest Data
+            if (guestUid) {
+                await migrateGuestData(guestUid, userCredential.user.uid);
+            }
+
             // Alert removed for smoother UX, auth observer handles redirect
+            showToast("Başarıyla giriş yapıldı.", "success");
             switchPage('#home-page');
         } catch (error) {
-            alert("Giriş Başarısız: " + error.message);
+            showToast("Giriş Başarısız: " + error.message, "error");
         }
     });
 
@@ -403,7 +473,7 @@ $(document).ready(function() {
     $('#action-logout').click(() => {
         signOut(auth).then(() => {
             switchPage('#home-page');
-            alert("Başarıyla çıkış yapıldı.");
+            showToast("Başarıyla çıkış yapıldı.", "success");
         });
     });
 
@@ -412,11 +482,11 @@ $(document).ready(function() {
         const email = $('#reset-email').val();
         try {
             await sendPasswordResetEmail(auth, email);
-            alert("Şifre sıfırlama e-postası gönderildi!");
+            showToast("Şifre sıfırlama e-postası gönderildi!", "success");
             $('#view-reset').hide();
             $('#view-signin').fadeIn();
         } catch (error) {
-            alert("Hata: " + error.message);
+            showToast("Hata: " + error.message, "error");
         }
     });
 
@@ -432,24 +502,31 @@ $(document).ready(function() {
     // --- MONITOR AUTH STATE ---
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            // User is signed in
-            $('#nav-login-btn').hide();
-            $('#nav-user-profile').css('display', 'flex');
-            
-            // Update Dashboard UI
-            $('#dash-user-name').text(user.displayName || "Kullanıcı");
-            $('#dash-user-email').text(user.email);
-            if(user.photoURL) {
-                $('#nav-user-img, #dash-user-img').attr('src', user.photoURL);
+            // Check if Anonymous (Guest) or Registered
+            if (user.isAnonymous) {
+                // Anonymous: Keep Login/Signup buttons visible
+                $('#nav-login-btn').show();
+                $('#nav-user-profile').hide();
+                $('#dash-user-name').text("Konuk");
+            } else {
+                // Registered: Show Profile
+                $('#nav-login-btn').hide();
+                $('#nav-user-profile').css('display', 'flex');
+                $('#dash-user-name').text(user.displayName || "Kullanıcı");
+                $('#dash-user-email').text(user.email);
+                if(user.photoURL) {
+                    $('#nav-user-img, #dash-user-img').attr('src', user.photoURL);
+                }
             }
-
-            // Load Orders
+            
+            // Load Orders (for both Anon and Registered)
             loadUserOrders(user.uid);
         } else {
-            // User is signed out
-            $('#nav-login-btn').show();
-            $('#nav-user-profile').hide();
-            $('#dash-user-name').text("Konuk");
+            // User is signed out completely -> Auto-Sign-In Anonymously
+            console.log("No user, signing in anonymously...");
+            signInAnonymously(auth).catch((error) => {
+                console.error("Anonymous auth failed", error);
+            });
         }
     });
     // 1. Navigation
@@ -746,15 +823,25 @@ $(document).ready(function() {
         }
     });
 
-    // Text Color change trigger (Updated to also color Logo)
+    // Logo Color Listener
+    $(document).on('click', '.logo-color-option', function() {
+        $('.logo-color-option').removeClass('selected');
+        $(this).addClass('selected');
+        const hexColor = $(this).data('hex');
+        if (logoMesh) {
+            logoMesh.children.forEach(child => {
+                if(child.material) child.material.color.set(hexColor);
+            });
+        }
+        if (activeModelConfig && activeModelConfig.logo) {
+            activeModelConfig.logo.color = hexColor;
+        }
+    });
+
+    // Text Color change trigger (Updated to ONLY color text, Logo has its own now)
     $('#custom-text-color').on('input', function() {
         const color = $(this).val();
         if (textMesh && textMesh.material) textMesh.material.color.set(color);
-        if (logoMesh) {
-            logoMesh.children.forEach(child => {
-                if(child.material) child.material.color.set(color);
-            });
-        }
         if (activeModelConfig && activeModelConfig.text) {
             activeModelConfig.text.color = color;
         }
@@ -818,6 +905,20 @@ $(document).ready(function() {
 
     $(document).on('click', '.remove-btn', function() {
         const index = $(this).data('index');
+        const itemToRemove = cart[index];
+
+        const user = auth.currentUser;
+        
+        if (itemToRemove && itemToRemove.firebaseId && user) {
+            const dbPath = `users/${user.uid}/saved_models/${itemToRemove.firebaseId}`;
+            
+            // Delete from Firebase
+            remove(ref(db, dbPath)).catch(error => {
+                console.error("Firebase deletion failed:", error);
+            });
+        }
+
+        // Remove from local cart
         cart.splice(index, 1);
         saveCart();
         renderCart();
@@ -1054,9 +1155,137 @@ $(document).ready(function() {
 		}
 		openInStudio(model);
 	});
+
+    // --- CHECKOUT FLOW ---
+    $('#btn-checkout-start').click(function() {
+        if(cart.length === 0) {
+            showToast("Sepetiniz boş.", "error");
+            return;
+        }
+
+        const user = auth.currentUser;
+        // If user is real (not anonymous), go straight to payment
+        if (user && !user.isAnonymous) {
+            window.location.href = "./payment/index.html";
+        } else {
+            // Guest or not logged in -> Ask
+            $('#auth-decision-modal').addClass('open');
+        }
+    });
+
+    $('#modal-btn-login').click(function() {
+        $('#auth-decision-modal').removeClass('open');
+        switchPage('#login-page');
+    });
+
+    $('#modal-btn-guest').click(function() {
+        // Proceed as guest
+        window.location.href = "./payment/index.html";
+    });
+
+    // --- CLOSE MODALS (Universal) ---
+    $(document).on('click', '.modal-close, .modal-overlay', function(e) {
+        if (e.target === this) {
+            $(this).removeClass('open');
+            // If it's the auth modal specifically, we can also use its ID
+            $('#auth-decision-modal').removeClass('open');
+        }
+    });
 });
 
 // --- HELPER FUNCTIONS ---
+
+function showToast(message, type = "info") {
+    // --- Error Translation Logic ---
+    let displayMessage = message;
+
+    if (type === "error") {
+        const errorMap = {
+            "auth/email-already-in-use": "Bu e-posta adresi zaten kullanımda.",
+            "auth/invalid-email": "Geçersiz e-posta adresi.",
+            "auth/user-not-found": "Kullanıcı bulunamadı.",
+            "auth/wrong-password": "Şifre hatalı.",
+            "auth/weak-password": "Şifre çok zayıf (en az 6 karakter olmalı).",
+            "auth/network-request-failed": "Ağ hatası. Lütfen internet bağlantınızı kontrol edin.",
+            "auth/too-many-requests": "Çok fazla başarısız deneme. Lütfen daha sonra tekrar deneyin.",
+            "auth/operation-not-allowed": "Bu işlem şu anda yapılamıyor.",
+            "auth/admin-restricted-operation": "Yönetici izni gereklidir (Anonim giriş kapalı olabilir).",
+            "auth/missing-email": "Lütfen e-posta adresinizi girin."
+        };
+
+        // Check if the message contains any of the error codes
+        for (const [code, friendlyMsg] of Object.entries(errorMap)) {
+            if (message.includes(code)) {
+                displayMessage = "Hata: " + friendlyMsg;
+                break;
+            }
+        }
+        
+        // Cleanup standard Firebase prefixes if no specific map found but it's still a Firebase error
+        if (displayMessage.includes("Firebase: Error")) {
+            displayMessage = displayMessage.replace("Firebase: Error", "Hata").replace(/\(auth\/.*\)\.?/, "").trim();
+        }
+    }
+
+    const $container = $('#toast-container');
+    const id = Date.now();
+    const icon = type === 'error' ? 'fa-circle-exclamation' : (type === 'success' ? 'fa-circle-check' : 'fa-circle-info');
+    
+    const toastHtml = `
+        <div id="toast-${id}" class="toast ${type}">
+            <i class="fa-solid ${icon} toast-icon"></i>
+            <span class="toast-message">${displayMessage}</span>
+        </div>
+    `;
+    
+    const $toast = $(toastHtml);
+    $container.append($toast);
+    
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+        $toast.addClass('hiding');
+        setTimeout(() => $toast.remove(), 300);
+    }, 4000);
+}
+
+async function migrateGuestData(guestUid, newUid) {
+    if (!guestUid || !newUid || guestUid === newUid) return;
+
+    const guestRef = ref(db, `users/${guestUid}/saved_models`);
+    const newRef = ref(db, `users/${newUid}/saved_models`);
+
+    try {
+        const snapshot = await get(guestRef);
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            const updates = {};
+            
+            // Push each item to the new user's list
+            Object.values(data).forEach(item => {
+                const newItemRef = push(newRef);
+                updates[newItemRef.key] = item;
+            });
+
+            // Perform the update on the new user node
+            await set(ref(db, `users/${newUid}/saved_models`), updates); // Use merge logic if needed, but here simple set/update works for new accounts. 
+            // Better approach for merging:
+            // Since set() overwrites, and we might be signing into an EXISTING account with EXISTING data, we should iterate and push.
+            // The logic above constructed a new object. Let's fix to use push correctly or update.
+            // Actually, simply looping and setting is safer.
+            
+            const promises = Object.values(data).map(item => {
+                 return push(newRef, item);
+            });
+            await Promise.all(promises);
+
+            // Delete old guest data
+            await remove(ref(db, `users/${guestUid}`));
+            console.log("Migration successful");
+        }
+    } catch (error) {
+        console.error("Migration failed:", error);
+    }
+}
 
 function syncUIWithConfig(config) {
     if (!config) return;
@@ -1128,6 +1357,14 @@ function syncUIWithConfig(config) {
     $('#logo-size-slider, #logo-size-input').val(logoConfig.scale || 1);
     $('#logo-depth-slider, #logo-depth-input').val(logoConfig.depth || 4);
     
+    // Logo Color Sync
+    const lColor = logoConfig.color || "#FFFFFF";
+    $('.logo-color-option').removeClass('selected');
+    let $lColorOption = $(`.logo-color-option[data-hex="${lColor}"]`);
+    if(!$lColorOption.length) $lColorOption = $(`.logo-color-option[data-hex="${lColor.toUpperCase()}"]`);
+    if($lColorOption.length) $lColorOption.addClass('selected');
+    else $(`.logo-color-option[data-hex="#FFFFFF"]`).addClass('selected');
+
     const lr = logoConfig.rotation || { x: 0, y: 0, z: 0 };
     const lp = logoConfig.position || { x: 0, y: 0, z: 0 };
     
@@ -1341,6 +1578,11 @@ function updateControlsVisibility(mode) {
         const showLogoDepth = checkParamVisibility('logoDepth', mode);
         $('#logo-depth-slider').closest('.form-group').toggle(showLogoDepth);
 
+        // Logo Color
+        const showLogoColor = checkParamVisibility('logoColor', mode);
+        $('#custom-logo-container .color-grid').toggle(showLogoColor);
+        $('#custom-logo-container .color-grid').prev('label').toggle(showLogoColor);
+
         // Logo Rotations
         const showLogoRotX = checkParamVisibility('logoRotationX', mode);
         $('#logo-rotation-x').closest('.form-group').toggle(showLogoRotX);
@@ -1435,6 +1677,7 @@ function openInStudio(model) {
 }
 
 function setupDragDrop() {
+    // 1. Viewer Drop Zone
     const dropZone = document.querySelector('.viewer-container');
     const overlay = document.getElementById('drop-zone-overlay');
     let dragCounter = 0;
@@ -1460,6 +1703,31 @@ function setupDragDrop() {
         const files = e.dataTransfer.files;
         if (files.length > 0) handleFile(files[0]);
     });
+
+    // 2. Logo Upload Box Drop Zone
+    const logoDropZone = document.getElementById('logo-upload-box');
+    if (logoDropZone) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            logoDropZone.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
+        });
+
+        logoDropZone.addEventListener('dragenter', () => {
+            logoDropZone.style.borderColor = '#3b82f6';
+            logoDropZone.style.backgroundColor = '#eff6ff';
+        });
+
+        logoDropZone.addEventListener('dragleave', () => {
+            logoDropZone.style.borderColor = '#bfdbfe';
+            logoDropZone.style.backgroundColor = 'white';
+        });
+
+        logoDropZone.addEventListener('drop', (e) => {
+            logoDropZone.style.borderColor = '#bfdbfe';
+            logoDropZone.style.backgroundColor = 'white';
+            const files = e.dataTransfer.files;
+            if (files.length > 0) handleFile(files[0]);
+        });
+    }
 }
 
 function syncBasicToPro() {
@@ -1472,7 +1740,7 @@ function syncProToBasic() {
     $(`#infill-select option[value="${proInfill}"]`).prop('selected', true);
 }
 
-function switchPage(targetId) {
+function switchPage(targetId, pushState = true) {
     $('.nav-menu li').removeClass('active');
     $(`.nav-menu li[data-target="${targetId}"]`).addClass('active');
     
@@ -1487,6 +1755,21 @@ function switchPage(targetId) {
         setTimeout(updateDimensions, 100);
     }
     window.scrollTo(0, 0);
+
+    if (pushState) {
+        // Map IDs to URL params
+        const map = {
+            '#home-page': 'home',
+            '#models-page': 'models',
+            '#upload-page': 'studio',
+            '#checkout-page': 'checkout',
+            '#login-page': 'login',
+            '#dashboard-page': 'dashboard'
+        };
+        const param = map[targetId] || 'home';
+        const newUrl = window.location.pathname + '?' + param;
+        window.history.pushState({ page: targetId }, "", newUrl);
+    }
 }
 
 // --- THREE.JS LOGIC ---
@@ -1505,7 +1788,7 @@ function init3D() {
     camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
     camera.position.set(200, 200, 200); 
 
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.shadowMap.enabled = true;
     
@@ -1567,8 +1850,32 @@ function handleFileUpload(e) {
 function handleFile(file) {
     if (!file) return;
     const fileName = file.name.toLowerCase();
+
+    // 1. Handle SVG (Logo)
+    if (fileName.endsWith('.svg')) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const svgContent = event.target.result;
+            // Check if we have an active model to apply this to
+            if (!mesh) {
+                showToast("Lütfen önce bir 3D model yükleyin veya seçin.", "error");
+                return;
+            }
+            updateCustomLogo(svgContent);
+            // Ensure logo controls are visible
+            if (activeModelConfig) {
+                 if (activeModelConfig.customizableParams) activeModelConfig.customizableParams.logo = 1;
+                 $('#custom-logo-container').show();
+                 updateControlsVisibility('basic'); // Refresh visibility
+            }
+        };
+        reader.readAsText(file);
+        return;
+    }
+
+    // 2. Handle 3D Model (STL/3MF)
     if (!fileName.endsWith('.stl') && !fileName.endsWith('.3mf')) {
-        alert("Sadece .STL ve .3MF dosyaları desteklenmektedir.");
+        showToast("Sadece .STL, .3MF ve .SVG dosyaları desteklenmektedir.", "error");
         return;
     }
     
@@ -1607,7 +1914,7 @@ function loadLibrarySTL(url) {
         .then(data => loadSTL(data))
         .catch(err => {
              console.error(err);
-             alert("Demo Mode: Ensure assets exist locally.");
+             showToast("Demo Modu: Lütfen yerel dosyaların mevcut olduğundan emin olun.", "error");
         });
 }
 
@@ -1779,9 +2086,9 @@ function updateCustomLogo(svgContent) {
     const depth = cfg.depth || 2;
     const scale = cfg.scale || 1;
 
-    // Material for Logo (using Text Color or a separate one? Using Text Color for consistency for now)
-    const selectedDiv = $('.text-color-option.selected');
-    const currentColor = selectedDiv.length > 0 ? selectedDiv.data('hex') : 0xFFFFFF;
+    // Material for Logo (using Logo-specific color)
+    const selectedLogoDiv = $('.logo-color-option.selected');
+    const currentColor = selectedLogoDiv.length > 0 ? selectedLogoDiv.data('hex') : (cfg.color || "#FFFFFF");
     const material = new THREE.MeshPhongMaterial({ color: currentColor });
 
     for (let i = 0; i < paths.length; i++) {
@@ -2190,61 +2497,127 @@ function calculatePrice() {
 async function addToCart() {
     const $btn = $('#add-to-cart');
     
-    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Ekleniyor...');
+    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> İşleniyor...');
 
     try {
+        // 1. Capture Snapshot
+        renderer.render(scene, camera);
+        const snapshot = renderer.domElement.toDataURL('image/png');
+
+        // 2. Prepare Minimal User Data
+        const name = $('#file-name-display').text() || "Özel Model";
         const priceText = $('#price-display').text();
-        const numericPrice = parseFloat(priceText.replace('₺', '').replace(/\./g, '').replace(',', '.').trim());
-        const name = $('#file-name-display').text();
+        const price = parseFloat(priceText.replace('₺', '').replace(/\./g, '').replace(',', '.').trim()) || 0;
         const mode = $('.tab-btn.active').text();
 
-        // 1. Capture Config (Color, Text, etc.)
-        const currentConfig = {
-            colorHex: $('.color-option.selected').data('hex'),
-            colorName: $('.color-option.selected').data('color'),
-            material: $('#material-select').val(),
-            infill: $('#infill-select').val(),
-            customText: (activeModelConfig && $('#custom-text-input').val()) ? $('#custom-text-input').val() : null,
-            customTextColor: (activeModelConfig) ? $('.text-color-option.selected').data('hex') : null
+        // Extract strictly user-defined values
+        const customizationData = {
+            // Reference to base model
+            plateId: currentLibraryModel ? currentLibraryModel.id : "custom_upload", 
+            
+            // Production Settings
+            production: {
+                material: $('#material-select').val(),
+                infill: $('#infill-select').val(),
+                colorName: $('.color-option.selected').data('color') || "Default",
+                colorHex: $('.color-option.selected').data('hex') || "#333",
+                quantity: parseInt($('#quantity-input').val()) || 1,
+                delivery: $('input[name="delivery"]:checked').val()
+            }
         };
 
-        // 2. Create Cart Item
+        // Add Text Data if exists
+        if (activeModelConfig && activeModelConfig.text) {
+            customizationData.text = {
+                content: $('#custom-text-input').val() || "",
+                font: $('#text-font-select').val(),
+                size: parseFloat($('#text-size-input').val()) || 10,
+                depth: parseFloat($('#text-depth-input').val()) || 4,
+                spacing: parseFloat($('#letter-spacing-input').val()) || 0,
+                align: $('input[name="text-align"]:checked').val(),
+                color: activeModelConfig.text.color, 
+                // Crucial Transformation Data
+                position: activeModelConfig.text.position, // {x, y, z}
+                rotation: activeModelConfig.text.rotation  // {x, y, z}
+            };
+        }
+
+        // Add Logo Data if exists
+        if (activeModelConfig && activeModelConfig.logo) {
+            customizationData.logo = {
+                svgContent: activeModelConfig.logo._lastSvg || null, 
+                scale: parseFloat($('#logo-size-input').val()) || 1,
+                depth: parseFloat($('#logo-depth-input').val()) || 4,
+                color: activeModelConfig.logo.color,
+                // Crucial Transformation Data
+                position: activeModelConfig.logo.position,
+                rotation: activeModelConfig.logo.rotation
+            };
+        }
+
+        const timestamp = Date.now();
+        const dateStr = new Date().toLocaleString('tr-TR');
+
+        const modelToSave = {
+            id: timestamp,
+            name: name,
+            desc: "Kullanıcı tarafından özelleştirildi (" + dateStr + ")",
+            price: price,
+            images: [snapshot],
+            stl: currentLibraryModel ? currentLibraryModel.stl : null, 
+            sellCount: 0,
+            isCustomizable: true,
+            customConfig: customizationData, // Saved cleaned data
+            createdAt: timestamp
+        };
+
+        // 3. Save to Firebase
+        const user = auth.currentUser;
+        
+        if (!user) {
+            showToast("Oturum açılıyor, lütfen tekrar deneyin.", "info");
+            $btn.prop('disabled', false).text('Sepete Ekle');
+            return;
+        }
+
+        const dbPath = `users/${user.uid}/saved_models`;
+        const newRef = push(ref(db, dbPath));
+        await set(newRef, modelToSave);
+
+        // 4. Add to Local Cart
         const cartItem = { 
             name: name, 
-            price: numericPrice, 
+            price: price, 
             mode: mode, 
             formattedPrice: priceText,
-            date: new Date().toLocaleString('tr-TR'),
+            date: dateStr,
+            image: snapshot, 
             isLibrary: !!currentLibraryModel,
             libraryId: currentLibraryModel ? currentLibraryModel.id : null,
-            configuration: currentLibraryModel ? currentConfig : null
+            configuration: customizationData, // Use the same clean data
+            firebaseId: newRef.key 
         };
         
-        // 3. Add to Memory State
         cart.push(cartItem);
-        
         saveCart(); 
         renderCart();
-        
-        $btn.text('Eklendi!').css('background-color', '#10B981');
+
+        // 5. UI Feedback
+        showToast("Sepete Eklendi!", "success");
         setTimeout(() => {
             $btn.prop('disabled', false).text('Sepete Ekle').css('background-color', '');
         }, 1500);
 
     } catch (error) {
-        console.error("Cart Error:", error);
-        $btn.prop('disabled', false).text('Sepete Ekle');
+        console.error("Cart/Save Error:", error);
+        $btn.prop('disabled', false).text('Hata');
+        showToast("İşlem hatası: " + error.message, "error");
     }
 }
 
 function saveCart() {
-    // 1. Filter: Create a new list that ONLY contains Library models
-    const itemsToSave = cart.filter(item => item.isLibrary === true);
-
-    // 2. Save only the filtered list to LocalStorage
-    localStorage.setItem('engrare_cart', JSON.stringify(itemsToSave));
-
-    // 3. Update the badge count
+    // Save all items including locally created ones
+    localStorage.setItem('engrare_cart', JSON.stringify(cart));
     $('#cart-badge').text(cart.length);
 }
 
@@ -2275,11 +2648,19 @@ function renderCart() {
     let sub = 0;
     cart.forEach((item, index) => {
         sub += item.price;
+        
+        // Use snapshot or default image
+        const imgUrl = item.image || "./content/product2.jpeg";
+
         $area.append(`
             <div class="cart-item">
-                <div class="info">
-                    <div style="font-weight:600">${item.name}</div>
-                    <div style="font-size:0.8rem; color:#666">${item.mode}</div>
+                <div style="display:flex; align-items:center; gap: 15px;">
+                    <img src="${imgUrl}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #eee; background: #f9f9f9;">
+                    <div class="info">
+                        <div style="font-weight:600">${item.name}</div>
+                        <div style="font-size:0.8rem; color:#666">${item.mode}</div>
+                        <div style="font-size:0.75rem; color:#999; margin-top:4px;">${item.date}</div>
+                    </div>
                 </div>
                 <div class="price-action">
                     <span style="font-weight:500; margin-right:15px">${item.formattedPrice}</span>

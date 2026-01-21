@@ -166,20 +166,24 @@
     </section>
 
     <section id="models-page" class="page">
-        <div class="container">
-			<div class="model-gallery-header">
-				<h1 style="margin-bottom: 20px;">Modelleri Keşfet.</h1>
-				<p>Yüksek performanslı 3D modellerimizin seçilmiş koleksiyonunu keşfedin.</p>
-				
-				<div style="margin-top: 30px; position: relative; max-width: 500px;">
-					<i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: #94A3B8;"></i>
-					<input type="text" id="model-search-bar" placeholder="Parçalar, dişliler, dronları arayın..." 
-						   style="width: 100%; padding: 16px 16px 16px 50px; border-radius: 50px; border: 1px solid #E2E8F0; font-size: 1rem; outline: none; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
-				</div>
-			</div>
-
-            <div class="grid-3" id="models-grid-container">
+        <div class="models-hero">
+            <div class="blob-mini blob-3"></div>
+            <div class="blob-mini blob-4"></div>
+            
+            <div class="models-hero-content">
+                <h1>Modelleri Keşfet.</h1>
+                <p>Yüksek performanslı 3D modellerimizin seçilmiş koleksiyonunu keşfedin.</p>
+                
+                <div class="search-container">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="model-search-bar" placeholder="Parçalar, dişliler, dronları arayın...">
                 </div>
+            </div>
+        </div>
+
+        <div class="container" style="padding-top: 40px;">
+            <div class="grid-3" id="models-grid-container">
+            </div>
         </div>
     </section>
 
@@ -364,7 +368,7 @@
                                 </div>
 
                                 <!-- CUSTOM LOGO SECTION MERGED HERE -->
-                                <div id="custom-logo-container" style="border-top: 1px dashed #bfdbfe; padding-top: 20px; margin-top: 20px;">
+                                <div id="custom-logo-container" style="padding-top: 10px; margin-top: 10px;">
                                     <label style="color: #1e40af; display:block; font-weight: 700; font-size: 0.9rem; margin-bottom: 12px;">Özel Logo (SVG)</label>
                                     
                                     <div class="form-group" style="margin-bottom: 15px;">
@@ -388,6 +392,16 @@
                                     <div class="form-group" style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center;">
                                         <input type="range" id="logo-depth-slider" class="slider-input" min="1" max="50" value="4" style="flex: 1; cursor: pointer;">
                                         <input type="number" id="logo-depth-input" class="input-box" value="4" min="1" max="50" style="width: 60px; padding: 4px; text-align: center; border-color: #60a5fa;">
+                                    </div>
+
+                                    <!-- Logo Color -->
+                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Logo Rengi</label>
+                                    <div class="color-grid" style="margin-bottom: 15px;">
+                                        <div class="logo-color-option" style="background:#111;" data-hex="#111111" title="Siyah"></div>
+                                        <div class="logo-color-option selected" style="background:#fff;" data-hex="#FFFFFF" title="Beyaz"></div>
+                                        <div class="logo-color-option" style="background:#9ca3af;" data-hex="#9ca3af" title="Gri"></div>
+                                        <div class="logo-color-option" style="background:#ef4444;" data-hex="#ef4444" title="Kırmızı"></div>
+                                        <div class="logo-color-option" style="background:#3b82f6;" data-hex="#3b82f6" title="Mavi"></div>
                                     </div>
 
                                     <!-- Logo Rotation Section -->
@@ -576,7 +590,7 @@
                     <span style="font-weight:700; font-size:1.2rem;">Toplam</span>
                     <span id="val-total" style="font-weight:800; font-size:1.5rem; color:var(--primary);">₺50.00</span>
                 </div>
-                <button class="btn primary" style="width: 100%; margin-top: 20px;">Hata: Ödeme Sistemi Çalışmıyor.</button>
+                <button id="btn-checkout-start" class="btn primary" style="width: 100%; margin-top: 20px;">Ödemeye Geç</button>
             </div>
         </div>
     </section>
@@ -612,13 +626,26 @@
                     </div>
                     <form class="login-form">
                         <div class="form-group">
-                            <input type="text" id="signup-name" class="login-input" placeholder="Tam Ad">
+                            <input type="text" id="signup-fullname" class="login-input" placeholder="Tam Ad (Ad Soyad)" required>
                         </div>
                         <div class="form-group">
-                            <input type="email" id="signup-email" class="login-input" placeholder="E-posta Adresi">
+                            <input type="text" id="signup-username" class="login-input" placeholder="Kullanıcı Adı" required>
                         </div>
                         <div class="form-group">
-                            <input type="password" id="signup-password" class="login-input" placeholder="Şifre">
+                            <label style="display:block; margin-bottom:5px; font-size:0.8rem; color:#666;">Doğum Tarihi</label>
+                            <input type="date" id="signup-dob" class="login-input" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="email" id="signup-email" class="login-input" placeholder="E-posta Adresi" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="password" id="signup-password" class="login-input" placeholder="Şifre" required>
+                        </div>
+                        <div class="form-group" style="display:flex; align-items:flex-start; gap:10px;">
+                            <input type="checkbox" id="signup-kvkk" style="margin-top:4px;" required>
+                            <label for="signup-kvkk" style="font-size:0.85rem; color:#666; cursor:pointer; line-height:1.4;">
+                                <a href="#" style="color:#0F172A; text-decoration:underline;">KVKK Aydınlatma Metni</a>'ni okudum ve kabul ediyorum.
+                            </label>
                         </div>
                         <button type="button" id="btn-signup" class="btn primary" style="width: 100%;">Kaydol</button>
                     </form>
@@ -698,6 +725,18 @@
         </div>
     </section>
 
+    <div id="auth-decision-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 400px; min-height: auto; flex-direction: column; text-align: center; padding: 40px;">
+            <div class="modal-close">&times;</div>
+            <h3 style="margin-bottom: 10px;">Devam Etmek İçin</h3>
+            <p style="margin-bottom: 30px;">Siparişinizi tamamlamak için nasıl devam etmek istersiniz?</p>
+            
+            <button id="modal-btn-login" class="btn primary" style="width: 100%; margin-bottom: 15px;">Giriş Yap / Üye Ol</button>
+            <button id="modal-btn-guest" class="btn secondary" style="width: 100%;">Üye Olmadan Devam Et</button>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
     <script type="module" src="myScript.js"></script>
 </body>
 </html>

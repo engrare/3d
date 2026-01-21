@@ -312,6 +312,13 @@ p { color: var(--text-muted); }
 }
 .text-color-option:hover { transform: scale(1.1); }
 .text-color-option.selected { box-shadow: 0 0 0 2px var(--accent); transform: scale(1.1); }
+.logo-color-option {
+    width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+    border: 2px solid white; box-shadow: 0 0 0 1px var(--border);
+    transition: transform 0.2s; position: relative;
+}
+.logo-color-option:hover { transform: scale(1.1); }
+.logo-color-option.selected { box-shadow: 0 0 0 2px var(--accent); transform: scale(1.1); }
 .color-option:hover { transform: scale(1.1); }
 .color-option.selected { box-shadow: 0 0 0 2px var(--accent); transform: scale(1.1); }
 
@@ -498,11 +505,105 @@ p { color: var(--text-muted); }
 }
 
 /* --- 8. NEW: MODELS PAGE (Apple Aesthetic) --- */
-.model-gallery-header {
-    padding: 60px 20px;
+/*
+  Replaced .model-gallery-header with a proper Hero Section
+  Keeping styles separate for clarity
+*/
+
+.models-hero {
+    position: relative;
+    padding: 100px 40px 80px 40px;
+    text-align: center;
+    overflow: hidden;
+    background: linear-gradient(180deg, rgba(248, 249, 251, 1) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+.models-hero-content {
+    position: relative;
+    z-index: 2;
     max-width: 800px;
     margin: 0 auto;
 }
+
+.models-hero-content h1 {
+    font-size: 3.5rem;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #0F172A 0%, #334155 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Mini Blobs for Models Hero */
+.blob-mini {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.3;
+    z-index: 1;
+    animation: float 8s infinite ease-in-out;
+}
+
+.blob-3 {
+    background: #a5b4fc; /* Indigo tint */
+    top: -50px;
+    right: 10%;
+}
+
+.blob-4 {
+    background: #fbcfe8; /* Pink tint */
+    top: 50%;
+    left: 10%;
+    animation-delay: 2s;
+}
+
+/* Styled Search Container */
+.search-container {
+    position: relative;
+    max-width: 600px;
+    margin: 40px auto 0 auto;
+}
+
+.search-container input {
+    width: 100%;
+    padding: 20px 20px 20px 60px;
+    border-radius: 50px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    font-size: 1.1rem;
+    outline: none;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    color: var(--text-main);
+}
+
+.search-container input:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    border-color: var(--accent);
+    background: white;
+}
+
+.search-icon {
+    position: absolute;
+    left: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94A3B8;
+    font-size: 1.2rem;
+    pointer-events: none;
+    transition: color 0.3s;
+    z-index: 10;
+}
+
+.search-container input:focus + .search-icon,
+.search-container input:not(:placeholder-shown) + .search-icon {
+    color: var(--accent);
+}
+
+/* Grid & Cards remain as they were, just refreshed context */
 
 .model-card {
     background: #fff;
@@ -916,7 +1017,57 @@ p { color: var(--text-muted); }
     }
 }
 
-/* Custom File Upload Box */
+/* --- 11. TOAST NOTIFICATIONS --- */
+#toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.toast {
+    min-width: 300px;
+    background: white;
+    color: var(--text-main);
+    padding: 16px 24px;
+    border-radius: 12px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    pointer-events: auto;
+    animation: toast-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    border-left: 4px solid var(--accent);
+}
+
+.toast.error { border-left-color: #EF4444; }
+.toast.success { border-left-color: #10B981; }
+
+.toast-icon { font-size: 1.2rem; }
+.toast.error .toast-icon { color: #EF4444; }
+.toast.success .toast-icon { color: #10B981; }
+
+.toast-message { font-size: 0.9rem; font-weight: 600; }
+
+@keyframes toast-in {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes toast-out {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+.toast.hiding {
+    animation: toast-out 0.3s ease forwards;
+}
+
+/* --- (Previous styles continued) --- */
 .custom-file-upload {
     background: white;
     border: 2px dashed #bfdbfe;
