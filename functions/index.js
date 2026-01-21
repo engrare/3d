@@ -4,6 +4,21 @@ const admin = require("firebase-admin");
 admin.initializeApp();
 const db = admin.database();
 
+exports.onUserCreated = functions.region("europe-west1").auth.user().onCreate(async (user) => {
+    const { uid, email, displayName } = user;
+    
+    try {
+        await db.ref(`users/${uid}/profile`).set({
+            username: displayName || "Kullanıcı",
+            email: email,
+            createdAt: admin.database.ServerValue.TIMESTAMP
+        });
+        console.log(`User profile created for ${uid}`);
+    } catch (error) {
+        console.error("Error creating user profile:", error);
+    }
+});
+
 exports.searchModels = functions.region("europe-west1").https.onCall(async (data, context) => {
     const query = data.query;
     
