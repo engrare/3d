@@ -130,7 +130,7 @@ const allFirebaseModels = [
         name: "Duvara Yapışmalı Özel Ad Plakası",
         desc: "Düzenlenebilir 3D metinli kişiselleştirilmiş masaüstü plakası.",
         price: 180,
-        images: ["./content/products/2/1.jpeg", "./content/products/2/2.jpg", "./content/products/2/3.jpeg"],
+        images: ["./content/products/2/1.jpg", "./content/products/2/2.jpg", "./content/products/2/3.jpg"],
         stl: "./content/products/2/sign.STL",
         sellCount: 50,
         isCustomizable: true,
