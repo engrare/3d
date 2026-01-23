@@ -32,7 +32,7 @@
             <div class="checkout-header">
                 <img src="../content/engrare_logo_elegant.png" alt="ENGRARE" height="50" style="margin-bottom: 20px;">
                 <div class="breadcrumb">
-                    <a href="../index.html">Sepet</a> <i class="fa-solid fa-chevron-right"></i> <span>Ödeme</span>
+                    <a href="../?checkout">Sepet</a> <i class="fa-solid fa-chevron-right"></i> <span>Ödeme</span>
                 </div>
             </div>
 
@@ -134,7 +134,7 @@
             <h3>Ödeme Yöntemi</h3>
             <div class="payment-tabs">
                 <button class="pay-tab active" data-method="iyzico">
-                    <i class="fa-solid fa-credit-card"></i> Kredi Kartı (Iyzico)
+                    <i class="fa-solid fa-credit-card"></i> Banka ve Kredi Kartı (Iyzico)
                 </button>
                 <button class="pay-tab" data-method="iban">
                     <i class="fa-solid fa-money-bill-transfer"></i> Havale / FAST
@@ -144,22 +144,17 @@
             <div id="pay-iyzico" class="payment-content">
                 <div style="background: #FFFBEB; border: 1px solid #F59E0B; padding: 12px; border-radius: 8px; color: #92400E; font-size: 0.85rem; margin-bottom: 15px; display: flex; gap: 10px; align-items: center;">
                     <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.1rem;"></i>
-                    <span><strong>Dikkat:</strong> Kredi kartı ile ödeme sistemi henüz aktif değildir. Lütfen Havale / FAST yöntemini kullanın.</span>
+                    <span><strong>Dikkat:</strong> Banka ve Kredi kartı ile ödeme sistemi henüz aktif değildir. Lütfen Havale / FAST yöntemini kullanın.</span>
                 </div>
                 <p style="margin-bottom: 15px; font-size: 0.9rem;">Güvenli ödeme sayfasına yönlendirileceksiniz.</p>
                 <div class="secure-badge"><i class="fa-solid fa-lock"></i> 256-bit SSL Güvenli Ödeme</div>
             </div>
 
             <div id="pay-iban" class="payment-content" style="display:none;">
-                <div class="iban-box">
-                    <div class="iban-label">Alıcı</div>
-                    <div class="iban-value">ENGRARE MÜHENDİSLİK A.Ş.</div>
-                    <div class="iban-label">IBAN</div>
-                    <div class="iban-value" style="font-family:monospace; font-size:1.1rem;">TR12 0006 4000 0012 3456 7890 01</div>
-                    <div class="iban-label">Açıklama</div>
-                    <div class="iban-value">Sipariş No: <span id="order-ref-num">...</span></div>
+                <div class="iban-box" style="text-align: center; color: var(--text-muted);">
+                    <i class="fa-solid fa-circle-info" style="font-size: 1.5rem; margin-bottom: 10px; color: var(--accent);"></i>
+                    <p>Lütfen ödeme işlemini tamamlamak için "Öde" butonuna basınız. <br>IBAN bilgileri ve Sipariş Numaranız bir sonraki adımda gösterilecektir.</p>
                 </div>
-                <p style="font-size:0.8rem; margin-top:10px; color:#ef4444;">* Lütfen açıklama kısmına sipariş numaranızı yazmayı unutmayınız.</p>
             </div>
 
             <button id="btn-complete-order" class="btn primary full-width" style="margin-top: 30px; padding: 18px; font-size: 1.1rem;">
@@ -168,6 +163,32 @@
             
             <div style="margin-top: 20px; font-size: 0.8rem; color: #94A3B8; text-align: center;">
                 Devam ederek <a href="sozlesme.html" target="_blank">Mesafeli Satış Sözleşmesi</a> ve <a href="kvkk.html" target="_blank">KVKK Metni</a>'ni kabul etmiş olursunuz.
+            </div>
+
+            <!-- SUCCESS SECTION (Hidden by default) -->
+            <div id="payment-success-container" class="payment-success-container" style="display:none;">
+                <i class="fa-regular fa-circle-check success-icon"></i>
+                <h2>Siparişiniz Alındı!</h2>
+                <p style="margin-bottom: 20px;">Siparişiniz başarıyla oluşturuldu.</p>
+                
+                <div class="iban-box" style="text-align:left; margin-top:20px;">
+                    <div class="iban-label">Sipariş Numaranız</div>
+                    <div id="success-order-id" class="order-id-highlight">...</div>
+                    
+                    <div style="margin-top:20px; border-top:1px dashed var(--border); padding-top:15px;">
+                        <h4 style="margin-bottom:10px; color:var(--primary);">Havale / EFT Bilgileri</h4>
+                        <div class="iban-label">Alıcı</div>
+                        <div class="iban-value">ENGRARE MÜHENDİSLİK A.Ş.</div>
+                        <div class="iban-label">IBAN</div>
+                        <div class="iban-value" style="font-family:monospace; font-size:1.1rem;">TR12 0006 4000 0012 3456 7890 01</div>
+                        <div class="iban-label">Açıklama Kısmına Yazılacak</div>
+                        <div class="iban-value">Sipariş No: <span id="success-order-ref">...</span></div>
+                    </div>
+                </div>
+                
+                <p style="font-size:0.85rem; color:#ef4444; margin-top:15px;">* Lütfen ödeme yaparken açıklama kısmına <strong>Sadece Sipariş Numarasını</strong> yazınız.</p>
+                
+                <a href="../index.html" class="btn primary full-width" style="margin-top:30px; text-decoration:none;">Ana Sayfaya Dön</a>
             </div>
         </div>
 
@@ -178,9 +199,21 @@
                 <!-- Items injected here -->
             </div>
             
+            <!-- Discount Section -->
+            <div class="discount-section">
+                <div class="discount-input-group">
+                    <input type="text" id="discount-code-input" class="input-box" placeholder="İndirim Kodu">
+                    <button id="btn-apply-discount" class="btn-sm secondary">Uygula</button>
+                </div>
+                <div id="discount-message"></div>
+            </div>
+
             <div class="summary-totals">
                 <div class="price-row"><span>Ara Toplam</span><span id="summ-subtotal">₺0.00</span></div>
                 <div class="price-row"><span>Kargo</span><span id="summ-shipping">₺50.00</span></div>
+                <div class="price-row" id="summ-discount-row" style="display:none; color: var(--accent);">
+                    <span>İndirim</span><span id="summ-discount">-₺0.00</span>
+                </div>
                 <div class="price-row total">
                     <span>Toplam</span>
                     <span id="summ-total">₺50.00</span>

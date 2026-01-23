@@ -1,8 +1,9 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged, signInAnonymously } from "firebase/auth";
 import { getDatabase, ref, set, push, onValue, get } from "firebase/database";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
-// Reuse Config (Ideally this should be in a shared config file, but for now duplicating)
+// Reuse Config
 const firebaseConfig = {
 	apiKey: "AIzaSyBM7oB0EkTjGJiOHdo67ByXA6qxVcvPS8Y",
 	authDomain: "engrar3d.firebaseapp.com",
@@ -17,10 +18,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
+const functions = getFunctions(app, 'europe-west1');
 
 let cart = [];
 let selectedAddress = null;
 let shippingCost = 50.00;
+let appliedDiscount = null;
 
 $(document).ready(function() {
     loadCart();
@@ -116,6 +119,56 @@ $(document).ready(function() {
         if(val) selectedAddress = JSON.parse(decodeURIComponent(val));
     });
 
+    // Discount Button
+    $('#btn-apply-discount').click(async function() {
+        const code = $('#discount-code-input').val().trim();
+        const $msg = $('#discount-message');
+        $msg.text('').removeClass('success error');
+        
+        if(!code) return;
+
+        $(this).prop('disabled', true).text('Kontrol...');
+
+        try {
+            const verifyDiscount = httpsCallable(functions, 'verifyDiscount');
+            const result = await verifyDiscount({ code: code });
+            const data = result.data;
+
+            if (data.valid) {
+                appliedDiscount = data;
+                
+                // UI Updates for Success
+                $('#discount-input-container').hide();
+                $('#discount-applied-container').css('display', 'flex'); // Flex for alignment
+                $('#applied-code-text').text(code);
+                $msg.text(`İndirim uygulandı: ${code}`).addClass('success');
+                
+                updateTotals();
+                showToast("İndirim kodu uygulandı.", "success");
+            } else {
+                appliedDiscount = null;
+                $msg.text(data.message || "Geçersiz kod.").addClass('error');
+                updateTotals();
+            }
+        } catch (error) {
+            console.error(error);
+            $msg.text("Bir hata oluştu.").addClass('error');
+        } finally {
+            $('#btn-apply-discount').prop('disabled', false).text('Uygula');
+        }
+    });
+
+    // Remove Discount Button
+    $('#btn-remove-discount').click(function() {
+        appliedDiscount = null;
+        $('#discount-code-input').val('');
+        $('#discount-applied-container').hide();
+        $('#discount-input-container').show();
+        $('#discount-message').text('');
+        updateTotals();
+        showToast("İndirim kaldırıldı.", "success");
+    });
+
     // Pay Button
     $('#btn-complete-order').click(processPayment);
 });
@@ -145,7 +198,7 @@ function renderCartSummary() {
                 <div class="item-info" style="flex:1">
                     <div class="item-name">${item.name}</div>
                     <div class="item-meta">Renk: ${color}</div>
-                    <div class="item-meta">Adet: ${item.configuration?.quantity || 1}</div> <!-- Assuming quantity is stored/handled -->
+                    <div class="item-meta">Adet: ${item.configuration?.quantity || 1}</div>
                 </div>
                 <div class="item-price">₺${item.price.toLocaleString('tr-TR')}</div>
             </div>
@@ -161,8 +214,27 @@ function updateTotals() {
     let subtotal = 0;
     cart.forEach(i => subtotal += i.price);
     
+    let discountAmount = 0;
+    if (appliedDiscount) {
+        if (appliedDiscount.type === 'percent') {
+            discountAmount = subtotal * (appliedDiscount.value / 100);
+        } else if (appliedDiscount.type === 'fixed') {
+            discountAmount = appliedDiscount.value;
+        }
+        // Cap discount at subtotal
+        if (discountAmount > subtotal) discountAmount = subtotal;
+    }
+
     $('#summ-shipping').text(formatTL(shippingCost));
-    const total = subtotal + shippingCost;
+    
+    if (discountAmount > 0) {
+        $('#summ-discount-row').show();
+        $('#summ-discount').text('-' + formatTL(discountAmount));
+    } else {
+        $('#summ-discount-row').hide();
+    }
+
+    const total = Math.max(0, subtotal + shippingCost - discountAmount);
     
     $('#summ-total').text(formatTL(total));
     $('#final-price-btn').text(formatTL(total));
@@ -229,6 +301,19 @@ async function processPayment() {
     }
 
     // Prepare Order Data
+    // Recalculate totals for data
+    const subtotal = cart.reduce((a, b) => a + b.price, 0);
+    let discountAmount = 0;
+    if (appliedDiscount) {
+         if (appliedDiscount.type === 'percent') {
+            discountAmount = subtotal * (appliedDiscount.value / 100);
+        } else if (appliedDiscount.type === 'fixed') {
+            discountAmount = appliedDiscount.value;
+        }
+        if (discountAmount > subtotal) discountAmount = subtotal;
+    }
+    const totalAmount = Math.max(0, subtotal + shippingCost - discountAmount);
+
     const orderData = {
         userId: user.uid,
         isGuest: user.isAnonymous,
@@ -237,44 +322,64 @@ async function processPayment() {
         shippingMethod: shippingMethod,
         shippingCost: shippingCost,
         paymentMethod: paymentMethod,
-        totalAmount: cart.reduce((a, b) => a + b.price, 0) + shippingCost,
-        status: "pending_payment", // Initial status
+        subtotal: subtotal,
+        discountAmount: discountAmount,
+        totalAmount: totalAmount,
+        status: "pending_payment", 
         createdAt: Date.now()
     };
+    
+    // Disable button to prevent double click
+    const $btn = $('#btn-complete-order');
+    $btn.prop('disabled', true).text('İşleniyor...');
 
     try {
-        const orderRef = push(ref(db, `orders`)); // Global orders
-        const orderId = orderRef.key;
-        orderData.id = orderId;
-        
-        await set(orderRef, orderData);
-        // Also save to user history
-        await set(ref(db, `users/${user.uid}/orders/${orderId}`), orderData);
+        // Use Backend Function instead of direct DB write
+        const createOrder = httpsCallable(functions, 'createOrder');
+        const result = await createOrder({
+            orderData: orderData,
+            discountCode: appliedDiscount ? appliedDiscount.code : null
+        });
 
-        if (paymentMethod === 'iban') {
-            // Show Order ID for Reference
-            $('#order-ref-num').text(orderId.substring(1)); // Show simplified ID
-            alert("Siparişiniz Alındı! Lütfen IBAN'a ödeme yaparken sipariş numarasını belirtin.");
+        const response = result.data;
+        if (response.success) {
+            const orderId = response.orderId;
+            
             // Clear Cart
             localStorage.removeItem('engrare_cart');
-            window.location.href = "../index.html";
+
+            if (paymentMethod === 'iban') {
+                // Show Success Section, Hide Form
+                $('.checkout-form-section > :not(#payment-success-container)').hide();
+                $('.checkout-summary').hide(); // Optional: Hide summary to focus on success
+                $('.checkout-wrapper').css('grid-template-columns', '1fr'); // Center content
+                
+                $('#success-order-id').text(orderId);
+                $('#success-order-ref').text(orderId.substring(1)); // Simplified ref if needed
+                
+                $('#payment-success-container').fadeIn();
+                
+                // Scroll to top
+                window.scrollTo(0, 0);
+            } else {
+                alert("Ödeme sayfasına yönlendiriliyorsunuz... (Simülasyon)");
+                window.location.href = "../index.html";
+            }
         } else {
-            // Iyzico (Simulation)
-            alert("Ödeme sayfasına yönlendiriliyorsunuz... (Simülasyon)");
-            localStorage.removeItem('engrare_cart');
-            window.location.href = "../index.html";
+             throw new Error("Sipariş oluşturulamadı.");
         }
 
     } catch (e) {
         console.error(e);
-        showToast("Sipariş oluşturulurken hata oluştu.", "error");
+        let msg = "Sipariş oluşturulurken hata oluştu.";
+        if (e.message && e.message.includes('Limit')) msg = "İndirim kodu limiti dolmuş.";
+        showToast(msg, "error");
+        $btn.prop('disabled', false).html('<span id="final-price-btn">' + formatTL(totalAmount) + '</span> Öde');
     }
 }
 
-// Re-implement simplified Toast for this page (or import)
 function showToast(msg, type) {
     const color = type === 'error' ? 'red' : 'green';
-    // Simple fallback for payment page
     const div = document.createElement('div');
     div.style.cssText = `position:fixed; bottom:20px; right:20px; background:white; padding:15px 25px; border-left:4px solid ${color}; box-shadow:0 5px 15px rgba(0,0,0,0.1); border-radius:8px; z-index:99999; animation: slideIn 0.3s;`;
     div.innerText = msg;
