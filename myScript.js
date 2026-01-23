@@ -189,10 +189,10 @@ const allFirebaseModels = [
     },
     {
         id: 3,
-        name: "Özel Ad Plakası 3",
-        desc: "Düzenlenebilir 3D metinli kişiselleştirilmiş masaüstü plakası.",
+        name: "Kalemlik",
+        desc: "Yüksek detaylı istenilen renge kişiselleştirilebilen ürün.",
         price: 180,
-        images: ["./content/product2.jpeg", "./content/product2_alt.jpeg", "./content/product2_alt2.jpeg"], 
+        images: ["./content/products/3/1.jpg"], 
         stl: "./content/desktop_writing_holder.STL",
         sellCount: 5,
         isCustomizable: true,
@@ -249,10 +249,66 @@ const allFirebaseModels = [
     },
     {
         id: 4,
-        name: "Özel Ad Plakası 4",
-        desc: "Düzenlenebilir 3D metinli kişiselleştirilmiş masaüstü plakası.",
+        name: "Dekoratif Lamba",
+        desc: "Yüksek elegant görünümde dekoratif ev tipi aydınlatma.",
         price: 180,
-        images: ["./content/product2.jpeg"], 
+        images: ["./content/products/4/1.jpg", "./content/products/4/2.jpg"], 
+        stl: "./content/desktop_writing_holder.STL",
+        sellCount: 20,
+        isCustomizable: true,
+        customConfig: {
+            baseScale: { x: 5, y: 0.2, z: 2 }, 
+            text: {
+                initialContent: "ENGRARE",
+                fontUrl: 'https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json',
+                fontSize: 10,       
+                fontThickness: 4,
+                letterSpacing: 0,
+                alignment: "center",   
+                position: { x: 0, y: 0, z: 10 },
+                rotation: { x: 0, y: 0, z: 0 },
+                color: "#FFFFFF"
+            },
+            logo: {
+                content: ENGRARE_LOGO_SVG,
+                scale: 1,
+                depth: 2,
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 }
+            },
+            customizableParams: {
+                textContent: 1,
+                textFont: 1,
+                textColor: 1,
+                textRotationX: 1,
+                textRotationY: 1,
+                textRotationZ: 1,
+                textPositionX: 1,
+                textPositionY: 1,
+                textPositionZ: 1,
+                logo: 0,
+                logoSize: 0,
+                logoDepth: 0,
+                logoRotationX: 0,
+                logoRotationY: 0,
+                logoRotationZ: 0,
+                logoPositionX: 0,
+                logoPositionY: 0,
+                logoPositionZ: 0,
+                modelColor: 1,
+                material: 1,
+                infill: 1,
+                quantity: 1,
+                delivery: 1
+            }
+        }
+    },
+    {
+        id: 5,
+        name: "Kratosun Kılıcı",
+        desc: "Renkli baskıya hazır Kreotosun Kılıcı",
+        price: 180,
+        images: ["./content/products/5/1.jpeg", "./content/products/5/2.jpeg"], 
         stl: "./content/desktop_writing_holder.STL",
         sellCount: 20,
         isCustomizable: true,
@@ -1166,7 +1222,7 @@ $(document).ready(function() {
         const user = auth.currentUser;
         // If user is real (not anonymous), go straight to payment
         if (user && !user.isAnonymous) {
-            window.location.href = "./payment/index.html";
+            window.location.href = "./payment";
         } else {
             // Guest or not logged in -> Ask
             $('#auth-decision-modal').addClass('open');
@@ -1180,7 +1236,7 @@ $(document).ready(function() {
 
     $('#modal-btn-guest').click(function() {
         // Proceed as guest
-        window.location.href = "./payment/index.html";
+        window.location.href = "./payment";
     });
 
     // --- CLOSE MODALS (Universal) ---

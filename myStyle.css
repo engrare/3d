@@ -375,12 +375,36 @@ p { color: var(--text-muted); }
 
 /* --- SERVICES & FEATURES --- */
 .feature-box {
-    background: #F8FAFC; padding: 30px; border-radius: var(--radius-md);
-    border: 1px solid transparent; transition: 0.3s;
+    background: white; padding: 40px 30px; border-radius: var(--radius-md);
+    border: 1px solid var(--border); transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
-.feature-box:hover { border-color: var(--accent); background: white; box-shadow: var(--shadow-md); }
-.icon-box { font-size: 2.5rem; margin-bottom: 20px; }
-.feature-box h4 { margin-bottom: 10px; font-weight: 700; color: var(--primary); }
+.feature-box:hover { 
+    transform: translateY(-10px); 
+    border-color: var(--accent); 
+    box-shadow: var(--shadow-lg); 
+}
+.icon-box { 
+    font-size: 3rem; 
+    margin-bottom: 25px; 
+    width: 80px;
+    height: 80px;
+    background: #F8FAFC;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s;
+}
+.feature-box:hover .icon-box {
+    background: #EFF6FF;
+    transform: rotate(5deg) scale(1.1);
+}
+.feature-box h4 { margin-bottom: 15px; font-weight: 800; color: var(--primary); font-size: 1.25rem; }
+.feature-box p { font-size: 0.95rem; line-height: 1.6; }
 
 /* --- TECH SECTION --- */
 .tech-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items: center; }
