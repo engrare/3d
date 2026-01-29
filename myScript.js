@@ -453,50 +453,221 @@ $(document).ready(function() {
     // --- FIREBASE AUTH LISTENERS ---
     
     // 1. Sign Up
+    // Initialize Flatpickr
+    flatpickr("#signup-dob", {
+        locale: "tr",
+        dateFormat: "d F Y",
+        disableMobile: "true", // Force custom picker on mobile too for consistency
+        theme: "airbnb" // You might need to import a theme css or just rely on base
+    });
+
+    let selectedProfilePhoto = { type: 'default', src: './content/default_user.png' }; // Store selection state
+
+    // Profile Photo UI Listeners
+    
+    // A. Option Buttons (Default & Icons)
+    $('.profile-option-btn').click(function() {
+        // Visual Selection
+        $('.profile-option-btn').removeClass('selected');
+        $(this).addClass('selected');
+
+        const type = $(this).data('type');
+        const $previewBox = $('#profile-preview-box');
+        const $previewImg = $('#signup-profile-preview');
+        const $previewIcon = $('#signup-profile-icon');
+        
+        if (type === 'default') {
+            const src = $(this).data('src');
+            
+            // Switch to Img mode
+            $previewIcon.hide();
+            $previewImg.attr('src', src).show();
+            $previewBox.css('background-color', '#f8fafc'); // Reset bg
+
+            selectedProfilePhoto = { type: 'default', src: src };
+            $('#upload-file-name').hide();
+        } 
+        else if (type === 'icon') {
+            const iconUnicode = $(this).data('icon'); 
+            const color = $(this).data('color') || '#3b82f6';
+            const iconClass = $(this).find('i').attr('class'); // Get class from button
+            
+            // Switch to Icon mode
+            $previewImg.hide();
+            $previewIcon.attr('class', iconClass).css('color', 'white').show();
+            $previewBox.css('background-color', color); // Set bg to icon color
+
+            // Generate Avatar on Canvas (for actual upload)
+            const canvas = document.createElement('canvas');
+            canvas.width = 200;
+            canvas.height = 200;
+            const ctx = canvas.getContext('2d');
+
+            // Background
+            ctx.fillStyle = color;
+            ctx.fillRect(0, 0, 200, 200);
+
+            // Wait for font to ensure it renders (basic check)
+            document.fonts.ready.then(() => {
+                ctx.font = '900 100px "Font Awesome 6 Free"'; 
+                ctx.fillStyle = 'white';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // Convert hex unicode to char
+                const char = String.fromCharCode(parseInt(iconUnicode, 16));
+                ctx.fillText(char, 100, 100);
+
+                const dataUrl = canvas.toDataURL('image/png');
+                selectedProfilePhoto = { type: 'generated', dataUrl: dataUrl };
+            });
+
+            $('#upload-file-name').hide();
+        }
+    });
+
+    // B. Upload Button Trigger
+    $('#profile-upload-trigger').click(function() {
+        $('#signup-file-input').click();
+    });
+
+    // C. File Input Change
+    $('#signup-file-input').change(function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const $previewBox = $('#profile-preview-box');
+                const $previewImg = $('#signup-profile-preview');
+                const $previewIcon = $('#signup-profile-icon');
+
+                // Switch to Img mode
+                $previewIcon.hide();
+                $previewImg.attr('src', e.target.result).show();
+                $previewBox.css('background-color', '#f8fafc');
+
+                selectedProfilePhoto = { type: 'upload', file: file };
+                
+                $('#upload-file-name').text("Seçilen: " + file.name).show();
+                
+                // Visual updates
+                $('.profile-option-btn').removeClass('selected');
+                $('#profile-upload-trigger').css('border-color', 'var(--accent)').css('color', 'var(--accent)');
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
     $('#btn-signup').click(async () => {
+        const $btn = $('#btn-signup');
+        const originalBtnText = $btn.text();
+        
         const fullname = $('#signup-fullname').val();
         const username = $('#signup-username').val();
-        const dob = $('#signup-dob').val();
+        const dob = $('#signup-dob').val(); // Flatpickr updates this value
         const email = $('#signup-email').val();
         const pass = $('#signup-password').val();
         const isKvkkChecked = $('#signup-kvkk').is(':checked');
 
-        if (!isKvkkChecked) {
-            alert("Lütfen KVKK Aydınlatma Metni'ni onaylayın.");
+        // Validation
+        if (!fullname || !username || !dob || !email) {
+            showToast("Lütfen tüm zorunlu alanları doldurun.", "error");
             return;
         }
 
-        if (!fullname || !username || !dob) {
-            alert("Lütfen tüm alanları doldurun.");
+        if (!pass) {
+             showToast("Lütfen bir şifre belirleyin.", "error");
+             return;
+        }
+
+        if (!isKvkkChecked) {
+            showToast("Lütfen KVKK Aydınlatma Metni'ni onaylayın.", "error");
             return;
         }
         
+        // Start Loading
+        $btn.addClass('loading').html('<div class="spinner-border"></div>');
+
         // Capture Guest UID if exists
         const currentUser = auth.currentUser;
         const guestUid = (currentUser && currentUser.isAnonymous) ? currentUser.uid : null;
 
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-            await updateProfile(userCredential.user, { displayName: fullname });
+            const user = userCredential.user;
             
-            // Write Extended Profile Data (Client-side, allowed by rules for own UID)
-            await set(ref(db, 'users/' + userCredential.user.uid + '/profile'), {
+            let photoURL = "./content/default_user.png";
+
+            // Handle Profile Photo Upload / Generation
+            if (selectedProfilePhoto.type === 'upload' && selectedProfilePhoto.file) {
+                try {
+                    const storageRef = sRef(storage, `profile_photos/${user.uid}`);
+                    const snapshot = await uploadBytes(storageRef, selectedProfilePhoto.file);
+                    photoURL = await getDownloadURL(snapshot.ref);
+                } catch (uploadErr) {
+                    console.error("Photo upload failed:", uploadErr);
+                    // showToast("Profil fotoğrafı yüklenemedi...", "info"); // Optional: don't block flow
+                }
+            } else if (selectedProfilePhoto.type === 'generated' && selectedProfilePhoto.dataUrl) {
+                try {
+                    const res = await fetch(selectedProfilePhoto.dataUrl);
+                    const blob = await res.blob();
+                    const storageRef = sRef(storage, `profile_photos/${user.uid}_avatar.png`);
+                    const snapshot = await uploadBytes(storageRef, blob);
+                    photoURL = await getDownloadURL(snapshot.ref);
+                } catch (err) {
+                    console.error("Avatar save failed", err);
+                    photoURL = selectedProfilePhoto.dataUrl; // Fallback
+                }
+            } else if (selectedProfilePhoto.type === 'default') {
+                photoURL = selectedProfilePhoto.src;
+            }
+
+            await updateProfile(user, { 
+                displayName: fullname,
+                photoURL: photoURL
+            });
+            
+            // Write Extended Profile Data
+            await set(ref(db, 'users/' + user.uid + '/profile'), {
                 fullname: fullname,
                 username: username,
                 dob: dob,
                 email: email,
-                role: "user"
+                role: "user",
+                photoURL: photoURL,
+                iconPreference: selectedProfilePhoto.type === 'icon' ? selectedProfilePhoto.value : null
             });
 
             // Migrate Guest Data
             if (guestUid) {
-                await migrateGuestData(guestUid, userCredential.user.uid);
+                await migrateGuestData(guestUid, user.uid);
             }
 
             showToast("Hesap oluşturuldu! Hoş geldiniz " + fullname, "success");
+            
+            // Reset Form Fields
+            $('#signup-fullname').val('');
+            $('#signup-username').val('');
+            $('#signup-dob').val(''); // Flatpickr clear might require .clear() but val('') usually works
+            $('#signup-email').val('');
+            $('#signup-password').val('');
+            $('#signup-kvkk').prop('checked', false);
+            
+            // Reset Profile Selection
+            $('.profile-option-btn').removeClass('selected');
+            $('.profile-option-btn[data-type="default"]').addClass('selected');
+            $('#signup-profile-preview').attr('src', './content/default_user.png').show();
+            $('#signup-profile-icon').hide();
+            $('#profile-preview-box').css('background-color', '#f8fafc');
+            selectedProfilePhoto = { type: 'default', src: './content/default_user.png' };
+
             switchPage('#home-page');
         } catch (error) {
             showToast("Hata: " + error.message, "error");
+        } finally {
+            // Stop Loading
+            $btn.removeClass('loading').text(originalBtnText);
         }
     });
 

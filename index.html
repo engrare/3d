@@ -10,6 +10,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/tr.js"></script>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-NLSV32JMM2"></script>
 <script>
@@ -625,6 +628,45 @@
                         <p>Bugün Engrare'ye katılın.</p>
                     </div>
                     <form class="login-form">
+                        <!-- Profile Photo Section -->
+                        <div class="form-group" style="text-align: center; margin-bottom: 25px;">
+                            <label style="display:block; margin-bottom:15px; font-size:0.9rem; color:#334155; font-weight:700;">Profil Fotoğrafı</label>
+                            
+                            <div class="profile-selection-container">
+                                <div class="profile-preview" id="profile-preview-box">
+                                    <img id="signup-profile-preview" src="./content/default_user.png" alt="Profil Önizleme">
+                                    <i id="signup-profile-icon" class="" style="display:none; font-size: 3.5rem; color: white;"></i>
+                                </div>
+                                
+                                <div class="profile-actions-wrapper">
+                                    <div class="profile-section-label">Bir Avatar Seçin</div>
+                                    <div class="profile-options">
+                                        <div class="profile-option-btn selected" data-type="default" data-src="./content/default_user.png" title="Varsayılan">
+                                            <i class="fa-regular fa-user"></i>
+                                        </div>
+                                        <div class="profile-option-btn" data-type="icon" data-icon="f013" data-color="#3b82f6" title="Dişli"> <!-- fa-gear -->
+                                            <i class="fa-solid fa-gear"></i>
+                                        </div>
+                                        <div class="profile-option-btn" data-type="icon" data-icon="f719" data-color="#ef4444" title="Makara"> <!-- fa-dharmachakra -->
+                                            <i class="fa-solid fa-dharmachakra"></i>
+                                        </div>
+                                        <div class="profile-option-btn" data-type="icon" data-icon="f53f" data-color="#10b981" title="Sanat"> <!-- fa-palette -->
+                                            <i class="fa-solid fa-palette"></i>
+                                        </div>
+                                    </div>
+
+                                    <div class="divider-text">v e y a</div>
+
+                                    <button type="button" id="profile-upload-trigger" class="btn-upload-trigger">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i> Kendi Fotoğrafını Yükle
+                                    </button>
+                                </div>
+                                
+                                <input type="file" id="signup-file-input" accept="image/*" hidden>
+                                <div id="upload-file-name" style="font-size: 0.75rem; color: var(--accent); margin-top: 5px; display: none;"></div>
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <input type="text" id="signup-fullname" class="login-input" placeholder="Tam Ad (Ad Soyad)" required>
                         </div>
@@ -632,8 +674,11 @@
                             <input type="text" id="signup-username" class="login-input" placeholder="Kullanıcı Adı" required>
                         </div>
                         <div class="form-group">
-                            <label style="display:block; margin-bottom:5px; font-size:0.8rem; color:#666;">Doğum Tarihi</label>
-                            <input type="date" id="signup-dob" class="login-input" required>
+                            <label style="display:block; margin-bottom:8px; font-size:0.8rem; color:#64748B; font-weight:600;">Doğum Tarihi</label>
+                            <div class="elegant-date-wrapper">
+                                <input type="text" id="signup-dob" class="elegant-date-input" placeholder="Gün / Ay / Yıl" required>
+                                <i class="fa-regular fa-calendar-days date-icon"></i>
+                            </div>
                         </div>
                         <div class="form-group">
                             <input type="email" id="signup-email" class="login-input" placeholder="E-posta Adresi" required>
@@ -644,7 +689,7 @@
                         <div class="form-group" style="display:flex; align-items:flex-start; gap:10px;">
                             <input type="checkbox" id="signup-kvkk" style="margin-top:4px;" required>
                             <label for="signup-kvkk" style="font-size:0.85rem; color:#666; cursor:pointer; line-height:1.4;">
-                                <a href="#" style="color:#0F172A; text-decoration:underline;">KVKK Aydınlatma Metni</a>'ni okudum ve kabul ediyorum.
+                                <a href="./payment/kvkk.html" target="_blank" style="color:#0F172A; text-decoration:underline;">KVKK Aydınlatma Metni</a>'ni okudum ve kabul ediyorum.
                             </label>
                         </div>
                         <button type="button" id="btn-signup" class="btn primary" style="width: 100%;">Kaydol</button>

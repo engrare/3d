@@ -1,0 +1,17 @@
+on directory "C:\Users\kayas\Desktop\3d-main" there are 3 website files which are named as "index.html", "myScript.js", "myStyle.css" please edit them according to my commends.
+
+
+on directory "C:\Users\kayas\Desktop\3d-main\payment" there are 2 html files named as "sozlesme.html", "kvkk.html" please edit them according to my commends.
+
+on directory "C:\Users\kayas\Desktop\3d-main\payment" there are 3 website files which are named as "index.html", "myScript.js", "myStyle.css" please edit them according to my commends.
+
+
+
+NOTLAR:
+kenarlıklı oval plaka
+Plaka Numaralığı
+
+
+function deploy:
+cd C:\Users\kayas\Desktop\3d-main
+firebase deploy --only functions

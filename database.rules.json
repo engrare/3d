@@ -1,0 +1,11 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        // Secure: Users (authenticated or anonymous) can ONLY read/write their own data
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    }
+  }
+}
