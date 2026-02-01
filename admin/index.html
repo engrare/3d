@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engrare 3D - Yönetim Paneli</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./myStyle.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+                "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+                "firebase/database": "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js",
+                "firebase/functions": "https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-logo">ENGRARE.</div>
+                <div class="brand-subtitle">Admin Paneli</div>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item active" data-target="#dashboard-section">
+                    <i class="fa-solid fa-chart-pie"></i> <span>Panel Özeti</span>
+                </li>
+                <li class="nav-item" data-target="#orders-section">
+                    <i class="fa-solid fa-cart-shopping"></i> <span>Sipariş Yönetimi</span>
+                </li>
+                <li class="nav-item" data-target="#production-section">
+                    <i class="fa-solid fa-list-check"></i> <span>Üretim Kuyruğu</span>
+                </li>
+                <li class="nav-item" data-target="#fleet-section">
+                    <i class="fa-solid fa-server"></i> <span>Cihaz & Filo</span>
+                </li>
+                <li class="nav-item" data-target="#files-section">
+                    <i class="fa-solid fa-folder-open"></i> <span>Dosya Kütüphanesi</span>
+                </li>
+                <li class="nav-item" data-target="#stock-section">
+                    <i class="fa-solid fa-cubes-stacked"></i> <span>Stok & Malzeme</span>
+                </li>
+                <li class="nav-item" data-target="#finance-section">
+                    <i class="fa-solid fa-file-invoice-dollar"></i> <span>Finans & Vergi</span>
+                </li>
+                <li class="nav-item" data-target="#logistics-section">
+                    <i class="fa-solid fa-truck-fast"></i> <span>Lojistik</span>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer" id="admin-login-trigger" style="cursor: pointer;">
+                <div class="user-profile">
+                    <img id="admin-avatar" src="../content/default_user.png" alt="Admin">
+                    <div class="user-info">
+                        <span class="name" id="admin-name">Giriş Yap</span>
+                        <span class="role" id="admin-role">Misafir</span>
+                    </div>
+                </div>
+                <button class="logout-btn" id="admin-logout-btn" style="display:none;"><i class="fa-solid fa-right-from-bracket"></i></button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            
+            <!-- 1. Dashboard (Overview) -->
+            <section id="dashboard-section" class="content-section active">
+                <div class="section-header">
+                    <h2>Panel Özeti</h2>
+                    <p class="section-desc">Günlük operasyonların ve canlı durumun özeti.</p>
+                </div>
+
+                <div class="dashboard-grid">
+                    <!-- Live Status -->
+                    <div class="card status-card">
+                        <div class="card-header">
+                            <h4>Canlı Baskı Durumu</h4>
+                            <span class="badge badge-success">Aktif</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="printer-info" id="live-status-info">
+                                <strong>Sistem Durumu</strong>
+                                <span id="live-status-msg">Yükleniyor...</span>
+                            </div>
+                            <div class="progress-wrapper" id="live-status-container" style="display:none;">
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar" style="width: 0%;"></div>
+                                </div>
+                                <div class="progress-stats">
+                                    <span>%0 Tamamlandı</span>
+                                    <span>Kalan: --</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Revenue Widget -->
+                    <div class="card revenue-card">
+                        <div class="card-header">
+                            <h4>Gelir Özeti</h4>
+                            <select class="small-select">
+                                <option>Bu Ay</option>
+                                <option>Bugün</option>
+                            </select>
+                        </div>
+                        <div class="revenue-stats">
+                            <div class="stat-item">
+                                <span class="label">Günlük</span>
+                                <span class="value" id="rev-daily">₺0.00</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="label">Aylık</span>
+                                <span class="value" id="rev-monthly">₺0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Camera Feed -->
+                    <div class="card camera-card full-width">
+                        <div class="card-header">
+                            <h4>Canlı İzleme</h4>
+                            <span class="live-indicator"><i class="fa-solid fa-circle"></i> CANLI</span>
+                        </div>
+                        <div class="camera-placeholder">
+                            <i class="fa-solid fa-video-slash"></i>
+                            <span>Kamera Bağlantısı Bekleniyor...</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Order Management -->
+            <section id="orders-section" class="content-section">
+                <div class="section-header">
+                    <h2>Sipariş Yönetimi</h2>
+                    <p class="section-desc">Gelen siparişleri görüntüleyin ve yönetin.</p>
+                </div>
+
+                <div class="card table-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Sipariş ID</th>
+                                <th>Durum</th>
+                                <th>Tutar</th>
+                                <th>Müşteri ID</th>
+                                <th>İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-table-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 3. Production Queue -->
+            <section id="production-section" class="content-section">
+                <div class="section-header">
+                    <h2>Üretim Kuyruğu</h2>
+                    <p class="section-desc">Baskı sırasını sürükleyip bırakarak düzenleyin.</p>
+                </div>
+
+                <div class="queue-container" id="production-queue">
+                   <!-- Populated by JS -->
+                </div>
+            </section>
+
+            <!-- 4. Device & Fleet Management -->
+            <section id="fleet-section" class="content-section">
+                <div class="section-header">
+                    <h2>Cihaz & Filo</h2>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <p class="section-desc" style="margin: 0;">Yazıcılarınızın durumunu yönetin.</p>
+                        <button id="btn-refresh-fleet" class="btn-sm secondary" style="border-radius: 20px; padding: 6px 16px;">
+                            <i class="fa-solid fa-rotate"></i> Yenile
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid-3" id="device-grid">
+                    <!-- Populated by Cloud Function -->
+                    <div style="grid-column: 1/-1; text-align: center; color: #94A3B8; padding: 40px;">
+                        <i class="fa-solid fa-server" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                        <p>Cihaz durumu yükleniyor veya veri yok.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. File Library -->
+            <section id="files-section" class="content-section">
+                <div class="section-header">
+                    <h2>Dosya Kütüphanesi</h2>
+                    <button class="btn primary"><i class="fa-solid fa-cloud-arrow-up"></i> Yeni Dosya Yükle</button>
+                </div>
+
+                <div class="file-grid" id="file-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </section>
+
+            <!-- 6. Stock & Materials -->
+            <section id="stock-section" class="content-section">
+                <div class="section-header">
+                    <h2>Stok & Malzeme</h2>
+                    <p class="section-desc">Filament envanter takibi.</p>
+                </div>
+
+                <div class="stock-list" id="stock-list-container">
+                     <!-- Populated by JS -->
+                </div>
+            </section>
+
+            <!-- 7. Finance & Tax -->
+            <section id="finance-section" class="content-section">
+                <div class="section-header">
+                    <h2>Finans & Vergi</h2>
+                    <p class="section-desc">Esnaf muafiyeti limit takibi ve giderler.</p>
+                </div>
+
+                <div class="card tax-card">
+                    <h4>Vergi Muafiyet Limiti (2026)</h4>
+                    <div class="tax-progress-wrapper">
+                         <div class="tax-labels">
+                            <span id="tax-current">Mevcut Satış: ₺0</span>
+                            <span id="tax-limit">Limit: ₺0</span>
+                        </div>
+                        <div class="progress-bar-container large">
+                            <div class="progress-bar gradient" id="tax-bar" style="width: 0%;"></div>
+                        </div>
+                        <div class="tax-status" id="tax-desc">
+                            <i class="fa-solid fa-check-circle"></i> Yükleniyor...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card expense-card" style="margin-top: 30px;">
+                    <div class="card-header">
+                        <h4>Gider Listesi</h4>
+                        <button class="btn-sm primary">+ Gider Ekle</button>
+                    </div>
+                    <ul class="expense-list" id="expense-list">
+                       <!-- Populated by JS -->
+                    </ul>
+                </div>
+            </section>
+
+             <!-- 8. Logistics -->
+             <section id="logistics-section" class="content-section">
+                <div class="section-header">
+                    <h2>Lojistik</h2>
+                    <p class="section-desc">Kargo ve gönderi işlemleri.</p>
+                </div>
+
+                <div class="card logistics-card">
+                    <div class="form-group">
+                        <label>Sipariş Seçin</label>
+                        <select class="select-box">
+                            <option>#ORD-2451 - Ahmet Yılmaz</option>
+                            <option>#ORD-2450 - Ayşe Demir</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Kargo Firması</label>
+                            <select class="select-box">
+                                <option>Yurtiçi Kargo</option>
+                                <option>Aras Kargo</option>
+                                <option>MNG Kargo</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Takip Numarası</label>
+                            <input type="text" class="input-box" placeholder="Takip No Giriniz">
+                        </div>
+                    </div>
+
+                    <div class="logistics-actions">
+                        <button class="btn primary"><i class="fa-solid fa-barcode"></i> Barkod/Etiket Oluştur</button>
+                        <button class="btn secondary">Takip Numarasını Kaydet</button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-close">&times;</div>
+            <h3 style="margin-bottom: 20px; color: var(--primary);">Yönetici Girişi</h3>
+            <form id="admin-login-form">
+                <div class="form-group">
+                    <label>E-posta</label>
+                    <input type="email" id="login-email" class="input-box" required>
+                </div>
+                <div class="form-group">
+                    <label>Şifre</label>
+                    <input type="password" id="login-password" class="input-box" required>
+                </div>
+                <button type="submit" class="btn primary" style="width: 100%;">Giriş Yap</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bambu Lab 2FA Modal -->
+    <div id="bambu-2fa-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 380px; text-align: center;">
+            <div class="modal-close" id="close-2fa-modal">&times;</div>
+            <div style="font-size: 3rem; margin-bottom: 15px;">🔐</div>
+            <h3 style="margin-bottom: 10px; color: var(--primary);">Güvenlik Doğrulaması</h3>
+            <p style="margin-bottom: 15px; color: var(--text-muted); font-size: 0.9rem;">
+                Bambu Lab hesabınız için e-postanıza gönderilen doğrulama kodunu giriniz.
+            </p>
+            
+            <form id="bambu-2fa-form" style="display: flex; flex-direction: column; gap: 15px;">
+                <div class="form-group" style="margin: 0;">
+                    <!-- EXPLICIT INPUT FIELD -->
+                    <input type="text" id="bambu-2fa-code" class="input-box" 
+                           placeholder="Kodu Buraya Girin (örn. 123456)" 
+                           style="text-align: center; font-size: 1.4rem; letter-spacing: 3px; font-weight: 700; padding: 12px; border: 2px solid var(--primary); border-radius: 8px; width: 100%; display: block;" 
+                           required autocomplete="off">
+                </div>
+                
+                <div style="font-size: 0.85rem;">
+                    <a href="#" id="resend-2fa-code" style="color: var(--accent); text-decoration: none;">
+                        Kodu Tekrar Gönder <span id="resend-timer"></span>
+                    </a>
+                </div>
+                
+                <button type="submit" class="btn primary" style="width: 100%; padding: 12px; font-size: 1rem;">DOĞRULA</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+    <script type="module" src="myScript.js"></script>
+</body>
+</html>
