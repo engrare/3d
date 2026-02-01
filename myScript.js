@@ -193,7 +193,7 @@ const allFirebaseModels = [
         desc: "Yüksek detaylı istenilen renge kişiselleştirilebilen ürün.",
         price: 180,
         images: ["./content/products/3/1.jpg"], 
-        stl: "./content/desktop_writing_holder.STL",
+        stl: "./content/products/3/kalemlik.STL",
         sellCount: 5,
         isCustomizable: true,
         customConfig: {
@@ -217,7 +217,7 @@ const allFirebaseModels = [
                 rotation: { x: 0, y: 0, z: 0 }
             },
             customizableParams: {
-                textContent: 1,
+                textContent: 0,
                 textFont: 0,
                 textSize: 1,
                 textDepth: 1,
@@ -230,8 +230,8 @@ const allFirebaseModels = [
                 textPositionX: 1,
                 textPositionY: 1,
                 textPositionZ: 0,
-                logo: 0,
-                logoSize: 0,
+                logo: 1,
+                logoSize: 1,
                 logoDepth: 0,
                 logoRotationX: 0,
                 logoRotationY: 0,
@@ -239,7 +239,7 @@ const allFirebaseModels = [
                 logoPositionX: 0,
                 logoPositionY: 0,
                 logoPositionZ: 0,
-                modelColor: 0,
+                modelColor: 1,
                 material: 1,
                 infill: 1,
                 quantity: 1,
@@ -1733,50 +1733,75 @@ function checkParamVisibility(paramName, currentMode) {
 function updateControlsVisibility(mode) {
     if (!activeModelConfig || !activeModelConfig.customizableParams) return;
 
-    // 1. Text Content
-    const showTextContent = checkParamVisibility('textContent', mode);
-    $('#custom-text-input').closest('.form-group, #custom-text-group > label + input').toggle(showTextContent);
+    // --- MASTER SWITCHES ---
+    // textContent acts as Master Switch for ALL text controls
+    const masterTextVisible = checkParamVisibility('textContent', mode);
+    
+    // logo acts as Master Switch for ALL logo controls
+    const masterLogoVisible = checkParamVisibility('logo', mode);
+
+    // 1. Text Content (Input Box)
+    $('#custom-text-input').closest('.form-group, #custom-text-group > label + textarea, #custom-text-group > textarea').prev('label').toggle(masterTextVisible);
+    $('#custom-text-input').toggle(masterTextVisible);
 
     // 2. Text Font
-    const showFont = checkParamVisibility('textFont', mode);
+    const showFont = masterTextVisible && checkParamVisibility('textFont', mode);
     $('#text-font-select').prev('label').toggle(showFont);
     $('#text-font-select').toggle(showFont);
 
-    // 3. Text Color
-    const showTextColor = checkParamVisibility('textColor', mode);
-    $('#custom-text-group .color-grid').first().prev('label').toggle(showTextColor);
-    $('#custom-text-group .color-grid').toggle(showTextColor);
-    
-    // 4. Rotations
-    const showRotX = checkParamVisibility('textRotationX', mode);
-    $('#text-rotation-x').closest('.form-group').toggle(showRotX);
-    
-    const showRotY = checkParamVisibility('textRotationY', mode);
-    $('#text-rotation-y').closest('.form-group').toggle(showRotY);
-    
-    const showRotZ = checkParamVisibility('textRotationZ', mode);
-    $('#text-rotation-z').closest('.form-group').toggle(showRotZ);
+    // 3. Text Size
+    const showSize = masterTextVisible && checkParamVisibility('textSize', mode);
+    $('#text-size-slider').closest('.form-group').prev('label').toggle(showSize);
+    $('#text-size-slider').closest('.form-group').toggle(showSize);
 
-    // Toggle Rotation Container
+    // 4. Text Depth
+    const showDepth = masterTextVisible && checkParamVisibility('textDepth', mode);
+    $('#text-depth-slider').closest('.form-group').prev('label').toggle(showDepth);
+    $('#text-depth-slider').closest('.form-group').toggle(showDepth);
+
+    // 5. Letter Spacing
+    const showSpacing = masterTextVisible && checkParamVisibility('letterSpacing', mode);
+    $('#letter-spacing-slider').closest('.form-group').prev('label').toggle(showSpacing);
+    $('#letter-spacing-slider').closest('.form-group').toggle(showSpacing);
+
+    // 6. Text Alignment
+    const showAlign = masterTextVisible && checkParamVisibility('textAlignment', mode);
+    $('input[name="text-align"]').first().closest('.form-group').prev('label').toggle(showAlign);
+    $('input[name="text-align"]').first().closest('.form-group').toggle(showAlign);
+
+    // 7. Text Color
+    const showTextColor = masterTextVisible && checkParamVisibility('textColor', mode);
+    $('#custom-text-group .color-grid').first().prev('label').toggle(showTextColor);
+    $('#custom-text-group .color-grid').first().toggle(showTextColor);
+    
+    // 8. Text Rotations (Group)
+    const showRotX = masterTextVisible && checkParamVisibility('textRotationX', mode);
+    const showRotY = masterTextVisible && checkParamVisibility('textRotationY', mode);
+    const showRotZ = masterTextVisible && checkParamVisibility('textRotationZ', mode);
     const anyRotVisible = showRotX || showRotY || showRotZ;
+
+    $('#text-rotation-x').closest('.form-group').toggle(showRotX);
+    $('#text-rotation-y').closest('.form-group').toggle(showRotY);
+    $('#text-rotation-z').closest('.form-group').toggle(showRotZ);
+    // Toggle the Rotation Container (The white box)
     $('#text-rotation-x').closest('.form-group').parent().toggle(anyRotVisible);
     
-    // 5. Positions
-    const showPosX = checkParamVisibility('textPositionX', mode);
-    $('#text-pos-x').closest('.form-group').toggle(showPosX);
-    
-    const showPosY = checkParamVisibility('textPositionY', mode);
-    $('#text-pos-y').closest('.form-group').toggle(showPosY);
-    
-    const showPosZ = checkParamVisibility('textPositionZ', mode);
-    $('#text-pos-z').closest('.form-group').toggle(showPosZ);
-
-    // Toggle Position Container
+    // 9. Text Positions (Group)
+    const showPosX = masterTextVisible && checkParamVisibility('textPositionX', mode);
+    const showPosY = masterTextVisible && checkParamVisibility('textPositionY', mode);
+    const showPosZ = masterTextVisible && checkParamVisibility('textPositionZ', mode);
     const anyPosVisible = showPosX || showPosY || showPosZ;
+
+    $('#text-pos-x').closest('.form-group').toggle(showPosX);
+    $('#text-pos-y').closest('.form-group').toggle(showPosY);
+    $('#text-pos-z').closest('.form-group').toggle(showPosZ);
+    // Toggle the Position Container (The white box)
     $('#text-pos-x').closest('.form-group').parent().toggle(anyPosVisible);
 
-    // 6. Other Params (Model Color, Material, etc.)
-    // Model Color (second .color-grid in #panel-basic, or the one not in #custom-text-group)
+
+    // 10. Other Params (Model Color, Material, etc.) - Independent of Text/Logo
+    // Model Color (The one in the main panel, distinct from text color)
+    // Note: The selector needs to be specific to avoid hiding text color grid if selectors overlap
     const showModelColor = checkParamVisibility('modelColor', mode);
     $('#panel-basic > .form-group:has(.color-grid)').toggle(showModelColor);
 
@@ -1792,47 +1817,59 @@ function updateControlsVisibility(mode) {
     const showQuantity = checkParamVisibility('quantity', mode);
     $('#quantity-input').closest('.form-group').toggle(showQuantity);
 
-    // 11. Logo Section
-    const showLogo = checkParamVisibility('logo', mode);
-    $('#custom-logo-container').toggle(showLogo);
+    // 11. Delivery
+    const showDelivery = checkParamVisibility('delivery', mode);
+    $('input[name="delivery"]').first().closest('.form-group').toggle(showDelivery);
 
-    if (showLogo) {
+
+    // 12. Logo Section
+    $('#custom-logo-container').toggle(masterLogoVisible);
+
+    if (masterLogoVisible) {
         // Logo Size
         const showLogoSize = checkParamVisibility('logoSize', mode);
+        $('#logo-size-slider').closest('.form-group').prev('label').toggle(showLogoSize);
         $('#logo-size-slider').closest('.form-group').toggle(showLogoSize);
 
         // Logo Depth
         const showLogoDepth = checkParamVisibility('logoDepth', mode);
+        $('#logo-depth-slider').closest('.form-group').prev('label').toggle(showLogoDepth);
         $('#logo-depth-slider').closest('.form-group').toggle(showLogoDepth);
 
         // Logo Color
         const showLogoColor = checkParamVisibility('logoColor', mode);
-        $('#custom-logo-container .color-grid').toggle(showLogoColor);
         $('#custom-logo-container .color-grid').prev('label').toggle(showLogoColor);
+        $('#custom-logo-container .color-grid').toggle(showLogoColor);
 
         // Logo Rotations
         const showLogoRotX = checkParamVisibility('logoRotationX', mode);
-        $('#logo-rotation-x').closest('.form-group').toggle(showLogoRotX);
         const showLogoRotY = checkParamVisibility('logoRotationY', mode);
-        $('#logo-rotation-y').closest('.form-group').toggle(showLogoRotY);
         const showLogoRotZ = checkParamVisibility('logoRotationZ', mode);
-        $('#logo-rotation-z').closest('.form-group').toggle(showLogoRotZ);
-
-        // Toggle Logo Rotation Container
         const anyLogoRotVisible = showLogoRotX || showLogoRotY || showLogoRotZ;
+
+        $('#logo-rotation-x').closest('.form-group').toggle(showLogoRotX);
+        $('#logo-rotation-y').closest('.form-group').toggle(showLogoRotY);
+        $('#logo-rotation-z').closest('.form-group').toggle(showLogoRotZ);
         $('#logo-rotation-x').closest('.form-group').parent().toggle(anyLogoRotVisible);
 
         // Logo Positions
         const showLogoPosX = checkParamVisibility('logoPositionX', mode);
-        $('#logo-pos-x').closest('.form-group').toggle(showLogoPosX);
         const showLogoPosY = checkParamVisibility('logoPositionY', mode);
-        $('#logo-pos-y').closest('.form-group').toggle(showLogoPosY);
         const showLogoPosZ = checkParamVisibility('logoPositionZ', mode);
-        $('#logo-pos-z').closest('.form-group').toggle(showLogoPosZ);
-
-        // Toggle Logo Position Container
         const anyLogoPosVisible = showLogoPosX || showLogoPosY || showLogoPosZ;
+
+        $('#logo-pos-x').closest('.form-group').toggle(showLogoPosX);
+        $('#logo-pos-y').closest('.form-group').toggle(showLogoPosY);
+        $('#logo-pos-z').closest('.form-group').toggle(showLogoPosZ);
         $('#logo-pos-x').closest('.form-group').parent().toggle(anyLogoPosVisible);
+    }
+
+    // 13. Parent Group Visibility
+    // Hide the entire custom-text-group if neither Text nor Logo is visible
+    if (!masterTextVisible && !masterLogoVisible) {
+        $('#custom-text-group').hide();
+    } else {
+        $('#custom-text-group').fadeIn();
     }
 }
 
@@ -2027,6 +2064,13 @@ function init3D() {
     controls.enabled = false; 
 
     createBed();
+    
+    // Setup drag listener (Moved from updateCustomText to support Logo dragging even if Text is hidden)
+    if (!textDragListenerSetup) {
+        setupTextDragListener();
+        textDragListenerSetup = true;
+    }
+
     animate();
     const resizeObserver = new ResizeObserver(() => updateDimensions());
     resizeObserver.observe(container);
@@ -2141,7 +2185,7 @@ function loadLibrarySTL(url) {
         .then(data => loadSTL(data))
         .catch(err => {
              console.error(err);
-             showToast("Demo Modu: Lütfen yerel dosyaların mevcut olduğundan emin olun.", "error");
+             showToast("Dosya açılırken bir hata oluştu.", "error");
         });
 }
 
@@ -2294,6 +2338,17 @@ function handleLogoUpload(e) {
 function updateCustomLogo(svgContent) {
     if (!mesh || !activeModelConfig || !activeModelConfig.logo) return;
 
+    // CHECK VISIBILITY PARAM
+    const logoParam = activeModelConfig.customizableParams ? activeModelConfig.customizableParams.logo : 1;
+    if (logoParam === 0) {
+        if (logoMesh) {
+            mesh.remove(logoMesh);
+            if (logoMesh.geometry) logoMesh.geometry.dispose();
+            logoMesh = null;
+        }
+        return;
+    }
+
     // Remove existing logo mesh
     if (logoMesh) {
         mesh.remove(logoMesh);
@@ -2382,6 +2437,17 @@ function updateCustomLogo(svgContent) {
 
 function updateCustomText(message) {
     if (!mesh || !activeModelConfig) return;
+
+    // CHECK VISIBILITY PARAM
+    const textParam = activeModelConfig.customizableParams ? activeModelConfig.customizableParams.textContent : 1;
+    if (textParam === 0) {
+        if (textMesh) {
+             mesh.remove(textMesh);
+             if(textMesh.geometry) textMesh.geometry.dispose();
+             textMesh = null;
+        }
+        return;
+    }
     
     // If message is empty, delete
     if (message === "") {
@@ -2491,12 +2557,7 @@ function updateCustomText(message) {
         textMesh.rotation.z = rot.z || 0;
 
         mesh.add(textMesh);
-        
-        // Setup drag listener only once
-        if (!textDragListenerSetup) {
-            setupTextDragListener();
-            textDragListenerSetup = true;
-        }
+
     });
 }
 
