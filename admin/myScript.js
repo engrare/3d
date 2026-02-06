@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
-import { getDatabase, ref, get, set } from "firebase/database";
+import { getDatabase, ref, get, set, update, onValue } from "firebase/database";
 import { getFunctions, httpsCallable } from "firebase/functions";
 
 const firebaseConfig = {
@@ -18,6 +18,8 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 const functions = getFunctions(app, 'europe-west1');
+
+let globalAdminData = null;
 
 // Default Data Structure provided by the user (Fallback)
 const DEFAULT_ADMIN_DATA = {
@@ -53,24 +55,11 @@ $(document).ready(function() {
         try {
             await signInWithEmailAndPassword(auth, email, password);
             
-            // Attempt READ to verify Admin Access
-            const adminRef = ref(db, 'admin');
-            const snapshot = await get(adminRef);
-            
             showToast("Yönetici girişi başarılı.", "success");
             $('#login-modal').removeClass('open');
-
-            let adminData = snapshot.val();
-
-            if (!adminData) {
-                console.log("Admin node empty. Seeding defaults...");
-                await set(adminRef, DEFAULT_ADMIN_DATA);
-                adminData = DEFAULT_ADMIN_DATA;
-            }
-
-            renderDashboard(adminData);
             
-            // Trigger Fleet Refresh on Login
+            // NOTE: The onAuthStateChanged listener will handle loading the data via onValue
+            // but we can trigger an initial fleet refresh here.
             refreshFleetStatus();
 
         } catch (error) {
@@ -126,17 +115,52 @@ $(document).ready(function() {
         }
     });
 
-    async function loadDataIfAdmin() {
+    function loadDataIfAdmin() {
         if (!auth.currentUser) return;
-        try {
-            const snapshot = await get(ref(db, 'admin'));
+        
+        // 1. Listen to Admin Data (Dashboard, Inventory, etc.)
+        const adminRef = ref(db, 'admin');
+        onValue(adminRef, (snapshot) => {
             if (snapshot.exists()) {
-                renderDashboard(snapshot.val());
-                refreshFleetStatus(); // Refresh devices on reload
+                const data = snapshot.val();
+                // We will merge orders later, so just pass other data for now
+                if(data.orders) delete data.orders; // Prevent stale admin orders from overwriting
+                
+                // If we haven't fetched users yet, we might render partial data
+                // But better to merge in a single state object if possible.
+                // For now, let's update the global object's non-order parts.
+                if (!globalAdminData) globalAdminData = {};
+                Object.assign(globalAdminData, data);
+                
+                renderDashboard(globalAdminData, false); // false = don't render orders yet
+            } else {
+                console.log("No admin data found, using defaults.");
+                if (!globalAdminData) globalAdminData = DEFAULT_ADMIN_DATA;
+                renderDashboard(globalAdminData, false);
             }
-        } catch (error) {
-            // Silent fail
-        }
+        }, (error) => {
+            console.error("Data Load Error:", error);
+        });
+
+        // 2. Fetch Orders via Cloud Function (Bypass permission issues)
+        const getAllOrders = httpsCallable(functions, 'getAllOrders');
+        getAllOrders()
+            .then((result) => {
+                const allOrders = result.data.orders || {};
+                
+                if (!globalAdminData) globalAdminData = {};
+                globalAdminData.orders = allOrders;
+
+                renderOrders(allOrders);
+                console.log("Orders loaded via Cloud Function:", Object.keys(allOrders).length);
+            })
+            .catch((error) => {
+                console.error("Order Load Error:", error);
+                showToast("Siparişler yüklenirken hata oluştu.", "error");
+            });
+        
+        // Initial fleet refresh on load
+        refreshFleetStatus();
     }
 
     // --- NAVIGATION ---
@@ -453,7 +477,9 @@ $(document).ready(function() {
     }
 
     // --- RENDER FUNCTION ---
-    function renderDashboard(data) {
+    function renderDashboard(data, renderOrdersFlag = true) {
+        // globalAdminData = data; // Already set in listener
+
         // 1. Live Status & Revenue
         if (data.dashboard) {
              if(data.dashboard.live_status) $('#live-status-msg').text(data.dashboard.live_status.message);
@@ -509,20 +535,8 @@ $(document).ready(function() {
         }
 
         // 6. Orders
-        const $orderTable = $('#orders-table-body');
-        $orderTable.empty();
-        if (data.orders) {
-            Object.entries(data.orders).forEach(([key, order]) => {
-                $orderTable.append(`
-                    <tr>
-                        <td>${key}</td>
-                        <td><span class="badge badge-warning">${order.status}</span></td>
-                        <td>₺${order.total}</td>
-                        <td>${order.user_id}</td>
-                        <td><button class="btn-icon"><i class="fa-solid fa-ellipsis-vertical"></i></button></td>
-                    </tr>
-                `);
-            });
+        if (renderOrdersFlag) {
+            renderOrders(data.orders || {});
         }
 
         // 7. Finance
@@ -556,8 +570,270 @@ $(document).ready(function() {
         }
     }
 
+    // --- ORDER MANAGEMENT HELPERS ---
+
+    function renderOrders(orders) {
+        const $orderTable = $('#orders-table-body');
+        $orderTable.empty();
+        
+        const searchTerm = $('#order-search-input').val().toLowerCase();
+        
+        // Helper for status badge
+        const getStatusBadge = (status) => {
+            let icon = 'fa-circle-question';
+            let badgeClass = 'badge-muted';
+            
+            if (!status) status = 'Bilinmiyor';
+
+            // Robust matching for Turkish characters
+            const s = String(status).toLocaleLowerCase('tr');
+            
+            if (s.includes('hazır') || s.includes('pending') || s.includes('bekliyor')) {
+                icon = 'fa-clock';
+                badgeClass = 'badge-warning';
+            } else if (s.includes('kargo')) {
+                icon = 'fa-truck';
+                badgeClass = 'badge-info';
+            } else if (s.includes('tamam') || s.includes('paid')) {
+                icon = 'fa-check';
+                badgeClass = 'badge-success';
+            } else if (s.includes('iptal')) {
+                icon = 'fa-ban';
+                badgeClass = 'badge-danger';
+            }
+            
+            return `<span class="badge ${badgeClass}"><i class="fa-solid ${icon}"></i> ${status}</span>`;
+        };
+
+        // Sort orders by date (newest first)
+        const sortedOrders = Object.entries(orders).sort(([,a], [,b]) => {
+            return (b.serverTimestamp || 0) - (a.serverTimestamp || 0);
+        });
+
+        sortedOrders.forEach(([key, order]) => {
+            // Search Filter
+            const searchString = (key + ' ' + (order.userId || '') + ' ' + (order.status || '')).toLowerCase();
+            if (searchTerm && !searchString.includes(searchTerm)) {
+                return; // Skip if doesn't match
+            }
+            
+            // Format Currency
+            const total = parseFloat(order.totalAmount || 0).toFixed(2);
+            const userIdDisplay = order.userId ? `<span title="${order.userId}">${order.userId.substring(0,8)}...</span>` : '-';
+
+            $orderTable.append(`
+                <tr>
+                    <td><input type="checkbox" class="order-checkbox" value="${key}" data-userid="${order.userId}"></td>
+                    <td><span style="font-family: monospace; font-weight: 600;">${key}</span></td>
+                    <td>${getStatusBadge(order.status)}</td>
+                    <td>₺${total}</td>
+                    <td>${userIdDisplay}</td>
+                    <td style="overflow: visible;">
+                        <div class="action-dropdown">
+                            <button class="btn-sm secondary view-details-btn" data-id="${key}" style="margin-right: 5px;">
+                                <i class="fa-solid fa-eye"></i> Detay
+                            </button>
+                            <button class="btn-icon action-trigger" data-id="${key}"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                            <div class="dropdown-menu">
+                                <div class="dropdown-item" data-id="${key}" data-userid="${order.userId}" data-status="Hazırlanıyor"><i class="fa-solid fa-clock"></i> Hazırlanıyor</div>
+                                <div class="dropdown-item" data-id="${key}" data-userid="${order.userId}" data-status="Kargolandı"><i class="fa-solid fa-truck"></i> Kargolandı</div>
+                                <div class="dropdown-item" data-id="${key}" data-userid="${order.userId}" data-status="Tamamlandı"><i class="fa-solid fa-check"></i> Tamamlandı</div>
+                                <div class="dropdown-item" data-id="${key}" data-userid="${order.userId}" data-status="İptal" style="color: #EF4444;"><i class="fa-solid fa-ban"></i> İptal</div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `);
+        });
+
+        // Dropdown Trigger Listener
+        $('.action-trigger').off('click').on('click', function(e) {
+            e.stopPropagation();
+            $('.dropdown-menu').not($(this).next('.dropdown-menu')).removeClass('show');
+            $(this).next('.dropdown-menu').toggleClass('show');
+        });
+
+        // View Details Listener
+        $('.view-details-btn').off('click').on('click', function(e) {
+            e.stopPropagation();
+            const orderId = $(this).data('id');
+            const order = globalAdminData.orders[orderId];
+            if (order) {
+                openOrderDetailModal(order);
+            }
+        });
+
+        // Status Change Listener
+        $('.dropdown-item').off('click').on('click', async function(e) {
+            e.stopPropagation();
+            const orderId = $(this).data('id');
+            const userId = $(this).data('userid');
+            const newStatus = $(this).data('status');
+            
+            $('.dropdown-menu').removeClass('show');
+
+            if(!orderId || !newStatus || !userId) {
+                showToast("Hata: Kullanıcı veya sipariş bilgisi eksik.", "error");
+                return;
+            }
+            
+            showToast(`Durum güncelleniyor: ${newStatus}...`, "info");
+
+            try {
+                // Update in User's path
+                await update(ref(db, `users/${userId}/orders/${orderId}`), {
+                    status: newStatus
+                });
+                showToast("Durum başarıyla güncellendi.", "success");
+            } catch (error) {
+                console.error("Status Update Error:", error);
+                showToast("Hata: " + error.message, "error");
+            }
+        });
+    }
+
+    // --- MODAL LOGIC ---
+    function openOrderDetailModal(order) {
+        // Populate Info
+        $('#modal-order-id').text(order.id);
+        $('#modal-order-status').text(order.status).attr('class', 'badge').addClass(
+            order.status.includes('paid') || order.status.includes('Tamam') ? 'badge-success' : 'badge-warning'
+        );
+
+        // Customer
+        const ship = order.shippingInfo || {};
+        $('#modal-customer-name').text((ship.name || '') + ' ' + (ship.surname || ''));
+        $('#modal-customer-email').text(ship.email || '-');
+        $('#modal-customer-phone').text(ship.phone || '-');
+        $('#modal-customer-id').text(order.userId || '-');
+
+        // Shipping
+        $('#modal-shipping-address').text(
+            (ship.address || '') + ' ' + (ship.city || '') + ' ' + (ship.zip || '')
+        );
+        $('#modal-shipping-method').text(order.shippingMethod || 'Standart');
+        $('#modal-payment-method').text(order.paymentMethod || 'Kredi Kartı');
+
+        // Items
+        const $tbody = $('#modal-items-body');
+        $tbody.empty();
+        
+        if (order.items && Array.isArray(order.items)) {
+            order.items.forEach(item => {
+                const img = item.image || item.photo || item.imageUrl || '../content/placeholder.png'; // Fallback
+                $tbody.append(`
+                    <tr>
+                        <td style="display: flex; align-items: center; gap: 15px;">
+                            <img src="${img}" style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border);">
+                            <div>
+                                <strong style="font-size: 0.9rem;">${item.name || 'Ürün'}</strong>
+                                <br>
+                                <span style="font-size: 0.75rem; color: var(--text-light);">${item.desc || ''}</span>
+                            </div>
+                        </td>
+                        <td>₺${parseFloat(item.price || 0).toFixed(2)}</td>
+                        <td>${item.quantity || 1}</td>
+                        <td style="font-weight: 600;">₺${(parseFloat(item.price || 0) * (item.quantity || 1)).toFixed(2)}</td>
+                    </tr>
+                `);
+            });
+        }
+
+        // Totals
+        $('#modal-subtotal').text('₺' + parseFloat(order.subtotal || 0).toFixed(2));
+        $('#modal-shipping-cost').text('₺' + parseFloat(order.shippingCost || 0).toFixed(2));
+        $('#modal-discount').text('-₺' + parseFloat(order.discountAmount || 0).toFixed(2));
+        $('#modal-total').text('₺' + parseFloat(order.totalAmount || 0).toFixed(2));
+
+        // Open
+        $('#order-detail-modal').addClass('open');
+    }
+
+    // Modal Close Events
+    $('#close-order-modal').click(function() {
+        $('#order-detail-modal').removeClass('open');
+    });
+
+    $(window).click(function(e) {
+        if ($(e.target).is('#order-detail-modal')) {
+            $('#order-detail-modal').removeClass('open');
+        }
+    });
+
+    // Close Dropdowns on Click Outside
+    $(document).on('click', function() {
+        $('.dropdown-menu').removeClass('show');
+    });
+
+    // Search Listener
+    $('#order-search-input').on('input', function() {
+        if (globalAdminData && globalAdminData.orders) {
+            renderOrders(globalAdminData.orders);
+        }
+    });
+
+    // Select All Listener
+    $('#select-all-orders').change(function() {
+        const isChecked = $(this).is(':checked');
+        $('.order-checkbox').prop('checked', isChecked);
+    });
+
+    // Bulk Update Listener
+    $('#btn-bulk-update').click(async function() {
+        const selectedIds = [];
+        const selectedUserIds = [];
+        
+        $('.order-checkbox:checked').each(function() {
+            selectedIds.push($(this).val());
+            selectedUserIds.push($(this).data('userid'));
+        });
+
+        const newStatus = $('#bulk-status-select').val();
+
+        if (selectedIds.length === 0) {
+            showToast("Lütfen en az bir sipariş seçin.", "error");
+            return;
+        }
+
+        if (!newStatus) {
+            showToast("Lütfen yeni bir durum seçin.", "error");
+            return;
+        }
+
+        if (!confirm(`${selectedIds.length} siparişin durumu "${newStatus}" olarak güncellenecek. Onaylıyor musunuz?`)) {
+            return;
+        }
+
+        const $btn = $(this);
+        $btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
+
+        try {
+            const updates = {};
+            selectedIds.forEach((orderId, index) => {
+                const userId = selectedUserIds[index];
+                if(userId) {
+                    updates[`users/${userId}/orders/${orderId}/status`] = newStatus;
+                }
+            });
+
+            await update(ref(db), updates);
+            
+            showToast(`${selectedIds.length} sipariş güncellendi.`, "success");
+            
+            // Uncheck select all
+            $('#select-all-orders').prop('checked', false);
+            
+        } catch (error) {
+            console.error("Bulk Update Error:", error);
+            showToast("Güncelleme hatası: " + error.message, "error");
+        } finally {
+            $btn.prop('disabled', false).text('Güncelle');
+        }
+    });
+
     // --- DRAG DROP ---
     $('.queue-item').on('dragstart', function(e) { /* ... */ });
+
 });
 
 // Helper
