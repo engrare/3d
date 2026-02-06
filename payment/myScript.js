@@ -348,22 +348,50 @@ async function processPayment() {
             // Clear Cart
             localStorage.removeItem('engrare_cart');
 
-            if (paymentMethod === 'iban') {
-                // Show Success Section, Hide Form
-                $('.checkout-form-section > :not(#payment-success-container)').hide();
-                $('.checkout-summary').hide(); // Optional: Hide summary to focus on success
-                $('.checkout-wrapper').css('grid-template-columns', '1fr'); // Center content
+            // --- REDIRECT LOGIC ---
+            if (response.totalAmount === 0) {
+                 // Free Order (100% Discount) -> Direct Success Page (or IBAN page styled as success)
+                 // We can reuse IBAN page for generic success or create a success.html.
+                 // For now, redirect to main page with alert as per "auto add to DB" requirement which is done.
+                 // Or better, show success message here.
+                 
+                 // Reuse Success Container for Free Order
+                 $('.checkout-form-section > :not(#payment-success-container)').hide();
+                 $('.checkout-summary').hide();
+                 $('.checkout-wrapper').css('grid-template-columns', '1fr');
+                 $('#success-order-id').text('#' + orderId);
+                 $('#success-order-ref').text("ÜCRETSİZ");
+                 $('.iban-box').html('<h3 style="color:#10B981; margin-top:20px;">Ödeme Tamamlandı</h3><p>Siparişiniz ücretsiz olarak oluşturuldu.</p>');
+                 $('#payment-success-container').fadeIn();
+                 window.scrollTo(0, 0);
+                 
+            } else if (paymentMethod === 'iban') {
+                // Redirect to new IBAN Page
+                window.location.href = `paywithiban.html?orderId=${orderId}`;
                 
-                $('#success-order-id').text(orderId);
-                $('#success-order-ref').text(orderId.substring(1)); // Simplified ref if needed
+            } else if (paymentMethod === 'iyzico') {
+                // Call Iyzico Function
+                $btn.text('Ödeme Sayfası Hazırlanıyor...');
                 
-                $('#payment-success-container').fadeIn();
-                
-                // Scroll to top
-                window.scrollTo(0, 0);
-            } else {
-                alert("Ödeme sayfasına yönlendiriliyorsunuz... (Simülasyon)");
-                window.location.href = "../index.html";
+                try {
+                    const createIyzicoPayment = httpsCallable(functions, 'createIyzicoPayment');
+                    const payResult = await createIyzicoPayment({ 
+                        orderId: orderId,
+                        userId: user.uid
+                    });
+                    
+                    if (payResult.data.status === 'success') {
+                        // Redirect to Iyzico
+                         window.location.href = payResult.data.paymentPageUrl;
+                    } else {
+                        throw new Error("Ödeme linki oluşturulamadı.");
+                    }
+                } catch (payErr) {
+                    console.error("Iyzico Error:", payErr);
+                    showToast("Ödeme sistemi hatası: " + payErr.message, "error");
+                    // Re-enable to allow trying another method
+                     $btn.prop('disabled', false).html('<span id="final-price-btn">' + formatTL(totalAmount) + '</span> Öde');
+                }
             }
         } else {
              throw new Error("Sipariş oluşturulamadı.");
