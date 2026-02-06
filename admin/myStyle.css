@@ -225,7 +225,7 @@ body {
 }
 
 /* Dashboard Grid */
-.dashboard-grid {
+.dashboard-grid, .grid-2 {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 24px;
@@ -353,7 +353,7 @@ body {
 }
 
 /* --- TABLES --- */
-.table-card { padding: 0; overflow: hidden; }
+.table-card { padding: 0; overflow: visible; }
 .data-table {
     width: 100%;
     border-collapse: collapse;
@@ -404,6 +404,7 @@ body {
 .badge-success { background: #DCFCE7; color: #166534; }
 .badge-warning { background: #FEF3C7; color: #92400E; }
 .badge-info { background: #DBEAFE; color: #1E40AF; }
+.badge-danger { background: #FEE2E2 !important; color: #EF4444 !important; }
 .badge-muted { background: #F1F5F9; color: #475569; }
 
 /* --- PRODUCTION QUEUE (Drag & Drop) --- */
@@ -962,4 +963,84 @@ body {
 
 
 
+}
+
+/* --- ORDER MANAGEMENT ACTIONS --- */
+.orders-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.bulk-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.search-box {
+    position: relative;
+    width: 250px;
+}
+
+.search-box i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+
+.search-box input {
+    padding-left: 35px;
+}
+
+.order-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--primary);
+}
+
+/* --- ACTION DROPDOWN --- */
+.action-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md);
+    z-index: 1000;
+    min-width: 150px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+
+.dropdown-item {
+    display: block;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    color: var(--text-main);
+    text-decoration: none;
+    transition: background 0.2s;
+    cursor: pointer;
+}
+
+.dropdown-item:hover {
+    background: #F1F5F9;
+    color: var(--accent);
 }
