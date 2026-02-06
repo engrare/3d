@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Havale ile Ödeme - Engrare</title>
+    <link rel="icon" type="image/png" href="https://www.engrare.com/files/photos/title_icon.png" sizes="48x48">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Using shared style plus specific overrides -->
+    <link rel="stylesheet" href="../myStyle.css">
+    <link rel="stylesheet" href="myStyle.css">
+    
+    <style>
+        .iban-container {
+            max-width: 600px;
+            margin: 60px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .step-icon {
+            font-size: 3rem;
+            color: #3B82F6;
+            margin-bottom: 20px;
+        }
+        .order-ref-box {
+            background: #EFF6FF;
+            border: 2px dashed #3B82F6;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .copy-btn {
+            background: none;
+            border: none;
+            color: #3B82F6;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-left: 10px;
+        }
+        .copy-btn:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <div class="iban-container">
+        <i class="fa-solid fa-money-bill-transfer step-icon"></i>
+        <h2 style="margin-bottom: 10px; color: var(--primary);">Siparişiniz Oluşturuldu!</h2>
+        <p style="color: var(--text-muted); margin-bottom: 30px;">Lütfen ödemeyi tamamlamak için aşağıdaki IBAN hesabına transfer yapınız.</p>
+
+        <div class="order-ref-box">
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px;">Sipariş Numarası (Açıklamaya Yazınız)</div>
+            <div id="order-id-display" style="font-size: 1.5rem; font-weight: 800; color: #1E293B; letter-spacing: 1px;">...</div>
+        </div>
+
+        <div style="text-align: left; margin-top: 30px;">
+            <div style="margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px;">
+                <div class="iban-label">Alıcı Adı</div>
+                <div class="iban-value" style="display: flex; justify-content: space-between;">
+                    <span>Kaya Sertel</span>
+                    <button class="copy-btn" onclick="copyText('Kaya Sertel')"><i class="fa-regular fa-copy"></i> Kopyala</button>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px;">
+                <div class="iban-label">Banka</div>
+                <div class="iban-value">T.C. İş Bankası</div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <div class="iban-label">IBAN</div>
+                <div class="iban-value" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span id="iban-text" style="font-family: monospace; font-size: 1.1rem;">TR41 0006 4000 0011 4560 4302 15</span>
+                    <button class="copy-btn" onclick="copyText('TR41 0006 4000 0011 4560 4302 15')"><i class="fa-regular fa-copy"></i> Kopyala</button>
+                </div>
+            </div>
+        </div>
+
+        <div style="background: #FFFBEB; padding: 15px; border-radius: 8px; font-size: 0.85rem; color: #B45309; text-align: left; margin-top: 20px;">
+            <i class="fa-solid fa-triangle-exclamation"></i> <strong>Önemli:</strong> Lütfen havale/EFT yaparken açıklama kısmına sadece <strong>Sipariş Numarasını</strong> yazınız. Başka bir şey yazmanız ödemenin onaylanmasını geciktirebilir.
+        </div>
+
+        <a href="../index.html" class="btn primary full-width" style="margin-top: 30px; display: block; text-decoration: none; padding: 15px;">Ana Sayfaya Dön</a>
+    </div>
+
+    <script>
+        // Get Order ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('orderId');
+        
+        if(orderId) {
+            document.getElementById('order-id-display').innerText = orderId;
+        } else {
+            document.getElementById('order-id-display').innerText = "HATA";
+        }
+
+        function showToast(msg, type = 'success') {
+            const color = type === 'error' ? '#EF4444' : '#10B981';
+            const div = document.createElement('div');
+            div.style.cssText = `position:fixed; bottom:20px; right:20px; background:white; padding:15px 25px; border-left:4px solid ${color}; box-shadow:0 5px 15px rgba(0,0,0,0.1); border-radius:8px; z-index:99999; animation: slideIn 0.3s; font-family: 'Plus Jakarta Sans', sans-serif;`;
+            div.innerText = msg;
+            document.body.appendChild(div);
+            
+            // Add animation keyframes if not present
+            if (!document.getElementById('toast-animation')) {
+                const style = document.createElement('style');
+                style.id = 'toast-animation';
+                style.innerHTML = `
+                    @keyframes slideIn {
+                        from { transform: translateX(100%); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            setTimeout(() => {
+                div.style.opacity = '0';
+                div.style.transform = 'translateX(100%)';
+                div.style.transition = 'all 0.3s ease';
+                setTimeout(() => div.remove(), 300);
+            }, 3000);
+        }
+
+        function copyText(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast("Kopyalandı!");
+                }).catch(err => {
+                    console.error('Kopyalama hatası:', err);
+                    fallbackCopyText(text);
+                });
+            } else {
+                fallbackCopyText(text);
+            }
+        }
+
+        function fallbackCopyText(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";  // Avoid scrolling to bottom
+            textArea.style.left = "-9999px";
+            textArea.style.top = "0";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showToast("Kopyalandı!");
+                } else {
+                    showToast("Kopyalama başarısız!", "error");
+                }
+            } catch (err) {
+                console.error('Fallback hatası:', err);
+                showToast("Kopyalama başarısız!", "error");
+            }
+            document.body.removeChild(textArea);
+        }
+    </script>
+</body>
+</html>
