@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, signInAnonymously } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, signInAnonymously, updateEmail } from "firebase/auth";
 import { getDatabase, ref, set, push, onValue, remove, get } from "firebase/database";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import * as THREE from 'three';
@@ -724,6 +724,16 @@ $(document).ready(function() {
         const tab = $(this).data('tab');
         $('.dash-tab').hide();
         $(`#tab-${tab}`).fadeIn(200);
+
+        // Pre-populate Account Settings
+        if (tab === 'account') {
+            const user = auth.currentUser;
+            if (user && !user.isAnonymous) {
+                $('#update-display-name').val(user.displayName || '');
+                $('#update-email').val(user.email || '');
+                if (user.photoURL) $('#settings-profile-img').attr('src', user.photoURL);
+            }
+        }
     });
     
     // --- MONITOR AUTH STATE ---
@@ -746,8 +756,11 @@ $(document).ready(function() {
                 }
             }
             
-            // Load Orders (for both Anon and Registered)
+            // Load Dashboard Data
             loadUserOrders(user.uid);
+            loadUserAddresses(user.uid);
+            loadUserFavorites(user.uid);
+            syncFavoriteStates(user.uid);
         } else {
             // User is signed out completely -> Auto-Sign-In Anonymously
             console.log("No user, signing in anonymously...");
@@ -756,6 +769,156 @@ $(document).ready(function() {
             });
         }
     });
+
+    // --- DASHBOARD LISTENERS ---
+    
+    // Profile Photo Change
+    $('#settings-photo-input').change(async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const user = auth.currentUser;
+        if (!user || user.isAnonymous) return;
+
+        showToast("Fotoğraf yükleniyor...", "info");
+        
+        try {
+            const storageRef = sRef(storage, `profile_photos/${user.uid}`);
+            const snapshot = await uploadBytes(storageRef, file);
+            const photoURL = await getDownloadURL(snapshot.ref);
+
+            await updateProfile(user, { photoURL: photoURL });
+            await set(ref(db, `users/${user.uid}/profile/photoURL`), photoURL);
+            
+            $('#settings-profile-img, #nav-user-img, #dash-user-img').attr('src', photoURL);
+            showToast("Profil fotoğrafı güncellendi!", "success");
+        } catch (error) {
+            showToast("Yükleme hatası: " + error.message, "error");
+        }
+    });
+
+    // Update Profile Info
+    $('#btn-update-profile').click(async () => {
+        const user = auth.currentUser;
+        if (!user || user.isAnonymous) return;
+
+        const newName = $('#update-display-name').val();
+        const newEmail = $('#update-email').val();
+        
+        if (!newName || !newEmail) {
+            showToast("Lütfen tüm alanları doldurun.", "error");
+            return;
+        }
+
+        const $btn = $('#btn-update-profile');
+        $btn.addClass('loading').prop('disabled', true);
+
+        try {
+            // 1. Update Display Name if changed
+            if (newName !== user.displayName) {
+                await updateProfile(user, { displayName: newName });
+                await set(ref(db, `users/${user.uid}/profile/fullname`), newName);
+                $('#dash-user-name').text(newName);
+            }
+
+            // 2. Update Email if changed (Note: Might require re-authentication)
+            if (newEmail !== user.email) {
+                try {
+                    await updateEmail(user, newEmail);
+                    await set(ref(db, `users/${user.uid}/profile/email`), newEmail);
+                    $('#dash-user-email').text(newEmail);
+                } catch (emailErr) {
+                    if (emailErr.code === 'auth/requires-recent-login') {
+                        showToast("Güvenlik gereği lütfen tekrar giriş yapıp deneyin.", "error");
+                        $btn.removeClass('loading').prop('disabled', false);
+                        return;
+                    }
+                    throw emailErr;
+                }
+            }
+
+            showToast("Bilgiler başarıyla güncellendi!", "success");
+        } catch (error) {
+            showToast("Güncelleme hatası: " + error.message, "error");
+        } finally {
+            $btn.removeClass('loading').prop('disabled', false);
+        }
+    });
+
+    // Address Modal Controls
+    $('#btn-add-address').click(() => {
+        $('#address-modal-title').text("Yeni Adres Ekle");
+        $('#address-form')[0].reset();
+        $('#address-id').val('');
+        $('#address-modal').addClass('open');
+    });
+
+    $('#btn-save-address').click(async () => {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const addrId = $('#address-id').val();
+        const addrData = {
+            title: $('#addr-title').val(),
+            fullname: $('#addr-fullname').val(),
+            phone: $('#addr-phone').val(),
+            city: $('#addr-city').val(),
+            district: $('#addr-district').val(),
+            details: $('#addr-details').val()
+        };
+
+        if (!addrData.title || !addrData.fullname || !addrData.details) {
+            showToast("Lütfen tüm alanları doldurun.", "error");
+            return;
+        }
+
+        try {
+            if (addrId) {
+                // Update
+                await set(ref(db, `users/${user.uid}/addresses/${addrId}`), addrData);
+            } else {
+                // New
+                const newAddrRef = push(ref(db, `users/${user.uid}/addresses`));
+                await set(newAddrRef, addrData);
+            }
+            $('#address-modal').removeClass('open');
+            showToast("Adres kaydedildi.", "success");
+        } catch (error) {
+            showToast("Hata: " + error.message, "error");
+        }
+    });
+
+    $(document).on('click', '.edit-addr-btn', function() {
+        const id = $(this).data('id');
+        const user = auth.currentUser;
+        get(ref(db, `users/${user.uid}/addresses/${id}`)).then(snapshot => {
+            const data = snapshot.val();
+            if (data) {
+                $('#address-modal-title').text("Adresi Düzenle");
+                $('#address-id').val(id);
+                $('#addr-title').val(data.title);
+                $('#addr-fullname').val(data.fullname);
+                $('#addr-phone').val(data.phone);
+                $('#addr-city').val(data.city);
+                $('#addr-district').val(data.district);
+                $('#addr-details').val(data.details);
+                $('#address-modal').addClass('open');
+            }
+        });
+    });
+
+    $(document).on('click', '.delete-addr-btn', async function() {
+        if (!confirm("Bu adresi silmek istediğinize emin misiniz?")) return;
+        const id = $(this).data('id');
+        const user = auth.currentUser;
+        try {
+            await remove(ref(db, `users/${user.uid}/addresses/${id}`));
+            showToast("Adres silindi.", "success");
+        } catch (error) {
+            showToast("Hata: " + error.message, "error");
+        }
+    });
+
     // 1. Navigation
 	$('.nav-menu li, .nav-trigger, .dropdown-item').click(function(e) {
         e.stopPropagation(); // Prevents bubbling issues
@@ -807,6 +970,51 @@ $(document).ready(function() {
             };
         }
         openInStudio(model);
+    });
+
+    // Favorite Button Toggle
+    $(document).on('click', '.fav-btn, #modal-fav-btn', async function(e) {
+        e.stopPropagation();
+        const $btn = $(this);
+        const isModalBtn = $btn.attr('id') === 'modal-fav-btn';
+        const id = isModalBtn ? currentModalId : $btn.data('id');
+        const user = auth.currentUser;
+
+        if (!user || user.isAnonymous) {
+            showToast("Favorilere eklemek için lütfen giriş yapın.", "info");
+            switchPage('#login-page');
+            return;
+        }
+
+        const model = allFirebaseModels.find(m => m.id == id);
+        if (!model) return;
+
+        const favRef = ref(db, `users/${user.uid}/favorites/${id}`);
+        
+        try {
+            const snapshot = await get(favRef);
+            if (snapshot.exists()) {
+                await remove(favRef);
+                const $targetBtns = $(`.fav-btn[data-id="${id}"], #modal-fav-btn`);
+                $targetBtns.removeClass('active').find('i').removeClass('fa-solid').addClass('fa-regular');
+                if (isModalBtn) $btn.css('color', '');
+                showToast("Favorilerden kaldırıldı.", "info");
+            } else {
+                await set(favRef, {
+                    id: model.id,
+                    name: model.name,
+                    price: model.price,
+                    image: (model.images && model.images[0]) || null,
+                    addedAt: Date.now()
+                });
+                const $targetBtns = $(`.fav-btn[data-id="${id}"], #modal-fav-btn`);
+                $targetBtns.addClass('active').find('i').removeClass('fa-regular').addClass('fa-solid');
+                if (isModalBtn) $btn.css('color', '#EF4444');
+                showToast("Favorilere eklendi!", "success");
+            }
+        } catch (error) {
+            showToast("Hata: " + error.message, "error");
+        }
     });
 
     // Text Color (Round Buttons) Listener
@@ -1337,6 +1545,20 @@ $(document).ready(function() {
             currentModalName = model.name;
             currentModalId = model.id;
 
+            // Sync favorite button state in modal
+            const user = auth.currentUser;
+            if (user && !user.isAnonymous) {
+                get(ref(db, `users/${user.uid}/favorites/${model.id}`)).then(snapshot => {
+                    if (snapshot.exists()) {
+                        $('#modal-fav-btn').addClass('active').css('color', '#EF4444').find('i').removeClass('fa-regular').addClass('fa-solid');
+                    } else {
+                        $('#modal-fav-btn').removeClass('active').css('color', '').find('i').removeClass('fa-solid').addClass('fa-regular');
+                    }
+                });
+            } else {
+                $('#modal-fav-btn').removeClass('active').css('color', '').find('i').removeClass('fa-solid').addClass('fa-regular');
+            }
+
             // Show/hide carousel controls based on image count
             if (currentModalImages.length > 1) {
                 $('.modal-carousel-controls').show();
@@ -1628,7 +1850,12 @@ function renderHomeLibrary() {
         
         $grid.append(`
             <div class="model-card" data-id="${model.id}">
-                <div class="card-image"><img src="${firstImage}" alt="${model.name}"/></div>
+                <div class="card-image">
+                    <img src="${firstImage}" alt="${model.name}"/>
+                    <button class="fav-btn" data-id="${model.id}" title="Favorilere Ekle">
+                        <i class="fa-regular fa-heart"></i>
+                    </button>
+                </div>
                 <div class="model-info">
                     <div class="model-title">${model.name}</div>
                     <div class="model-desc">${model.desc.substring(0, 60)}...</div>
@@ -1669,7 +1896,12 @@ function renderModelsPage(modelsList) {
         
         $grid.append(`
             <div class="model-card" data-id="${model.id}">
-                <div class="card-image"><img src="${firstImage}" alt="${model.name}"/></div>
+                <div class="card-image">
+                    <img src="${firstImage}" alt="${model.name}"/>
+                    <button class="fav-btn" data-id="${model.id}" title="Favorilere Ekle">
+                        <i class="fa-regular fa-heart"></i>
+                    </button>
+                </div>
                 <div class="model-info">
                     <div class="model-title">${model.name}</div>
                     <div class="model-desc">${model.desc.substring(0, 60)}...</div>
@@ -1689,189 +1921,9 @@ function renderModelsPage(modelsList) {
     });
 }
 
-function loadUserOrders(userId) {
-    const ordersRef = ref(db, 'orders/' + userId);
-    onValue(ordersRef, (snapshot) => {
-        const data = snapshot.val();
-        const $list = $('#orders-list');
-        $list.empty();
-        
-        if (data) {
-            Object.values(data).forEach((order) => {
-                $list.append(`
-                    <div class="cart-item">
-                        <div class="info">
-                            <div style="font-weight:600">Sipariş #${order.id}</div>
-                            <div style="font-size:0.8rem">${order.date}</div>
-                        </div>
-                        <div style="font-weight:500">₺${order.total}</div>
-                        <div style="color: green; font-size: 0.85rem; font-weight: 600;">${order.status}</div>
-                    </div>
-                `);
-            });
-        } else {
-            $list.html('<p>Geçmiş sipariş bulunamadı.</p>');
-        }
-    });
-}
-
-function checkParamVisibility(paramName, currentMode) {
-    const configVal = activeModelConfig?.customizableParams?.[paramName] || 0;
-    
-    // Case 1: Param is 0 ('none') -> Never visible
-    if (configVal === 0) return false;
-
-    // Case 2: Param is 1 ('basic') -> Always visible (Basic implies Pro)
-    if (configVal === 1) return true; 
-
-    // Case 3: Param is 2 ('pro') -> Only visible in 'advanced' (Pro) mode
-    if (configVal === 2) return currentMode === 'advanced';
-
-    return false; // Fallback
-}
-
-function updateControlsVisibility(mode) {
-    if (!activeModelConfig || !activeModelConfig.customizableParams) return;
-
-    // --- MASTER SWITCHES ---
-    // textContent acts as Master Switch for ALL text controls
-    const masterTextVisible = checkParamVisibility('textContent', mode);
-    
-    // logo acts as Master Switch for ALL logo controls
-    const masterLogoVisible = checkParamVisibility('logo', mode);
-
-    // 1. Text Content (Input Box)
-    $('#custom-text-input').closest('.form-group, #custom-text-group > label + textarea, #custom-text-group > textarea').prev('label').toggle(masterTextVisible);
-    $('#custom-text-input').toggle(masterTextVisible);
-
-    // 2. Text Font
-    const showFont = masterTextVisible && checkParamVisibility('textFont', mode);
-    $('#text-font-select').prev('label').toggle(showFont);
-    $('#text-font-select').toggle(showFont);
-
-    // 3. Text Size
-    const showSize = masterTextVisible && checkParamVisibility('textSize', mode);
-    $('#text-size-slider').closest('.form-group').prev('label').toggle(showSize);
-    $('#text-size-slider').closest('.form-group').toggle(showSize);
-
-    // 4. Text Depth
-    const showDepth = masterTextVisible && checkParamVisibility('textDepth', mode);
-    $('#text-depth-slider').closest('.form-group').prev('label').toggle(showDepth);
-    $('#text-depth-slider').closest('.form-group').toggle(showDepth);
-
-    // 5. Letter Spacing
-    const showSpacing = masterTextVisible && checkParamVisibility('letterSpacing', mode);
-    $('#letter-spacing-slider').closest('.form-group').prev('label').toggle(showSpacing);
-    $('#letter-spacing-slider').closest('.form-group').toggle(showSpacing);
-
-    // 6. Text Alignment
-    const showAlign = masterTextVisible && checkParamVisibility('textAlignment', mode);
-    $('input[name="text-align"]').first().closest('.form-group').prev('label').toggle(showAlign);
-    $('input[name="text-align"]').first().closest('.form-group').toggle(showAlign);
-
-    // 7. Text Color
-    const showTextColor = masterTextVisible && checkParamVisibility('textColor', mode);
-    $('#custom-text-group .color-grid').first().prev('label').toggle(showTextColor);
-    $('#custom-text-group .color-grid').first().toggle(showTextColor);
-    
-    // 8. Text Rotations (Group)
-    const showRotX = masterTextVisible && checkParamVisibility('textRotationX', mode);
-    const showRotY = masterTextVisible && checkParamVisibility('textRotationY', mode);
-    const showRotZ = masterTextVisible && checkParamVisibility('textRotationZ', mode);
-    const anyRotVisible = showRotX || showRotY || showRotZ;
-
-    $('#text-rotation-x').closest('.form-group').toggle(showRotX);
-    $('#text-rotation-y').closest('.form-group').toggle(showRotY);
-    $('#text-rotation-z').closest('.form-group').toggle(showRotZ);
-    // Toggle the Rotation Container (The white box)
-    $('#text-rotation-x').closest('.form-group').parent().toggle(anyRotVisible);
-    
-    // 9. Text Positions (Group)
-    const showPosX = masterTextVisible && checkParamVisibility('textPositionX', mode);
-    const showPosY = masterTextVisible && checkParamVisibility('textPositionY', mode);
-    const showPosZ = masterTextVisible && checkParamVisibility('textPositionZ', mode);
-    const anyPosVisible = showPosX || showPosY || showPosZ;
-
-    $('#text-pos-x').closest('.form-group').toggle(showPosX);
-    $('#text-pos-y').closest('.form-group').toggle(showPosY);
-    $('#text-pos-z').closest('.form-group').toggle(showPosZ);
-    // Toggle the Position Container (The white box)
-    $('#text-pos-x').closest('.form-group').parent().toggle(anyPosVisible);
 
 
-    // 10. Other Params (Model Color, Material, etc.) - Independent of Text/Logo
-    // Model Color (The one in the main panel, distinct from text color)
-    // Note: The selector needs to be specific to avoid hiding text color grid if selectors overlap
-    const showModelColor = checkParamVisibility('modelColor', mode);
-    $('#panel-basic > .form-group:has(.color-grid)').toggle(showModelColor);
 
-    // Material
-    const showMaterial = checkParamVisibility('material', mode);
-    $('#material-select').closest('.form-group').toggle(showMaterial);
-
-    // Infill
-    const showInfill = checkParamVisibility('infill', mode);
-    $('#infill-select').closest('.form-group').toggle(showInfill);
-
-    // Quantity
-    const showQuantity = checkParamVisibility('quantity', mode);
-    $('#quantity-input').closest('.form-group').toggle(showQuantity);
-
-    // 11. Delivery
-    const showDelivery = checkParamVisibility('delivery', mode);
-    $('input[name="delivery"]').first().closest('.form-group').toggle(showDelivery);
-
-
-    // 12. Logo Section
-    $('#custom-logo-container').toggle(masterLogoVisible);
-
-    if (masterLogoVisible) {
-        // Logo Size
-        const showLogoSize = checkParamVisibility('logoSize', mode);
-        $('#logo-size-slider').closest('.form-group').prev('label').toggle(showLogoSize);
-        $('#logo-size-slider').closest('.form-group').toggle(showLogoSize);
-
-        // Logo Depth
-        const showLogoDepth = checkParamVisibility('logoDepth', mode);
-        $('#logo-depth-slider').closest('.form-group').prev('label').toggle(showLogoDepth);
-        $('#logo-depth-slider').closest('.form-group').toggle(showLogoDepth);
-
-        // Logo Color
-        const showLogoColor = checkParamVisibility('logoColor', mode);
-        $('#custom-logo-container .color-grid').prev('label').toggle(showLogoColor);
-        $('#custom-logo-container .color-grid').toggle(showLogoColor);
-
-        // Logo Rotations
-        const showLogoRotX = checkParamVisibility('logoRotationX', mode);
-        const showLogoRotY = checkParamVisibility('logoRotationY', mode);
-        const showLogoRotZ = checkParamVisibility('logoRotationZ', mode);
-        const anyLogoRotVisible = showLogoRotX || showLogoRotY || showLogoRotZ;
-
-        $('#logo-rotation-x').closest('.form-group').toggle(showLogoRotX);
-        $('#logo-rotation-y').closest('.form-group').toggle(showLogoRotY);
-        $('#logo-rotation-z').closest('.form-group').toggle(showLogoRotZ);
-        $('#logo-rotation-x').closest('.form-group').parent().toggle(anyLogoRotVisible);
-
-        // Logo Positions
-        const showLogoPosX = checkParamVisibility('logoPositionX', mode);
-        const showLogoPosY = checkParamVisibility('logoPositionY', mode);
-        const showLogoPosZ = checkParamVisibility('logoPositionZ', mode);
-        const anyLogoPosVisible = showLogoPosX || showLogoPosY || showLogoPosZ;
-
-        $('#logo-pos-x').closest('.form-group').toggle(showLogoPosX);
-        $('#logo-pos-y').closest('.form-group').toggle(showLogoPosY);
-        $('#logo-pos-z').closest('.form-group').toggle(showLogoPosZ);
-        $('#logo-pos-x').closest('.form-group').parent().toggle(anyLogoPosVisible);
-    }
-
-    // 13. Parent Group Visibility
-    // Hide the entire custom-text-group if neither Text nor Logo is visible
-    if (!masterTextVisible && !masterLogoVisible) {
-        $('#custom-text-group').hide();
-    } else {
-        $('#custom-text-group').fadeIn();
-    }
-}
 
 function openInStudio(model) {
     // --- CLEAR INPUT ---
@@ -2962,4 +3014,331 @@ function renderCart() {
     $('#val-subtotal').text(formatTL(sub));
     $('#shipping-display').text(formatTL(shipping));
     $('#val-total').text(formatTL(sub + shipping));
+}
+
+function loadUserOrders(userId) {
+    if (!userId) return;
+    const ordersRef = ref(db, `users/${userId}/orders`);
+    onValue(ordersRef, (snapshot) => {
+        const data = snapshot.val();
+        const $list = $('#orders-list');
+        $list.empty();
+        
+        if (data) {
+            const orders = Object.entries(data).map(([id, val]) => ({ id, ...val }))
+                .sort((a, b) => (b.createdAt || b.serverTimestamp || 0) - (a.createdAt || a.serverTimestamp || 0));
+
+            orders.forEach((order) => {
+                const timestamp = order.serverTimestamp || order.createdAt;
+                const dateStr = timestamp ? new Date(timestamp).toLocaleString('tr-TR') : (order.date || 'Bilinmiyor');
+                const total = order.totalAmount || order.total || 0;
+                
+                const statusMap = {
+                    'pending_payment': { text: 'Ödeme Bekliyor', color: '#F59E0B', bg: '#FEF3C7' },
+                    'paid': { text: 'Ödendi', color: '#10B981', bg: '#D1FAE5' },
+                    'completed': { text: 'Tamamlandı', color: '#10B981', bg: '#D1FAE5' },
+                    'shipped': { text: 'Kargoya Verildi', color: '#3B82F6', bg: '#DBEAFE' },
+                    'cancelled': { text: 'İptal Edildi', color: '#EF4444', bg: '#FEE2E2' }
+                };
+
+                const status = statusMap[order.status] || { text: 'Hazırlanıyor', color: '#10B981', bg: '#D1FAE5' };
+                
+                // Get first item image for thumbnail
+                const firstItemImg = (order.items && order.items.length > 0 && order.items[0].image) ? order.items[0].image : './content/product2.jpeg';
+                const itemCount = order.items ? order.items.length : 0;
+
+                const $card = $(`
+                    <div class="order-card" data-id="${order.id}">
+                        <div class="order-card-main">
+                            <div class="order-thumbnail-group">
+                                <img src="${firstItemImg}" alt="Ürün">
+                                ${itemCount > 1 ? `<div style="position:absolute; bottom:0; right:0; background:rgba(0,0,0,0.6); color:white; font-size:10px; padding:2px 4px; border-top-left-radius:4px;">+${itemCount-1}</div>` : ''}
+                            </div>
+                            <div class="order-info-text">
+                                <h4>Sipariş #${order.id.substring(0, 8).toUpperCase()}</h4>
+                                <p><i class="fa-regular fa-calendar" style="margin-right: 5px;"></i> ${dateStr}</p>
+                                <p style="font-weight:700; color:var(--primary); margin-top:5px;">₺${total.toFixed(2)}</p>
+                            </div>
+                        </div>
+                        <div class="order-status-pill" style="background: ${status.bg}; color: ${status.color};">
+                            <i class="fa-solid fa-circle" style="font-size: 0.5rem;"></i>
+                            ${status.text}
+                        </div>
+                    </div>
+                `);
+
+                $card.click(() => showOrderDetails(order));
+                $list.append($card);
+            });
+        } else {
+            $list.html('<div style="text-align:center; padding:60px; background: #F8FAFC; border-radius: 16px; border: 2px dashed #E2E8F0;"><i class="fa-solid fa-box-open" style="font-size:3.5rem; color:#CBD5E1; margin-bottom:20px; display:block;"></i><p style="font-weight: 600; color: #64748B;">Henüz bir siparişiniz bulunmuyor.</p><p style="font-size: 0.85rem; color: #94A3B8; margin-top: 8px;">Tüm siparişleriniz burada listelenecektir.</p></div>');
+        }
+    });
+}
+
+function showOrderDetails(order) {
+    const timestamp = order.serverTimestamp || order.createdAt;
+    const dateStr = timestamp ? new Date(timestamp).toLocaleString('tr-TR') : (order.date || 'Bilinmiyor');
+    
+    const statusMap = {
+        'pending_payment': { text: 'Ödeme Bekliyor', color: '#F59E0B', bg: '#FEF3C7' },
+        'paid': { text: 'Ödendi', color: '#10B981', bg: '#D1FAE5' },
+        'completed': { text: 'Tamamlandı', color: '#10B981', bg: '#D1FAE5' },
+        'shipped': { text: 'Kargoya Verildi', color: '#3B82F6', bg: '#DBEAFE' },
+        'cancelled': { text: 'İptal Edildi', color: '#EF4444', bg: '#FEE2E2' }
+    };
+    const status = statusMap[order.status] || { text: 'Hazırlanıyor', color: '#10B981', bg: '#D1FAE5' };
+
+    let itemsHtml = '';
+    if (order.items) {
+        order.items.forEach(item => {
+            itemsHtml += `
+                <div class="detail-item-row">
+                    <img src="${item.image || './content/product2.jpeg'}" class="detail-item-img">
+                    <div class="detail-item-info">
+                        <h5>${item.name}</h5>
+                        <p>${item.quantity || 1} Adet • ${item.material || 'Standart'}</p>
+                    </div>
+                    <div style="font-weight:700;">₺${(item.price || 0).toFixed(2)}</div>
+                </div>
+            `;
+        });
+    }
+
+    const content = `
+        <div class="order-details-header">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:15px;">
+                <div>
+                    <h2 style="margin-bottom:5px;">Sipariş Detayı</h2>
+                    <p style="font-size:0.9rem;">#${order.id.toUpperCase()}</p>
+                </div>
+                <div class="order-status-pill" style="background: ${status.bg}; color: ${status.color};">
+                    <i class="fa-solid fa-circle" style="font-size: 0.5rem;"></i>
+                    ${status.text}
+                </div>
+            </div>
+            <p style="font-size:0.9rem; color:var(--text-muted);"><i class="fa-regular fa-calendar"></i> Tarih: ${dateStr}</p>
+        </div>
+
+        <div class="order-details-items">
+            <h4 style="margin-bottom:15px; font-size:1.1rem;">Ürünler</h4>
+            ${itemsHtml}
+        </div>
+
+        <div class="order-summary-box">
+            <div class="summary-line">
+                <span>Ara Toplam</span>
+                <span>₺${(order.subtotal || 0).toFixed(2)}</span>
+            </div>
+            <div class="summary-line">
+                <span>Kargo</span>
+                <span>₺${(order.shippingCost || 0).toFixed(2)}</span>
+            </div>
+            ${order.discountAmount > 0 ? `
+            <div class="summary-line" style="color:#10B981;">
+                <span>İndirim</span>
+                <span>-₺${order.discountAmount.toFixed(2)}</span>
+            </div>` : ''}
+            <div class="summary-line total">
+                <span>Toplam</span>
+                <span>₺${(order.totalAmount || 0).toFixed(2)}</span>
+            </div>
+        </div>
+
+        <div style="margin-top:30px; display:flex; gap:15px;">
+             ${order.status === 'pending_payment' ? `<button class="btn primary" style="flex:1;" onclick="window.location.href='./payment?orderId=${order.id}'">Ödemeyi Tamamla</button>` : ''}
+             <button class="btn secondary" style="flex:1;" onclick="$('#order-details-modal').removeClass('open')">Kapat</button>
+        </div>
+    `;
+
+    $('#order-details-content').html(content);
+    $('#order-details-modal').addClass('open');
+}
+
+function loadUserAddresses(userId) {
+    if (!userId) return;
+    const addrRef = ref(db, `users/${userId}/addresses`);
+    onValue(addrRef, (snapshot) => {
+        const data = snapshot.val();
+        const $list = $('#addresses-list');
+        $list.empty();
+        
+        if (data) {
+            Object.entries(data).forEach(([id, addr]) => {
+                const fullname = addr.fullname || `${addr.name || ''} ${addr.surname || ''}`.trim() || 'İsimsiz';
+                const details = addr.details || addr.address || '';
+                const location = addr.district ? `${addr.district} / ${addr.city}` : (addr.city || '');
+
+                $list.append(`
+                    <div class="address-card" style="position:relative; padding:25px; border:1px solid var(--border); border-radius:16px; background:white; transition: all 0.3s ease;">
+                        <div style="font-weight:800; font-size:1.1rem; margin-bottom:12px; display:flex; align-items:center; gap:10px; color: var(--primary);">
+                            <i class="fa-solid ${addr.title?.toLowerCase().includes('ev') ? 'fa-house' : 'fa-briefcase'}" style="color:var(--accent); font-size: 1rem;"></i>
+                            ${addr.title || 'Adres'}
+                        </div>
+                        <div style="font-weight:700; color:var(--text-main); margin-bottom:6px; font-size: 0.95rem;">${fullname}</div>
+                        <div style="font-size:0.9rem; color:var(--text-muted); line-height:1.6;">${details}<br>${location}</div>
+                        <div style="font-size:0.85rem; color:var(--text-muted); margin-top:12px; display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-phone" style="font-size:0.75rem; color: var(--text-light);"></i> 
+                            ${addr.phone || '-'}
+                        </div>
+                        <div style="margin-top:20px; display:flex; gap:12px;">
+                            <button class="btn-sm edit-addr-btn" data-id="${id}" style="flex:1; border-radius: 8px; font-weight: 700;">Düzenle</button>
+                            <button class="btn-sm delete-addr-btn" data-id="${id}" style="color: #EF4444; border-color: #FCA5A5; border-radius: 8px; font-weight: 700;">Sil</button>
+                        </div>
+                    </div>
+                `);
+            });
+        } else {
+            $list.html('<div style="grid-column: 1/-1; text-align: center; padding: 60px; background: #F8FAFC; border-radius: 16px; border: 2px dashed #E2E8F0;"><i class="fa-solid fa-location-dot" style="font-size:3.5rem; color:#CBD5E1; margin-bottom:20px; display:block;"></i><p style="font-weight: 600; color: #64748B;">Kayıtlı adresiniz bulunmuyor.</p><p style="font-size: 0.85rem; color: #94A3B8; margin-top: 8px;">Teslimat adreslerinizi buraya ekleyerek hızlı sipariş verebilirsiniz.</p></div>');
+        }
+    });
+}
+
+function loadUserFavorites(userId) {
+    if (!userId) return;
+    const favRef = ref(db, `users/${userId}/favorites`);
+    onValue(favRef, (snapshot) => {
+        const data = snapshot.val();
+        const $list = $('#favorites-list');
+        $list.empty();
+        
+        if (data) {
+            Object.entries(data).forEach(([id, model]) => {
+                const img = model.image || './content/product2.jpeg';
+                // We use a div wrapper to handle different click targets
+                const $card = $(`
+                    <div class="product-card favorite-item-card" style="padding:0; position:relative; overflow:hidden; border-radius:20px; border:1px solid #e2e8f0; background:white; cursor:pointer; transition: transform 0.2s;">
+                        <div class="card-image" style="height:200px; position:relative; overflow:hidden;">
+                            <img src="${img}" style="width:100%; height:100%; object-fit:cover;">
+                            <button class="fav-btn active" data-id="${id}" title="Favorilerden Kaldır" style="position:absolute; top:12px; right:12px; z-index:5;">
+                                <i class="fa-solid fa-heart"></i>
+                            </button>
+                        </div>
+                        <div class="card-info" style="padding:20px;">
+                            <div style="font-weight:700; font-size:1.05rem; margin-bottom:8px; color: var(--primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${model.name}</div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px;">
+                                <span style="font-weight:800; color:var(--primary); font-size: 1.1rem;">₺${(model.price || 0).toFixed(2)}</span>
+                                <button class="btn primary studio-open-btn" style="padding: 10px 18px; border-radius: 10px; font-weight:700; font-size:0.8rem; color: white !important; position:relative; z-index:5;">Stüdyoda Aç</button>
+                            </div>
+                        </div>
+                    </div>
+                `);
+
+                // 1. Click on card (excluding button/fav-icon) -> Show More Info (Modal)
+                $card.on('click', function(e) {
+                    // Only trigger modal if the click wasn't on the buttons
+                    if (!$(e.target).closest('.studio-open-btn, .fav-btn').length) {
+                        // Trigger the same logic as .model-card click
+                        const modelData = allFirebaseModels.find(m => m.id == id);
+                        if (modelData) {
+                            currentModalImages = modelData.images || ["./content/product2.jpeg"];
+                            currentImageIndex = 0;
+                            updateModalImage();
+                            $('#modal-title').text(modelData.name);
+                            $('#modal-desc').text(modelData.desc);
+                            $('#modal-price').text('₺' + modelData.price.toFixed(2));
+                            currentModalStl = modelData.stl;
+                            currentModalName = modelData.name;
+                            currentModalId = modelData.id;
+                            
+                            // Image counter & carousel
+                            if (currentModalImages.length > 1) $('.modal-carousel-controls').show();
+                            else $('.modal-carousel-controls').hide();
+                            
+                            $('#model-modal').addClass('open');
+                        } else {
+                            // Fallback if not in allFirebaseModels
+                             showToast("Model detayları yüklenemedi.", "error");
+                        }
+                    }
+                });
+
+                // 2. Click on "Stüdyoda Aç" -> Open Studio
+                $card.find('.studio-open-btn').on('click', function(e) {
+                    e.stopPropagation();
+                    const modelData = allFirebaseModels.find(m => m.id == id);
+                    if (modelData) {
+                        openInStudio(modelData);
+                    } else {
+                        showToast("Model stüdyoda açılamadı.", "error");
+                    }
+                });
+
+                $list.append($card);
+            });
+        } else {
+            $list.html('<div style="grid-column: 1/-1; text-align: center; padding: 60px; background: #F8FAFC; border-radius: 20px; border: 2px dashed #E2E8F0;"><i class="fa-regular fa-heart" style="font-size:3.5rem; color:#CBD5E1; margin-bottom:20px; display:block;"></i><p style="font-weight: 600; color: #64748B;">Henüz favori ürününüz yok.</p></div>');
+        }
+    });
+}
+
+async function openSavedModelInStudio(savedModel) {
+    if (!savedModel) return;
+
+    // 1. Prepare model object for Studio
+    const studioModel = {
+        name: savedModel.name,
+        stl: savedModel.stl,
+        isCustomizable: true,
+        customConfig: savedModel.customConfig
+    };
+
+    // 2. Open Studio
+    openInStudio(studioModel);
+    
+    // 3. Sync UI with the saved config
+    // openInStudio already calls syncUIWithConfig(activeModelConfig)
+    
+    showToast("Tasarım Stüdyoya yüklendi.", "success");
+}
+
+function syncFavoriteStates(userId) {
+    const favRef = ref(db, `users/${userId}/favorites`);
+    onValue(favRef, (snapshot) => {
+        const favorites = snapshot.val() || {};
+        $('.fav-btn').each(function() {
+            const id = $(this).data('id');
+            if (favorites[id]) {
+                $(this).addClass('active').find('i').removeClass('fa-regular').addClass('fa-solid');
+            } else {
+                $(this).removeClass('active').find('i').removeClass('fa-solid').addClass('fa-regular');
+            }
+        });
+    });
+}
+
+function checkParamVisibility(paramName, currentMode) {
+    const configVal = activeModelConfig?.customizableParams?.[paramName] || 0;
+    if (configVal === 0) return false;
+    if (configVal === 1) return true; 
+    if (configVal === 2) return currentMode === 'advanced';
+    return false;
+}
+
+function updateControlsVisibility(mode) {
+    if (!activeModelConfig || !activeModelConfig.customizableParams) return;
+    const masterTextVisible = checkParamVisibility('textContent', mode);
+    const masterLogoVisible = checkParamVisibility('logo', mode);
+    
+    // Individual control visibility
+    $('#custom-text-input').closest('.form-group').toggle(masterTextVisible);
+    $('#text-font-select').closest('.form-group').toggle(masterTextVisible && checkParamVisibility('textFont', mode));
+    $('#text-size-slider').closest('.form-group').toggle(masterTextVisible && checkParamVisibility('textSize', mode));
+    $('#text-depth-slider').closest('.form-group').toggle(masterTextVisible && checkParamVisibility('textDepth', mode));
+    $('#letter-spacing-slider').closest('.form-group').toggle(masterTextVisible && checkParamVisibility('letterSpacing', mode));
+    $('input[name="text-align"]').closest('.form-group').toggle(masterTextVisible && checkParamVisibility('textAlignment', mode));
+    $('#custom-text-group .color-grid').first().toggle(masterTextVisible && checkParamVisibility('textColor', mode));
+    
+    // Toggle the Position and Rotation containers if any of their children are visible
+    const showRot = masterTextVisible && (checkParamVisibility('textRotationX', mode) || checkParamVisibility('textRotationY', mode) || checkParamVisibility('textRotationZ', mode));
+    $('#text-rotation-x').closest('.form-group').parent().toggle(showRot);
+    
+    const showPos = masterTextVisible && (checkParamVisibility('textPositionX', mode) || checkParamVisibility('textPositionY', mode) || checkParamVisibility('textPositionZ', mode));
+    $('#text-pos-x').closest('.form-group').parent().toggle(showPos);
+
+    // Other settings
+    $('#material-select').closest('.form-group').toggle(checkParamVisibility('material', mode));
+    $('#infill-select').closest('.form-group').toggle(checkParamVisibility('infill', mode));
+    $('#quantity-input').closest('.form-group').toggle(checkParamVisibility('quantity', mode));
+    $('input[name="delivery"]').closest('.form-group').toggle(checkParamVisibility('delivery', mode));
 }
