@@ -476,6 +476,18 @@ button.btn-sm:not(.primary):not(.secondary) {
     text-transform: lowercase;
     height: fit-content;
 }
+.fast-badge {
+    background: #00D100;
+    color: white;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    height: fit-content;
+    white-space: nowrap;
+}
 .footer-bottom { border-top: 1px solid #334155; margin-top: 60px; padding-top: 30px; text-align: center; color: #64748B; font-size: 0.85rem; }
 
 /* Responsive adjustments */
