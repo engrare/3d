@@ -601,8 +601,9 @@ $(document).ready(function() {
             // Handle Profile Photo Upload / Generation
             if (selectedProfilePhoto.type === 'upload' && selectedProfilePhoto.file) {
                 try {
+                    const downscaledBlob = await downscaleImage(selectedProfilePhoto.file, 400);
                     const storageRef = sRef(storage, `profile_photos/${user.uid}`);
-                    const snapshot = await uploadBytes(storageRef, selectedProfilePhoto.file);
+                    const snapshot = await uploadBytes(storageRef, downscaledBlob);
                     photoURL = await getDownloadURL(snapshot.ref);
                 } catch (uploadErr) {
                     console.error("Photo upload failed:", uploadErr);
@@ -783,8 +784,9 @@ $(document).ready(function() {
         showToast("Fotoğraf yükleniyor...", "info");
         
         try {
+            const downscaledBlob = await downscaleImage(file, 400);
             const storageRef = sRef(storage, `profile_photos/${user.uid}`);
-            const snapshot = await uploadBytes(storageRef, file);
+            const snapshot = await uploadBytes(storageRef, downscaledBlob);
             const photoURL = await getDownloadURL(snapshot.ref);
 
             await updateProfile(user, { photoURL: photoURL });
@@ -908,14 +910,23 @@ $(document).ready(function() {
     });
 
     $(document).on('click', '.delete-addr-btn', async function() {
-        if (!confirm("Bu adresi silmek istediğinize emin misiniz?")) return;
         const id = $(this).data('id');
         const user = auth.currentUser;
-        try {
-            await remove(ref(db, `users/${user.uid}/addresses/${id}`));
-            showToast("Adres silindi.", "success");
-        } catch (error) {
-            showToast("Hata: " + error.message, "error");
+
+        const confirmed = await showConfirm(
+            "Adresi Sil",
+            "Bu adresi kalıcı olarak silmek istediğinize emin misiniz?",
+            "Evet, Sil",
+            "Vazgeç"
+        );
+
+        if (confirmed) {
+            try {
+                await remove(ref(db, `users/${user.uid}/addresses/${id}`));
+                showToast("Adres silindi.", "success");
+            } catch (error) {
+                showToast("Hata: " + error.message, "error");
+            }
         }
     });
 
@@ -1572,8 +1583,8 @@ $(document).ready(function() {
 
     // Close Modal
     $('.modal-close, .modal-overlay').click(function(e) {
-        if (e.target === this) {
-            $('#model-modal').removeClass('open');
+        if ($(e.target).hasClass('modal-close') || e.target === this) {
+            $(this).closest('.modal-overlay').removeClass('open');
         }
     });
 
@@ -1634,15 +1645,52 @@ $(document).ready(function() {
 
     // --- CLOSE MODALS (Universal) ---
     $(document).on('click', '.modal-close, .modal-overlay', function(e) {
-        if (e.target === this) {
-            $(this).removeClass('open');
-            // If it's the auth modal specifically, we can also use its ID
-            $('#auth-decision-modal').removeClass('open');
+        if ($(e.target).hasClass('modal-close') || $(e.target).hasClass('modal-overlay')) {
+            $('.modal-overlay').removeClass('open');
         }
     });
 });
 
 // --- HELPER FUNCTIONS ---
+
+function downscaleImage(file, maxDimension = 400) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > maxDimension) {
+                        height *= maxDimension / width;
+                        width = maxDimension;
+                    }
+                } else {
+                    if (height > maxDimension) {
+                        width *= maxDimension / height;
+                        height = maxDimension;
+                    }
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                canvas.toBlob((blob) => {
+                    resolve(blob);
+                }, file.type, 0.8);
+            };
+            img.onerror = reject;
+        };
+        reader.onerror = reject;
+    });
+}
 
 function showToast(message, type = "info") {
     // --- Error Translation Logic ---
@@ -1695,6 +1743,40 @@ function showToast(message, type = "info") {
         $toast.addClass('hiding');
         setTimeout(() => $toast.remove(), 300);
     }, 4000);
+}
+
+function showConfirm(title, message, yesText = "Evet", noText = "Hayır") {
+    return new Promise((resolve) => {
+        const $modal = $('#confirm-modal');
+        $('#confirm-title').text(title);
+        $('#confirm-message').text(message);
+        $('#confirm-btn-yes').text(yesText);
+        $('#confirm-btn-cancel').text(noText);
+
+        $modal.addClass('open');
+
+        // Clean up previous listeners
+        $('#confirm-btn-yes').off('click');
+        $('#confirm-btn-cancel').off('click');
+
+        $('#confirm-btn-yes').click(() => {
+            $modal.removeClass('open');
+            resolve(true);
+        });
+
+        $('#confirm-btn-cancel').click(() => {
+            $modal.removeClass('open');
+            resolve(false);
+        });
+        
+        // Also close on overlay click
+        $modal.off('click').on('click', function(e) {
+            if (e.target === this) {
+                $modal.removeClass('open');
+                resolve(false);
+            }
+        });
+    });
 }
 
 async function migrateGuestData(guestUid, newUid) {
