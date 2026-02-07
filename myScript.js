@@ -629,6 +629,8 @@ $(document).ready(function() {
                 photoURL: photoURL
             });
             
+            updateAllProfileImages(photoURL);
+            
             // Write Extended Profile Data
             await set(ref(db, 'users/' + user.uid + '/profile'), {
                 fullname: fullname,
@@ -752,9 +754,7 @@ $(document).ready(function() {
                 $('#nav-user-profile').css('display', 'flex');
                 $('#dash-user-name').text(user.displayName || "Kullanıcı");
                 $('#dash-user-email').text(user.email);
-                if(user.photoURL) {
-                    $('#nav-user-img, #dash-user-img').attr('src', user.photoURL);
-                }
+                updateAllProfileImages(user.photoURL);
             }
             
             // Load Dashboard Data
@@ -763,11 +763,11 @@ $(document).ready(function() {
             loadUserFavorites(user.uid);
             syncFavoriteStates(user.uid);
         } else {
-            // User is signed out completely -> Auto-Sign-In Anonymously
-            console.log("No user, signing in anonymously...");
-            signInAnonymously(auth).catch((error) => {
-                console.error("Anonymous auth failed", error);
-            });
+            // No user is logged in - Remain in guest/offline state.
+            // UI defaults (Login button visible, etc.) are already handled by lack of 'user' block.
+            $('#nav-login-btn').show();
+            $('#nav-user-profile').hide();
+            updateAllProfileImages(null);
         }
     });
 
@@ -792,7 +792,7 @@ $(document).ready(function() {
             await updateProfile(user, { photoURL: photoURL });
             await set(ref(db, `users/${user.uid}/profile/photoURL`), photoURL);
             
-            $('#settings-profile-img, #nav-user-img, #dash-user-img').attr('src', photoURL);
+            updateAllProfileImages(photoURL);
             showToast("Profil fotoğrafı güncellendi!", "success");
         } catch (error) {
             showToast("Yükleme hatası: " + error.message, "error");
@@ -1638,8 +1638,15 @@ $(document).ready(function() {
         switchPage('#login-page');
     });
 
-    $('#modal-btn-guest').click(function() {
-        // Proceed as guest
+    $('#modal-btn-guest').click(async function() {
+        // Proceed as guest - Ensure Anonymous Auth if no user exists
+        if (!auth.currentUser) {
+            try {
+                await signInAnonymously(auth);
+            } catch (err) {
+                console.error("Guest Proceed Auth Failed:", err);
+            }
+        }
         window.location.href = "./payment";
     });
 
@@ -1690,6 +1697,12 @@ function downscaleImage(file, maxDimension = 400) {
         };
         reader.onerror = reject;
     });
+}
+
+function updateAllProfileImages(url) {
+    const defaultUrl = './content/default_user.png';
+    const targetUrl = url || defaultUrl;
+    $('#nav-user-img, #dash-user-img, #settings-profile-img').attr('src', targetUrl);
 }
 
 function showToast(message, type = "info") {
@@ -2183,7 +2196,7 @@ function init3D() {
     dirLight.castShadow = true;
     scene.add(dirLight);
 
-    camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+    camera = new THREE.PerspectiveCamera(45, 1, 0.1, 50000);
     camera.position.set(200, 200, 200); 
 
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
@@ -2421,7 +2434,17 @@ function loadSTL(data) {
 
     // 9. Auto-Focus camera
     const maxDim = Math.max(finalSize.x, finalSize.y, finalSize.z);
-    let fitDistance = Math.max(maxDim * 1.5, 60);
+    
+    // Calculate base distance
+    let fitDistance = maxDim * 1.5;
+
+    // RESPONSIVE FIX: If screen is portrait (mobile), move camera further back
+    if (camera.aspect < 1) {
+        fitDistance = fitDistance / camera.aspect; 
+    }
+
+    // Ensure a minimum distance so we are not inside the object
+    fitDistance = Math.max(fitDistance, 100);
 
     camera.position.set(fitDistance, fitDistance, fitDistance);
     
@@ -2919,6 +2942,19 @@ function calculatePrice() {
 async function addToCart() {
     const $btn = $('#add-to-cart');
     
+    // Lazy Login: Only sign in anonymously if NO user exists
+    if (!auth.currentUser) {
+        try {
+            await signInAnonymously(auth);
+            // After sign-in, onAuthStateChanged will trigger and load data, 
+            // but we can continue here with the new UID
+        } catch (loginErr) {
+            console.error("Lazy Login Failed:", loginErr);
+            showToast("Hata: Oturum başlatılamadı.", "error");
+            return;
+        }
+    }
+
     $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> İşleniyor...');
 
     try {
