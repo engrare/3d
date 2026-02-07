@@ -796,6 +796,7 @@
                     <i class="fa-brands fa-cc-visa" title="Visa"></i>
                     <i class="fa-brands fa-cc-mastercard" title="Mastercard"></i>
                     <div class="iyzico-badge">iyzico</div>
+                    <div class="fast-badge">Havale / FAST</div>
                 </div>
                 <p style="color: #94A3B8; font-size: 0.75rem; margin-top: 12px; line-height: 1.4;">
                     <i class="fa-solid fa-shield-halved" style="margin-right: 5px; color: #10B981;"></i> 
@@ -861,6 +862,21 @@
             <div class="modal-close">&times;</div>
             <div id="order-details-content">
                 <!-- Order details will be loaded here dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <div id="confirm-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 400px; min-height: auto; flex-direction: column; text-align: center; padding: 40px; border-radius: 24px;">
+            <div id="confirm-icon-box" style="width: 70px; height: 70px; background: #FEF2F2; color: #EF4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; font-size: 2rem;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 id="confirm-title" style="margin-bottom: 10px; font-size: 1.5rem;">Emin misiniz?</h3>
+            <p id="confirm-message" style="margin-bottom: 30px; color: var(--text-muted); line-height: 1.5;">Bu işlem geri alınamaz.</p>
+            
+            <div style="display: flex; gap: 15px;">
+                <button id="confirm-btn-cancel" class="btn secondary" style="flex: 1; padding: 12px;">Vazgeç</button>
+                <button id="confirm-btn-yes" class="btn primary" style="flex: 1; padding: 12px; background: #EF4444; border-color: #EF4444;">Evet, Sil</button>
             </div>
         </div>
     </div>
