@@ -602,7 +602,7 @@ $(document).ready(function() {
             if (selectedProfilePhoto.type === 'upload' && selectedProfilePhoto.file) {
                 try {
                     const downscaledBlob = await downscaleImage(selectedProfilePhoto.file, 400);
-                    const storageRef = sRef(storage, `profile_photos/${user.uid}`);
+                    const storageRef = sRef(storage, `users/${user.uid}/profile.jpg`);
                     const snapshot = await uploadBytes(storageRef, downscaledBlob);
                     photoURL = await getDownloadURL(snapshot.ref);
                 } catch (uploadErr) {
@@ -613,7 +613,7 @@ $(document).ready(function() {
                 try {
                     const res = await fetch(selectedProfilePhoto.dataUrl);
                     const blob = await res.blob();
-                    const storageRef = sRef(storage, `profile_photos/${user.uid}_avatar.png`);
+                    const storageRef = sRef(storage, `users/${user.uid}/profile.jpg`);
                     const snapshot = await uploadBytes(storageRef, blob);
                     photoURL = await getDownloadURL(snapshot.ref);
                 } catch (err) {
@@ -774,78 +774,154 @@ $(document).ready(function() {
     // --- DASHBOARD LISTENERS ---
     
     // Profile Photo Change
-    $('#settings-photo-input').change(async function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
+$('#settings-photo-input').change(async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
 
-        const user = auth.currentUser;
-        if (!user || user.isAnonymous) return;
+    const user = auth.currentUser;
+    if (!user || user.isAnonymous) return;
 
-        showToast("Fotoğraf yükleniyor...", "info");
+    showToast("Fotoğraf yükleniyor...", "info");
+    
+    try {
+        // 1. Resmi küçült (Bu fonksiyonun Blob döndürdüğünden emin olun)
+        const downscaledBlob = await downscaleImage(file, 400);
+
+        // 2. YOL SABİTLEME:
+        // Güvenlik kuralımızda 'users/{userId}/profile.jpg' demiştik.
+        // Bu isim KESİNLİKLE kurallardaki ile aynı olmalı.
+        const storageRef = sRef(storage, `users/${user.uid}/profile.jpg`);
+
+        // 3. METADATA (ÖNEMLİ):
+        // Security Rules'daki "contentType.matches('image/.*')" kuralını geçmek için
+        // ve tarayıcının dosyayı doğru tanıması için bunu ekliyoruz.
+        const metadata = {
+            contentType: 'image/jpeg', // Dosya uzantımız .jpg olduğu için jpeg diyoruz
+            cacheControl: 'public,max-age=300' // (Opsiyonel) Tarayıcı 5 dk cache tutsun
+        };
+
+        // 4. Yükleme işlemini metadata ile yapıyoruz
+        const snapshot = await uploadBytes(storageRef, downscaledBlob, metadata);
+
+        // 5. İndirme Bağlantısını Al
+        // Firebase her yüklemede token'ı değiştirdiği için URL değişecektir.
+        const photoURL = await getDownloadURL(snapshot.ref);
+
+        // 6. Veritabanlarını Güncelle
+        // Auth profilini güncelle
+        await updateProfile(user, { photoURL: photoURL });
         
-        try {
-            const downscaledBlob = await downscaleImage(file, 400);
-            const storageRef = sRef(storage, `profile_photos/${user.uid}`);
-            const snapshot = await uploadBytes(storageRef, downscaledBlob);
-            const photoURL = await getDownloadURL(snapshot.ref);
+        // Realtime DB veya Firestore güncelle (Sen Realtime kullanıyorsun)
+        await set(ref(db, `users/${user.uid}/profile/photoURL`), photoURL);
+        
+        // 7. Arayüzü Güncelle
+        updateAllProfileImages(photoURL);
+        showToast("Profil fotoğrafı güncellendi!", "success");
 
-            await updateProfile(user, { photoURL: photoURL });
-            await set(ref(db, `users/${user.uid}/profile/photoURL`), photoURL);
-            
-            updateAllProfileImages(photoURL);
-            showToast("Profil fotoğrafı güncellendi!", "success");
-        } catch (error) {
+    } catch (error) {
+        console.error(error); // Konsola detaylı hata bas
+        
+        // Kullanıcıya yetki hatası mı yoksa başka bir şey mi olduğunu söyleyebilirsin
+        if (error.code === 'storage/unauthorized') {
+            showToast("Yükleme reddedildi: İzin yok veya dosya çok büyük.", "error");
+        } else {
             showToast("Yükleme hatası: " + error.message, "error");
         }
-    });
+    }
+});
 
-    // Update Profile Info
-    $('#btn-update-profile').click(async () => {
-        const user = auth.currentUser;
-        if (!user || user.isAnonymous) return;
+// Update Profile Info
+$('#btn-update-profile').click(async () => {
+    const user = auth.currentUser;
+    if (!user || user.isAnonymous) return;
 
-        const newName = $('#update-display-name').val();
-        const newEmail = $('#update-email').val();
-        
-        if (!newName || !newEmail) {
-            showToast("Lütfen tüm alanları doldurun.", "error");
-            return;
+    // 1. Girdileri al ve kenar boşluklarını temizle (Trim)
+    const newName = $('#update-display-name').val().trim();
+    const newEmail = $('#update-email').val().trim();
+    
+    // Boş kontrolü
+    if (!newName || !newEmail) {
+        showToast("Lütfen tüm alanları doldurun.", "error");
+        return;
+    }
+
+    const $btn = $('#btn-update-profile');
+    
+    // Değişiklik yoksa boşuna işlem yapma
+    if (newName === user.displayName && newEmail === user.email) {
+        showToast("Herhangi bir değişiklik yapmadınız.", "info");
+        return;
+    }
+
+    $btn.addClass('loading').prop('disabled', true);
+
+    try {
+        // Veritabanı güncellemelerini bu objede toplayacağız (Batch Update)
+        const dbUpdates = {};
+        let profileUpdated = false;
+
+        // --- 1. İSİM GÜNCELLEME ---
+        if (newName !== user.displayName) {
+            await updateProfile(user, { displayName: newName });
+            
+            // Veritabanı yolunu ve değerini listeye ekle
+            dbUpdates[`users/${user.uid}/profile/fullname`] = newName;
+            
+            // Arayüzü güncelle (Veritabanı başarısını beklemeden anlık hissettir)
+            $('#dash-user-name').text(newName);
+            profileUpdated = true;
         }
 
-        const $btn = $('#btn-update-profile');
-        $btn.addClass('loading').prop('disabled', true);
+        // --- 2. EMAIL GÜNCELLEME ---
+        if (newEmail !== user.email) {
+            try {
+                await updateEmail(user, newEmail);
+                
+                // Veritabanı yolunu listeye ekle
+                dbUpdates[`users/${user.uid}/profile/email`] = newEmail;
+                
+                $('#dash-user-email').text(newEmail);
+                profileUpdated = true;
 
-        try {
-            // 1. Update Display Name if changed
-            if (newName !== user.displayName) {
-                await updateProfile(user, { displayName: newName });
-                await set(ref(db, `users/${user.uid}/profile/fullname`), newName);
-                $('#dash-user-name').text(newName);
-            }
+                showToast("E-posta güncellendi. Lütfen gelen kutunuzu doğrulayın.", "info");
 
-            // 2. Update Email if changed (Note: Might require re-authentication)
-            if (newEmail !== user.email) {
-                try {
-                    await updateEmail(user, newEmail);
-                    await set(ref(db, `users/${user.uid}/profile/email`), newEmail);
-                    $('#dash-user-email').text(newEmail);
-                } catch (emailErr) {
-                    if (emailErr.code === 'auth/requires-recent-login') {
-                        showToast("Güvenlik gereği lütfen tekrar giriş yapıp deneyin.", "error");
-                        $btn.removeClass('loading').prop('disabled', false);
-                        return;
-                    }
-                    throw emailErr;
+            } catch (emailErr) {
+                if (emailErr.code === 'auth/requires-recent-login') {
+                    showToast("Güvenlik gereği: E-posta değiştirmek için çıkış yapıp tekrar girmelisiniz.", "error");
+                    // Hata durumunda butonu hemen aç ve fonksiyondan çık
+                    $btn.removeClass('loading').prop('disabled', false);
+                    return; 
                 }
+                throw emailErr; // Diğer hataları genel catch bloğuna fırlat
             }
-
-            showToast("Bilgiler başarıyla güncellendi!", "success");
-        } catch (error) {
-            showToast("Güncelleme hatası: " + error.message, "error");
-        } finally {
-            $btn.removeClass('loading').prop('disabled', false);
         }
-    });
+
+        // --- 3. VERİTABANI GÜNCELLEMESİ (TEK SEFERDE) ---
+        // Eğer veritabanına yazılacak bir şey varsa tek seferde gönder
+        if (Object.keys(dbUpdates).length > 0) {
+            // 'update' fonksiyonu root seviyesinden çoklu yolları günceller
+            await update(ref(db), dbUpdates);
+        }
+
+        if (profileUpdated) {
+            showToast("Bilgiler başarıyla güncellendi!", "success");
+        }
+
+    } catch (error) {
+        console.error("Profil güncelleme hatası:", error);
+        
+        // Kullanıcı dostu hata mesajları
+        if (error.code === 'auth/email-already-in-use') {
+            showToast("Bu e-posta adresi başka bir hesap tarafından kullanılıyor.", "error");
+        } else if (error.code === 'auth/invalid-email') {
+            showToast("Geçersiz e-posta formatı.", "error");
+        } else {
+            showToast("Güncelleme hatası: " + error.message, "error");
+        }
+    } finally {
+        $btn.removeClass('loading').prop('disabled', false);
+    }
+});
 
     // Address Modal Controls
     $('#btn-add-address').click(() => {
@@ -2304,8 +2380,8 @@ function handleFile(file) {
     activeModelConfig = JSON.parse(JSON.stringify(USER_UPLOAD_CONFIG));
     originalModelConfig = JSON.parse(JSON.stringify(USER_UPLOAD_CONFIG));
 
-    // Show text group (since USER_UPLOAD_CONFIG has params enabled)
-    $('#custom-text-group').fadeIn();
+    // Hide text group for user uploads
+    $('#custom-text-group').hide();
     
     // Sync UI with Default Config
     syncUIWithConfig(activeModelConfig);
