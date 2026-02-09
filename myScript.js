@@ -5,6 +5,7 @@ import { getFunctions, httpsCallable } from "firebase/functions";
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+import { ThreeMFLoader } from 'three/addons/loaders/3MFLoader.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -435,7 +436,16 @@ $(document).ready(function() {
             'login': '#login-page',
             'dashboard': '#dashboard-page'
         };
-        if (map[path]) {
+        
+        if (path === 'account') {
+            onAuthStateChanged(auth, (user) => {
+                if (user && !user.isAnonymous) {
+                    switchPage('#dashboard-page', false);
+                } else {
+                    switchPage('#login-page', false);
+                }
+            });
+        } else if (map[path]) {
             // Wait slightly for DOM/Auth if needed, or switch immediately
             switchPage(map[path], false); 
         }
@@ -2398,7 +2408,13 @@ function handleFile(file) {
 
     $('#file-name-display').text(file.name);
     const reader = new FileReader();
-    reader.onload = function(ev) { loadSTL(ev.target.result); };
+    reader.onload = function(ev) { 
+        if (fileName.endsWith('.3mf')) {
+            load3MF(ev.target.result);
+        } else {
+            loadSTL(ev.target.result); 
+        }
+    };
     reader.readAsArrayBuffer(file);
 }
 
@@ -2535,11 +2551,238 @@ function loadSTL(data) {
     }
 
     const vol = getVolume(geometry) / 1000;
-    $('#model-vol').data('raw', (isNaN(vol) || vol <= 0) ? 10 : vol);
+    const finalVol = (isNaN(vol) || vol <= 0) ? 10 : vol;
+    $('#model-vol').data('raw', finalVol);
+    $('#model-vol-display').text(finalVol.toFixed(2));
     
     calculatePrice();
     $('#add-to-cart').prop('disabled', false);
 }
+
+function load3MF(data) {
+    const loader = new ThreeMFLoader();
+    
+    // Scene cleanup
+    if (mesh) scene.remove(mesh);
+    scene.children.forEach(child => {
+        if (child.type === "BoxHelper" || child.type === "AxesHelper") scene.remove(child);
+    });
+    if (typeof textMesh !== 'undefined' && textMesh) {
+         scene.remove(textMesh);
+         textMesh = null;
+    }
+
+    // --- DEEP XML SNIFFER (Asynchronous) ---
+    const getXmlColorCount = new Promise((resolve) => {
+        if (typeof JSZip === 'undefined') {
+            console.warn("JSZip not found, skipping deep XML sniff.");
+            return resolve(0);
+        }
+
+        const zip = new JSZip();
+        zip.loadAsync(data).then(contents => {
+            // Find the model file (usually 3D/model.model but let's be flexible)
+            const modelFile = contents.file(/.*model\.model$/i)[0];
+            if (!modelFile) return resolve(0);
+
+            modelFile.async("string").then(xmlString => {
+                const xmlColors = new Set();
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+                
+                // Helper to extract colors from tags
+                const extractFromTags = (tagName, attrName) => {
+                    const tags = xmlDoc.getElementsByTagName(tagName);
+                    for (let i = 0; i < tags.length; i++) {
+                        const val = attrName ? tags[i].getAttribute(attrName) : (tags[i].getAttribute("color") || tags[i].textContent);
+                        if (val && val.trim().length >= 6) xmlColors.add(val.trim().toLowerCase());
+                    }
+                    // Try with namespace-agnostic approach if nothing found
+                    const allTags = xmlDoc.querySelectorAll(tagName.split(':').pop());
+                    allTags.forEach(t => {
+                        const val = attrName ? t.getAttribute(attrName) : (t.getAttribute("color") || t.textContent);
+                        if (val && val.trim().length >= 6) xmlColors.add(val.trim().toLowerCase());
+                    });
+                };
+
+                extractFromTags("color");
+                extractFromTags("basecolor", "color");
+                extractFromTags("m:color");
+                extractFromTags("base", "color");
+
+                // Count unique base material entries
+                const baseMaterials = xmlDoc.querySelectorAll("basematerials, colorgroup");
+                let entryCount = 0;
+                baseMaterials.forEach(group => {
+                    entryCount += group.querySelectorAll("base, color").length;
+                });
+
+                const result = Math.max(xmlColors.size, entryCount);
+                console.log("%c--- 3MF DEEP XML SNIFF RESULT ---", "background: #000; color: #fbbf24; font-weight: bold;");
+                console.log("Unique Colors in XML:", xmlColors.size);
+                console.log("Material Entries in XML:", entryCount);
+                console.log("XML Predicted Count:", result);
+                resolve(result);
+            }).catch(e => { console.error("XML Read Error:", e); resolve(0); });
+        }).catch(e => { console.error("ZIP Load Error:", e); resolve(0); });
+    });
+
+    const blob = new Blob([data], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+
+    // Load 3D and then combine with XML results
+    getXmlColorCount.then(xmlCount => {
+        loader.load(url, function (object) {
+            URL.revokeObjectURL(url);
+            mesh = object; 
+            
+            scene.add(mesh);
+
+            if (!currentLibraryModel) {
+                const graphCount = countUniqueColors(mesh);
+                const bestCount = Math.max(graphCount, xmlCount);
+                console.log("%c>>> FINAL COLOR COUNT: " + bestCount + " <<<", "color: #3b82f6; font-weight: bold; font-size: 20px; text-decoration: underline;");
+            }
+
+            // Sync transformations and UI
+            const bbox = new THREE.Box3().setFromObject(mesh);
+            const center = new THREE.Vector3();
+            bbox.getCenter(center);
+            const size = new THREE.Vector3();
+            bbox.getSize(size);
+
+            mesh.position.x += (mesh.position.x - center.x);
+            mesh.position.y += (mesh.position.y - center.y);
+            mesh.position.z += (mesh.position.z - center.z);
+            const finalBbox = new THREE.Box3().setFromObject(mesh);
+            mesh.position.y -= finalBbox.min.y;
+
+            if (activeModelConfig) {
+                try { updateCustomText(activeModelConfig.text.initialContent); } catch(e){}
+                if (activeModelConfig.logo && (activeModelConfig.logo._lastSvg || activeModelConfig.logo.content)) {
+                     try { updateCustomLogo(activeModelConfig.logo._lastSvg || activeModelConfig.logo.content); } catch(e){}
+                }
+            }
+
+            $('#dim-x').text(size.x.toFixed(1));
+            $('#dim-y').text(size.y.toFixed(1));
+            $('#dim-z').text(size.z.toFixed(1));
+            $('.dimensions-box').fadeIn();
+
+            const maxDim = Math.max(size.x, size.y, size.z);
+            let fitDistance = Math.max(maxDim * 1.5, 100);
+            if (camera.aspect < 1) fitDistance /= camera.aspect;
+            camera.position.set(fitDistance, fitDistance, fitDistance);
+            camera.lookAt(0, size.y / 2, 0);
+            if(controls) {
+                controls.target.set(0, size.y / 2, 0);
+                controls.enabled = true;
+                controls.update();
+            }
+
+            let totalVol = 0;
+            mesh.traverse(child => { if (child.isMesh && child.geometry) totalVol += getVolume(child.geometry); });
+            const volCm3 = totalVol / 1000;
+            const finalVolCm3 = (isNaN(volCm3) || volCm3 <= 0) ? 10 : volCm3;
+            $('#model-vol').data('raw', finalVolCm3);
+            $('#model-vol-display').text(finalVolCm3.toFixed(2));
+            calculatePrice();
+            $('#add-to-cart').prop('disabled', false);
+
+        }, undefined, function (error) {
+            URL.revokeObjectURL(url);
+            console.error("3MF Load Error:", error);
+            showToast("3MF dosyası yüklenirken hata oluştu. Yalnızca generic 3mf dosyaları yüklenebilir.", "error");
+        });
+    });
+}
+
+function countUniqueColors(object) {
+    const hexColors = new Set();
+    const materialUUIDs = new Set();
+    let meshCount = 0;
+    let maxGroupsFound = 0;
+    
+    console.log("%c--- 3MF COLOR SNIFFER 9.0 ---", "background: #111; color: #a855f7; padding: 2px 5px; font-weight: bold;");
+    
+    object.traverse(node => {
+        if (node.isMesh) {
+            meshCount++;
+            const geo = node.geometry;
+            const mat = node.material;
+
+            console.log(`%c[Mesh ${meshCount}] "${node.name || 'unnamed'}"`, "color: #a855f7; font-weight: bold;");
+
+            // 1. Material Count & UUIDs
+            if (mat) {
+                const mats = Array.isArray(mat) ? mat : [mat];
+                mats.forEach((m, i) => {
+                    materialUUIDs.add(m.uuid);
+                    if (m.color) {
+                        const hex = m.color.getHexString();
+                        hexColors.add(hex);
+                        console.log(`   - Mat ${i} Color: ${hex}`);
+                    }
+                });
+            }
+
+            // 2. Multi-material Groups (Crucial for 3MF)
+            if (geo && geo.groups && geo.groups.length > 0) {
+                console.log(`   - Geometry Groups Found: ${geo.groups.length}`);
+                if (geo.groups.length > maxGroupsFound) maxGroupsFound = geo.groups.length;
+            }
+
+            // 3. Dense Vertex Color Sampling
+            if (geo && geo.attributes.color) {
+                const attr = geo.attributes.color;
+                console.log(`   - Vertex Color Attr: Found (${attr.count} vertices)`);
+                // Sample more points for small models
+                const step = Math.max(1, Math.floor(attr.count / 1000));
+                for (let i = 0; i < attr.count; i += step) {
+                    const c = new THREE.Color().fromBufferAttribute(attr, i);
+                    hexColors.add(c.getHexString());
+                }
+            }
+
+            // 4. UserData Sniffing
+            if (node.userData) {
+                // Look for common 3MF color keys
+                ['color', 'baseColor', 'diffuse'].forEach(key => {
+                    if (node.userData[key]) {
+                        const c = new THREE.Color(node.userData[key]);
+                        hexColors.add(c.getHexString());
+                        console.log(`   - UserData "${key}" color: ${c.getHexString()}`);
+                    }
+                });
+            }
+        }
+    });
+
+    console.log("%c--- SNIFFER SUMMARY ---", "color: #a855f7; font-weight: bold;");
+    console.log("Meshes:", meshCount);
+    console.log("Distinct Materials (UUID):", materialUUIDs.size);
+    console.log("Max Groups in any Mesh:", maxGroupsFound);
+    console.log("Unique Hex Values:", Array.from(hexColors));
+    
+    // REFINED HEURISTIC:
+    // If the loader fails to map colors (all white), 
+    // the count is likely either the number of materials OR the number of geometry groups.
+    let finalCount = hexColors.size;
+    
+    // If we only have white/one-color, but multiple materials or groups exist
+    if (finalCount <= 1) {
+        finalCount = Math.max(finalCount, materialUUIDs.size, maxGroupsFound, meshCount);
+        console.log("%cHeuristic: High-confidence fallback used based on structure.", "color: #3b82f6;");
+    }
+
+    if (finalCount === 0) finalCount = 1;
+
+    console.log("%cFinal Calculated Color Count: " + finalCount, "color: #10b981; font-weight: bold; font-size: 16px;");
+    console.log("%c---------------------------", "background: #111; color: #a855f7;");
+
+    return finalCount;
+}
+
 
 let textMesh = null;
 let logoMesh = null;
@@ -2991,25 +3234,42 @@ function getVolume(geometry) {
 }
 
 function formatTL(price) {
-    if (isNaN(price)) return "₺0.00";
-    return price.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
+    if (isNaN(price) || price <= 0) return "₺0,00";
+    return new Intl.NumberFormat('tr-TR', {
+        style: 'currency',
+        currency: 'TRY',
+        minimumFractionDigits: 2
+    }).format(price);
 }
 
 function calculatePrice() {
     let vol = $('#model-vol').data('raw');
     if(vol === undefined || vol === null || isNaN(vol)) vol = 0;
 
-    const materialFactor = parseFloat($('#material-select').val());
-    const infillVal = parseFloat($('#pro-infill').val());
-    const infillFactor = infillVal / 20; 
+    // Constants & Multipliers
+    const FIXED_COST = 35;
+    const MATERIAL_MULTIPLIERS = {
+        'PLA': 2.65,
+        'PETG': 2.80,
+        'TPU': 3.25,
+        'SPECIAL': 3.90
+    };
+
+    const matKey = $('#material-select').val();
+    const materialMultiplier = MATERIAL_MULTIPLIERS[matKey] || 2.65;
+    const infillPercentage = parseFloat($('#pro-infill').val()) / 100;
     const deliveryFactor = parseFloat($('input[name="delivery"]:checked').val());
     let quantity = parseInt($('#quantity-input').val());
     if (isNaN(quantity) || quantity < 1) quantity = 1;
 
-    let unitPrice = vol * BASE_PRICE_PER_CM3 * materialFactor * infillFactor;
-    
-    if (vol > 0 && unitPrice < 50) unitPrice = 50; 
-    if (vol === 0) unitPrice = 0;
+    // Step A: Calculate Effective Volume (40% wall + 60% infill)
+    const effectiveVolume = vol * (0.40 + (infillPercentage * 0.60));
+
+    // Step B: Calculate Final Price
+    let unitPrice = 0;
+    if (vol > 0) {
+        unitPrice = (effectiveVolume * materialMultiplier) + FIXED_COST;
+    }
 
     let totalPrice = unitPrice * quantity * deliveryFactor;
     $('#price-display').text(formatTL(totalPrice));
@@ -3514,14 +3774,14 @@ function updateControlsVisibility(mode) {
     const masterTextVisible = checkParamVisibility('textContent', mode);
     const masterLogoVisible = checkParamVisibility('logo', mode);
     
-    // Individual control visibility
+    // 1. Individual Text control visibility
     $('#custom-text-input').closest('.form-group').toggle(masterTextVisible);
     $('#text-font-select').closest('.form-group').toggle(masterTextVisible && checkParamVisibility('textFont', mode));
     $('#text-size-slider').closest('.form-group').toggle(masterTextVisible && checkParamVisibility('textSize', mode));
     $('#text-depth-slider').closest('.form-group').toggle(masterTextVisible && checkParamVisibility('textDepth', mode));
     $('#letter-spacing-slider').closest('.form-group').toggle(masterTextVisible && checkParamVisibility('letterSpacing', mode));
     $('input[name="text-align"]').closest('.form-group').toggle(masterTextVisible && checkParamVisibility('textAlignment', mode));
-    $('#custom-text-group .color-grid').first().toggle(masterTextVisible && checkParamVisibility('textColor', mode));
+    $('#custom-text-group .color-grid').first().closest('.form-group').toggle(masterTextVisible && checkParamVisibility('textColor', mode));
     
     // Toggle the Position and Rotation containers if any of their children are visible
     const showRot = masterTextVisible && (checkParamVisibility('textRotationX', mode) || checkParamVisibility('textRotationY', mode) || checkParamVisibility('textRotationZ', mode));
@@ -3530,7 +3790,20 @@ function updateControlsVisibility(mode) {
     const showPos = masterTextVisible && (checkParamVisibility('textPositionX', mode) || checkParamVisibility('textPositionY', mode) || checkParamVisibility('textPositionZ', mode));
     $('#text-pos-x').closest('.form-group').parent().toggle(showPos);
 
-    // Other settings
+    // 2. Individual Logo control visibility
+    $('#custom-logo-container').toggle(masterLogoVisible);
+    $('#logo-upload-box').closest('.form-group').toggle(masterLogoVisible);
+    $('#logo-size-slider').closest('.form-group').toggle(masterLogoVisible && checkParamVisibility('logoSize', mode));
+    $('#logo-depth-slider').closest('.form-group').toggle(masterLogoVisible && checkParamVisibility('logoDepth', mode));
+    $('#custom-logo-container .color-grid').first().closest('.form-group').toggle(masterLogoVisible && checkParamVisibility('logoColor', mode));
+
+    const showLogoRot = masterLogoVisible && (checkParamVisibility('logoRotationX', mode) || checkParamVisibility('logoRotationY', mode) || checkParamVisibility('logoRotationZ', mode));
+    $('#logo-rotation-x').closest('.form-group').parent().toggle(showLogoRot);
+
+    const showLogoPos = masterLogoVisible && (checkParamVisibility('logoPositionX', mode) || checkParamVisibility('logoPositionY', mode) || checkParamVisibility('logoPositionZ', mode));
+    $('#logo-pos-x').closest('.form-group').parent().toggle(showLogoPos);
+
+    // 3. Other settings
     $('#material-select').closest('.form-group').toggle(checkParamVisibility('material', mode));
     $('#infill-select').closest('.form-group').toggle(checkParamVisibility('infill', mode));
     $('#quantity-input').closest('.form-group').toggle(checkParamVisibility('quantity', mode));
