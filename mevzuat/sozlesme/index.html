@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesafeli Satış Sözleşmesi - Engrare 3D</title>
+    <link rel="icon" type="image/png" href="https://www.engrare.com/files/photos/title_icon.png" sizes="48x48">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<link rel="stylesheet" href="../../myStyle.css">
+    <style>
+        .legal-content h1 { margin-bottom: 30px; font-size: 2.5rem; }
+        .legal-content h3 { margin-top: 40px; margin-bottom: 15px; font-size: 1.5rem; color: var(--primary); }
+        .legal-content p { margin-bottom: 15px; line-height: 1.8; }
+        .legal-content ul { margin-bottom: 20px; padding-left: 20px; }
+        .legal-content li { margin-bottom: 10px; color: var(--text-muted); }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="brand-logo"><a href="../../" style="text-decoration: none; color: inherit;"><img src="../../content/engrare_logo_elegant.png" height="65px" alt="Engrare" onerror="this.style.display='none'; this.parentElement.innerText='ENGRARE.'"></a></div>
+            <ul class="nav-menu">
+                <li><a href="../../?home" style="text-decoration: none; color: inherit;">Keşfet</a></li>
+                <li><a href="../../?models" style="text-decoration: none; color: inherit;">Modeller</a></li>
+                <li><a href="../../?studio" style="text-decoration: none; color: inherit;">Stüdyo</a></li>
+                <li title="Sepet">
+                    <a href="../../?checkout" style="text-decoration: none; color: inherit; display: flex; align-items: center;">
+                        <i class="fa-solid fa-cart-shopping" style="font-size: 1.2rem;"></i> 
+                        <span id="cart-badge" style="margin-left: 6px;">0</span>
+                    </a>
+                </li>
+                
+                <li id="nav-user-container" style="margin-left: auto; display: flex; align-items: center;">
+                    <a href="../../?account" style="text-decoration: none; color: inherit; cursor: pointer; padding: 10px; display: flex; align-items: center;">
+                        <i class="fa-regular fa-user" style="font-size: 1.2rem;"></i>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <script>
+        $(document).ready(function() {
+            // Load Cart Count
+            function updateCartBadge() {
+                const cartData = localStorage.getItem('cart');
+                if (cartData) {
+                    try {
+                        const cart = JSON.parse(cartData);
+                        $('#cart-badge').text(cart.length);
+                    } catch (e) {
+                        console.error("Error parsing cart data", e);
+                    }
+                }
+            }
+            updateCartBadge();
+        });
+    </script>
+
+    <div class="container narrow legal-content">
+        <h1>MESAFELİ SATIŞ SÖZLEŞMESİ</h1>
+        <h3>MADDE 1 - TARAFLAR</h3>
+        <p><strong>SATICI:</strong><br>Kaya Sertel<br>İstanbul<br>kaya@engrare.com</p>
+        <p><strong>ALICI:</strong><br>Müşteri (Sipariş verirken kullanılan bilgiler esas alınır.)</p>
+        <h3>MADDE 2 - KONU</h3>
+        <p>İşbu sözleşmenin konusu, Alıcı’nın Satıcı’ya ait 3d.engrare.com internet sitesinden siparişini verdiği ürünün satışı ve teslimi ile ilgili olarak 6502 sayılı Kanun hükümleri gereğince hak ve yükümlülüklerin saptanmasıdır.</p>
+        <h3>MADDE 3 - ÜRÜN VE FİYATLANDIRMA (Vergi Muafiyeti)</h3>
+        <p>Satıcı, 193 Sayılı Gelir Vergisi Kanunu Madde 9/10 (Evde İmalat) kapsamında "Esnaf Muaflığı"ndan yararlanmaktadır. Bu nedenle ürün satış bedellerine <strong>KDV (Katma Değer Vergisi) uygulanmamaktadır ve fiyatlara KDV dahil değildir.</strong> Alıcı, ödediği tutar karşılığında fatura yerine geçen belge/banka dekontu temin edebilir.</p>
+        <h3>MADDE 4 - CAYMA HAKKI İSTİSNASI</h3>
+        <p>Yönetmeliğin "Cayma Hakkının Kullanılamayacağı Haller" başlıklı maddesi gereği; <strong>Alıcı’nın talebiyle kişiye özel olarak üretilen (isim yazılı vb.) ürünlerde cayma hakkı kullanılamaz.</strong></p>
+    </div>
+
+    <footer class="main-footer">
+        <div class="container footer-grid">
+            <div class="footer-col">
+                <div class="brand-logo" style="color:white; margin-bottom: 15px;">ENGRARE.</div>
+                <p style="color: #94A3B8; font-size: 0.9rem;">Kişisel 3D baskı ve tasarım atölyesi.</p>
+            </div>
+            <div class="footer-col">
+                <h5>Hizmetler</h5>
+                <ul>
+                    <li>Tasarım Özelleştirme</li>
+                    <li>Kişiye Özel Üretim</li>
+                    <li>3D Modelleme</li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h5>Kurumsal</h5>
+                <ul>
+                    <li><a href="../iletisim/" style="color: inherit; text-decoration: none;">İletişim</a></li>
+                    <li><a href="../gizlilik/" style="color: inherit; text-decoration: none;">Gizlilik Politikası</a></li>
+                    <li><a href="../teslimat/" style="color: inherit; text-decoration: none;">Teslimat ve İade</a></li>
+                    <li><a href="../sozlesme/" style="color: inherit; text-decoration: none;">Mesafeli Satış Sözleşmesi</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h5>Güvenli Ödeme</h5>
+                <div class="payment-methods">
+                    <i class="fa-brands fa-cc-visa" title="Visa"></i>
+                    <i class="fa-brands fa-cc-mastercard" title="Mastercard"></i>
+                    <div class="iyzico-badge">iyzico</div>
+                    <div class="fast-badge">Havale / FAST</div>
+                </div>
+                <p style="color: #94A3B8; font-size: 0.75rem; margin-top: 12px; line-height: 1.4;">
+                    <i class="fa-solid fa-shield-halved" style="margin-right: 5px; color: #10B981;"></i> 
+                    256-bit SSL ile %100 Güvenli Ödeme
+                </p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="container" style="padding: 20px 5px;">
+                © 2026 ENGRARE. Tüm hakları saklıdır.
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
