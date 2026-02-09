@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/tr.js"></script>
@@ -222,66 +223,80 @@
 
                         <div id="panel-basic" class="config-panel">
 							<div id="custom-text-group" style="display:none; background: linear-gradient(135deg, #f0f9ff 0%, #eff6ff 100%); padding: 16px; border-radius: 12px; border: 1px solid #bfdbfe; margin-bottom: 20px;">
-                                <label style="color: #1e40af; display:block; font-weight: 700; font-size: 0.9rem; margin-bottom: 12px;">Özel Metin</label>
-                                <textarea id="custom-text-input" class="input-box" placeholder="Burada yazın..." style="border-color: #60a5fa; color: #1e3a8a; font-weight: 600; margin-bottom: 15px; min-height: 80px; resize: vertical; padding: 12px; line-height: 1.4;">ENGRARE</textarea>
+                                <div class="form-group" style="margin-bottom: 20px;">
+                                    <label style="color: #1e40af; display:block; font-weight: 700; font-size: 0.9rem; margin-bottom: 12px;">Özel Metin</label>
+                                    <textarea id="custom-text-input" class="input-box" placeholder="Burada yazın..." style="border-color: #60a5fa; color: #1e3a8a; font-weight: 600; min-height: 80px; resize: vertical; padding: 12px; line-height: 1.4;">ENGRARE</textarea>
+                                </div>
                                 
                                 <!-- Font Selection -->
-                                <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Yazı Tipi</label>
-                                <select id="text-font-select" class="select-box" style="margin-bottom: 15px; border-color: #60a5fa; background: white;">
-                                    <option value="helvetiker_bold">Helvetica Kalın</option>
-                                    <option value="helvetiker_regular">Helvetica Normal</option>
-                                    <option value="optimer_bold">Optimer Kalın</option>
-                                    <option value="optimer_regular">Optimer Normal</option>
-                                    <option value="droid_sans_bold">Droid Sans Kalın</option>
-                                    <option value="droid_sans_regular">Droid Sans Normal</option>
-                                </select>
+                                <div class="form-group" style="margin-bottom: 20px;">
+                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Yazı Tipi</label>
+                                    <select id="text-font-select" class="select-box" style="margin-bottom: 15px; border-color: #60a5fa; background: white;">
+                                        <option value="helvetiker_bold">Helvetica Kalın</option>
+                                        <option value="helvetiker_regular">Helvetica Normal</option>
+                                        <option value="optimer_bold">Optimer Kalın</option>
+                                        <option value="optimer_regular">Optimer Normal</option>
+                                        <option value="droid_sans_bold">Droid Sans Kalın</option>
+                                        <option value="droid_sans_regular">Droid Sans Normal</option>
+                                    </select>
+                                </div>
 
                                 <!-- Text Size -->
-                                <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Yazı Boyutu</label>
-                                <div class="form-group" style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center;">
-                                    <input type="range" id="text-size-slider" class="slider-input" min="1" max="100" value="10" style="flex: 1; cursor: pointer;">
-                                    <input type="number" id="text-size-input" class="input-box" value="10" min="1" max="100" style="width: 60px; padding: 4px; text-align: center; border-color: #60a5fa;">
+                                <div class="form-group" style="margin-bottom: 20px;">
+                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Yazı Boyutu</label>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <input type="range" id="text-size-slider" class="slider-input" min="1" max="100" value="10" style="flex: 1; cursor: pointer;">
+                                        <input type="number" id="text-size-input" class="input-box" value="10" min="1" max="100" style="width: 60px; padding: 4px; text-align: center; border-color: #60a5fa;">
+                                    </div>
                                 </div>
 
                                 <!-- Text Depth -->
-                                <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Yazı Derinliği</label>
-                                <div class="form-group" style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center;">
-                                    <input type="range" id="text-depth-slider" class="slider-input" min="1" max="50" value="4" style="flex: 1; cursor: pointer;">
-                                    <input type="number" id="text-depth-input" class="input-box" value="4" min="1" max="50" style="width: 60px; padding: 4px; text-align: center; border-color: #60a5fa;">
+                                <div class="form-group" style="margin-bottom: 20px;">
+                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Yazı Derinliği</label>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <input type="range" id="text-depth-slider" class="slider-input" min="1" max="50" value="4" style="flex: 1; cursor: pointer;">
+                                        <input type="number" id="text-depth-input" class="input-box" value="4" min="1" max="50" style="width: 60px; padding: 4px; text-align: center; border-color: #60a5fa;">
+                                    </div>
                                 </div>
 
                                 <!-- Letter Spacing -->
-                                <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Harf Aralığı</label>
-                                <div class="form-group" style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center;">
-                                    <input type="range" id="letter-spacing-slider" class="slider-input" min="0" max="10" step="0.1" value="0" style="flex: 1; cursor: pointer;">
-                                    <input type="number" id="letter-spacing-input" class="input-box" value="0" min="0" max="10" step="0.1" style="width: 60px; padding: 4px; text-align: center; border-color: #60a5fa;">
+                                <div class="form-group" style="margin-bottom: 20px;">
+                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Harf Aralığı</label>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <input type="range" id="letter-spacing-slider" class="slider-input" min="0" max="10" step="0.1" value="0" style="flex: 1; cursor: pointer;">
+                                        <input type="number" id="letter-spacing-input" class="input-box" value="0" min="0" max="10" step="0.1" style="width: 60px; padding: 4px; text-align: center; border-color: #60a5fa;">
+                                    </div>
                                 </div>
 
                                 <!-- Text Alignment -->
-                                <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Hizalama</label>
-                                <div class="form-group" style="margin-bottom: 15px; display: flex; gap: 10px;">
-                                    <label class="delivery-option" style="flex:1; justify-content:center; padding: 8px; margin-bottom:0;" title="Sola Yasla">
-                                        <i class="fa-solid fa-align-left"></i>
-                                        <input type="radio" name="text-align" value="left">
-                                    </label>
-                                    <label class="delivery-option active" style="flex:1; justify-content:center; padding: 8px; margin-bottom:0;" title="Ortala">
-                                        <i class="fa-solid fa-align-center"></i>
-                                        <input type="radio" name="text-align" value="center" checked>
-                                    </label>
-                                    <label class="delivery-option" style="flex:1; justify-content:center; padding: 8px; margin-bottom:0;" title="Sağa Yasla">
-                                        <i class="fa-solid fa-align-right"></i>
-                                        <input type="radio" name="text-align" value="right">
-                                    </label>
+                                <div class="form-group" style="margin-bottom: 20px;">
+                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Hizalama</label>
+                                    <div style="display: flex; gap: 10px;">
+                                        <label class="delivery-option" style="flex:1; justify-content:center; padding: 8px; margin-bottom:0;" title="Sola Yasla">
+                                            <i class="fa-solid fa-align-left"></i>
+                                            <input type="radio" name="text-align" value="left">
+                                        </label>
+                                        <label class="delivery-option active" style="flex:1; justify-content:center; padding: 8px; margin-bottom:0;" title="Ortala">
+                                            <i class="fa-solid fa-align-center"></i>
+                                            <input type="radio" name="text-align" value="center" checked>
+                                        </label>
+                                        <label class="delivery-option" style="flex:1; justify-content:center; padding: 8px; margin-bottom:0;" title="Sağa Yasla">
+                                            <i class="fa-solid fa-align-right"></i>
+                                            <input type="radio" name="text-align" value="right">
+                                        </label>
+                                    </div>
                                 </div>
                                 
                                 <!-- Text Color -->
-                                <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Metin Rengi</label>
-                                <div class="color-grid" style="margin-bottom: 15px;">
-                                    <div class="text-color-option" style="background:#111;" data-hex="#111111" title="Siyah"></div>
-                                    <div class="text-color-option selected" style="background:#fff;" data-hex="#FFFFFF" title="Beyaz"></div>
-                                    <div class="text-color-option" style="background:#9ca3af;" data-hex="#9ca3af" title="Gri"></div>
-                                    <div class="text-color-option" style="background:#ef4444;" data-hex="#ef4444" title="Kırmızı"></div>
-                                    <div class="text-color-option" style="background:#3b82f6;" data-hex="#3b82f6" title="Mavi"></div>
+                                <div class="form-group" style="margin-bottom: 20px;">
+                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Metin Rengi</label>
+                                    <div class="color-grid" style="margin-bottom: 15px;">
+                                        <div class="text-color-option" style="background:#111;" data-hex="#111111" title="Siyah"></div>
+                                        <div class="text-color-option selected" style="background:#fff;" data-hex="#FFFFFF" title="Beyaz"></div>
+                                        <div class="text-color-option" style="background:#9ca3af;" data-hex="#9ca3af" title="Gri"></div>
+                                        <div class="text-color-option" style="background:#ef4444;" data-hex="#ef4444" title="Kırmızı"></div>
+                                        <div class="text-color-option" style="background:#3b82f6;" data-hex="#3b82f6" title="Mavi"></div>
+                                    </div>
                                 </div>
                                 
                                 <!-- Text Rotation Section -->
@@ -342,39 +357,47 @@
 
                                 <!-- CUSTOM LOGO SECTION MERGED HERE -->
                                 <div id="custom-logo-container" style="padding-top: 10px; margin-top: 10px;">
-                                    <label style="color: #1e40af; display:block; font-weight: 700; font-size: 0.9rem; margin-bottom: 12px;">Özel Logo (SVG)</label>
-                                    
-                                    <div class="form-group" style="margin-bottom: 15px;">
-                                        <div id="logo-upload-box" class="custom-file-upload" onclick="document.getElementById('logo-file-input').click();">
-                                            <i class="fa-solid fa-cloud-arrow-up" style="font-size: 1.5rem; color: #3b82f6; margin-bottom: 8px;"></i>
-                                            <span style="font-weight: 600; color: #1e40af; font-size: 0.9rem;">SVG Logo Yükle</span>
-                                            <span style="font-size: 0.75rem; color: #64748B;">veya sürükleyip bırakın</span>
-                                            <input type="file" id="logo-file-input" accept=".svg" hidden>
+                                    <div class="form-group" style="margin-bottom: 20px;">
+                                        <label style="color: #1e40af; display:block; font-weight: 700; font-size: 0.9rem; margin-bottom: 12px;">Özel Logo (SVG)</label>
+                                        
+                                        <div style="margin-bottom: 15px;">
+                                            <div id="logo-upload-box" class="custom-file-upload" onclick="document.getElementById('logo-file-input').click();">
+                                                <i class="fa-solid fa-cloud-arrow-up" style="font-size: 1.5rem; color: #3b82f6; margin-bottom: 8px;"></i>
+                                                <span style="font-weight: 600; color: #1e40af; font-size: 0.9rem;">SVG Logo Yükle</span>
+                                                <span style="font-size: 0.75rem; color: #64748B;">veya sürükleyip bırakın</span>
+                                                <input type="file" id="logo-file-input" accept=".svg" hidden>
+                                            </div>
                                         </div>
                                     </div>
 
                                     <!-- Logo Size -->
-                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Logo Boyutu</label>
-                                    <div class="form-group" style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center;">
-                                        <input type="range" id="logo-size-slider" class="slider-input" min="0.1" max="5" step="0.1" value="1" style="flex: 1; cursor: pointer;">
-                                        <input type="number" id="logo-size-input" class="input-box" value="1" min="0.1" max="5" step="0.1" style="width: 60px; padding: 4px; text-align: center; border-color: #60a5fa;">
+                                    <div class="form-group" style="margin-bottom: 20px;">
+                                        <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Logo Boyutu</label>
+                                        <div style="display: flex; gap: 8px; align-items: center;">
+                                            <input type="range" id="logo-size-slider" class="slider-input" min="0.1" max="5" step="0.1" value="1" style="flex: 1; cursor: pointer;">
+                                            <input type="number" id="logo-size-input" class="input-box" value="1" min="0.1" max="5" step="0.1" style="width: 60px; padding: 4px; text-align: center; border-color: #60a5fa;">
+                                        </div>
                                     </div>
 
                                     <!-- Logo Depth -->
-                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:none; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Logo Derinliği</label>
-                                    <div class="form-group" style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center;">
-                                        <input type="range" id="logo-depth-slider" class="slider-input" min="1" max="50" value="4" style="flex: 1; cursor: pointer;">
-                                        <input type="number" id="logo-depth-input" class="input-box" value="4" min="1" max="50" style="width: 60px; padding: 4px; text-align: center; border-color: #60a5fa;">
+                                    <div class="form-group" style="margin-bottom: 20px; display: none;">
+                                        <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Logo Derinliği</label>
+                                        <div style="display: flex; gap: 8px; align-items: center;">
+                                            <input type="range" id="logo-depth-slider" class="slider-input" min="1" max="50" value="4" style="flex: 1; cursor: pointer;">
+                                            <input type="number" id="logo-depth-input" class="input-box" value="4" min="1" max="50" style="width: 60px; padding: 4px; text-align: center; border-color: #60a5fa;">
+                                        </div>
                                     </div>
 
                                     <!-- Logo Color -->
-                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Logo Rengi</label>
-                                    <div class="color-grid" style="margin-bottom: 15px;">
-                                        <div class="logo-color-option" style="background:#111;" data-hex="#111111" title="Siyah"></div>
-                                        <div class="logo-color-option selected" style="background:#fff;" data-hex="#FFFFFF" title="Beyaz"></div>
-                                        <div class="logo-color-option" style="background:#9ca3af;" data-hex="#9ca3af" title="Gri"></div>
-                                        <div class="logo-color-option" style="background:#ef4444;" data-hex="#ef4444" title="Kırmızı"></div>
-                                        <div class="logo-color-option" style="background:#3b82f6;" data-hex="#3b82f6" title="Mavi"></div>
+                                    <div class="form-group" style="margin-bottom: 20px;">
+                                        <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Logo Rengi</label>
+                                        <div class="color-grid" style="margin-bottom: 15px;">
+                                            <div class="logo-color-option" style="background:#111;" data-hex="#111111" title="Siyah"></div>
+                                            <div class="logo-color-option selected" style="background:#fff;" data-hex="#FFFFFF" title="Beyaz"></div>
+                                            <div class="logo-color-option" style="background:#9ca3af;" data-hex="#9ca3af" title="Gri"></div>
+                                            <div class="logo-color-option" style="background:#ef4444;" data-hex="#ef4444" title="Kırmızı"></div>
+                                            <div class="logo-color-option" style="background:#3b82f6;" data-hex="#3b82f6" title="Mavi"></div>
+                                        </div>
                                     </div>
 
                                     <!-- Logo Rotation Section -->
@@ -431,10 +454,10 @@
                             <div class="form-group">
                                 <label>Malzeme Seçimi</label>
                                 <select id="material-select" class="select-box">
-                                    <option value="1">PLA+ (Standart)</option>
-                                    <option value="1.5">PETG (Mühendislik)</option>
-                                    <option value="3.0">ABS (Isıya Dayanıklı)</option>
-                                    <option value="2.5">TPU (Esnek 95A)</option>
+                                    <option value="PLA">PLA+ (Standart)</option>
+                                    <option value="PETG">PETG (Mühendislik)</option>
+                                    <option value="SPECIAL">Carbon / Special</option>
+                                    <option value="TPU">TPU (Esnek 95A)</option>
                                 </select>
                             </div>
 
@@ -531,7 +554,8 @@
 
                     <div class="sidebar-footer">
                          <div class="dimensions-box" style="margin-bottom: 15px; font-size: 0.8rem; color: var(--text-muted); display:none;">
-                            <strong>Boyutlar:</strong> <span id="dim-x"></span> x <span id="dim-y"></span> x <span id="dim-z"></span>
+                            <strong>Boyutlar:</strong> <span id="dim-x"></span> x <span id="dim-y"></span> x <span id="dim-z"></span> mm<br>
+                            <strong>Hacim:</strong> <span id="model-vol-display"></span> cm³
                         </div>
                         <div class="price-row">
                             <span class="price-label">Tahmini Maliyet</span>
@@ -788,6 +812,15 @@
                     <li>Tasarım Özelleştirme</li>
                     <li>Kişiye Özel Üretim</li>
                     <li>3D Modelleme</li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h5>Kurumsal</h5>
+                <ul>
+                    <li><a href="mevzuat/iletisim/" style="color: inherit; text-decoration: none;">İletişim</a></li>
+                    <li><a href="mevzuat/gizlilik/" style="color: inherit; text-decoration: none;">Gizlilik Politikası</a></li>
+                    <li><a href="mevzuat/teslimat/" style="color: inherit; text-decoration: none;">Teslimat ve İade</a></li>
+                    <li><a href="mevzuat/sozlesme/" style="color: inherit; text-decoration: none;">Mesafeli Satış Sözleşmesi</a></li>
                 </ul>
             </div>
             <div class="footer-col">
