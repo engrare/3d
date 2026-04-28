@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ENGRARE | 3D Fiyatlandırma Motoru</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        engrare: {
+                            light: '#4f4f51',
+                            DEFAULT: '#1f1f22',
+                            dark: '#0a0a0b',
+                            accent: '#ff6b35' // Şık bir endüstriyel turuncu
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Glassmorphism & Animasyon Sınıfları */
+        body {
+            background: radial-gradient(circle at top right, #1f1f22, #0a0a0b 70%);
+            min-height: 100vh;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+        .price-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .price-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px -10px rgba(255, 107, 53, 0.3);
+            border-color: rgba(255, 107, 53, 0.5);
+        }
+        /* Custom Input Styling */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        .input-glow:focus {
+            box-shadow: 0 0 15px rgba(255, 107, 53, 0.2);
+            border-color: #ff6b35;
+        }
+    </style>
+</head>
+<body class="text-gray-200 antialiased flex items-center justify-center p-4 sm:p-8">
+
+    <div class="w-full max-w-5xl">
+        
+        <div class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-3">
+                ENGRARE <span class="text-engrare-accent">STUDIO</span>
+            </h1>
+            <p class="text-gray-400 font-light text-lg">Dinamik Toptan & Perakende Fiyat Motoru</p>
+        </div>
+
+        <div class="glass-panel rounded-3xl p-6 sm:p-10">
+            
+            <div class="max-w-md mx-auto mb-12 text-center">
+                <label for="printTime" class="block text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wider">
+                    Tahmini Baskı Süresi (Saat)
+                </label>
+                <div class="relative">
+                    <input type="number" id="printTime" step="0.1" min="0" placeholder="Örn: 2.5" 
+                           class="w-full bg-black/40 border border-gray-700 rounded-xl px-6 py-4 text-3xl text-center text-white font-bold transition-all outline-none input-glow placeholder-gray-700"
+                           oninput="calculatePrices()">
+                    <div class="absolute right-6 top-1/2 -translate-y-1/2 text-gray-500 font-medium">Saat</div>
+                </div>
+                <div class="mt-4 text-sm text-gray-500" id="costDisplay">
+                    Ham Maliyet: <span class="text-white font-semibold">0.00 ₺</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <div class="glass-panel price-card rounded-2xl p-6 relative overflow-hidden group">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-600 to-gray-400 group-hover:from-engrare-accent group-hover:to-orange-400 transition-all"></div>
+                    <h3 class="text-gray-400 font-semibold mb-1 uppercase tracking-wide text-xs">Perakende Sipariş</h3>
+                    <div class="text-xl text-white font-bold mb-4">1 - 19 Adet</div>
+                    <div class="flex items-end gap-1">
+                        <span class="text-4xl font-extrabold text-white" id="priceTier1">0</span>
+                        <span class="text-xl text-gray-400 font-medium pb-1">₺</span>
+                        <span class="text-sm text-gray-500 pb-1.5 ml-1">/ adet</span>
+                    </div>
+                    <div class="mt-4 text-xs text-gray-500 bg-black/30 rounded-lg p-3">
+                        Standart Kar Marjı (%100 + Risk/Kargo Payı)
+                    </div>
+                </div>
+
+                <div class="glass-panel price-card rounded-2xl p-6 relative overflow-hidden group border-engrare-accent/20">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-engrare-accent to-orange-500"></div>
+                    <div class="absolute -top-3 -right-6 bg-engrare-accent text-black text-[10px] font-bold px-8 py-1 rotate-45">POPÜLER</div>
+                    <h3 class="text-engrare-accent font-semibold mb-1 uppercase tracking-wide text-xs">Küçük Toptan</h3>
+                    <div class="text-xl text-white font-bold mb-4">20 - 99 Adet</div>
+                    <div class="flex items-end gap-1">
+                        <span class="text-4xl font-extrabold text-white" id="priceTier2">0</span>
+                        <span class="text-xl text-engrare-accent font-medium pb-1">₺</span>
+                        <span class="text-sm text-gray-500 pb-1.5 ml-1">/ adet</span>
+                    </div>
+                    <div class="mt-4 text-xs text-gray-500 bg-black/30 rounded-lg p-3">
+                        Orta Ölçekli Üretim İndirimi
+                    </div>
+                </div>
+
+                <div class="glass-panel price-card rounded-2xl p-6 relative overflow-hidden group">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-600 to-gray-400 group-hover:from-engrare-accent group-hover:to-orange-400 transition-all"></div>
+                    <h3 class="text-gray-400 font-semibold mb-1 uppercase tracking-wide text-xs">Büyük Toptan</h3>
+                    <div class="text-xl text-white font-bold mb-4">100+ Adet</div>
+                    <div class="flex items-end gap-1">
+                        <span class="text-4xl font-extrabold text-white" id="priceTier3">0</span>
+                        <span class="text-xl text-gray-400 font-medium pb-1">₺</span>
+                        <span class="text-sm text-gray-500 pb-1.5 ml-1">/ adet</span>
+                    </div>
+                    <div class="mt-4 text-xs text-gray-500 bg-black/30 rounded-lg p-3">
+                        Maksimum Kapasite, Optimum Kar
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        
+        <div class="text-center mt-8 text-gray-600 text-xs font-medium">
+            Porima PLA (0.75 ₺/gr) ve Bambu Lab A1 (50gr/sa) verileri baz alınmıştır.
+        </div>
+
+    </div>
+
+    <script>
+        // Fiyatlandırma Sabitleri (Daha önce hesaplanan değerler)
+        const HOURLY_COST = 46.10; // Makine Eskime + Elektrik + Hammadde
+        const FIXED_PACKAGE_COST = 15.00; // Kutu/Bant Masrafı
+        
+        // 120 TL Maliyete karşılık belirlediğin fiyatlardan oranları çekiyoruz.
+        // Formül: (Kullanıcı Fiyatı / 120) = Çarpan
+        const TIER1_MULTIPLIER = 250 / 120; // ~2.083
+        const TIER2_MULTIPLIER = 230 / 120; // ~1.916
+        const TIER3_MULTIPLIER = 200 / 120; // ~1.666
+
+        function calculatePrices() {
+            const timeInput = document.getElementById('printTime').value;
+            const hours = parseFloat(timeInput);
+
+            // Değer yoksa veya 0'sa sıfırla
+            if (isNaN(hours) || hours <= 0) {
+                document.getElementById('costDisplay').innerHTML = `Ham Maliyet: <span class="text-white font-semibold">0.00 ₺</span>`;
+                document.getElementById('priceTier1').innerText = "0";
+                document.getElementById('priceTier2').innerText = "0";
+                document.getElementById('priceTier3').innerText = "0";
+                return;
+            }
+
+            // 1. Ham Maliyeti Hesapla
+            const rawCost = (hours * HOURLY_COST) + FIXED_PACKAGE_COST;
+            
+            // 2. Toptan Katsayılarını Uygula (Yuvarlayarak)
+            const priceTier1 = Math.ceil(rawCost * TIER1_MULTIPLIER);
+            const priceTier2 = Math.ceil(rawCost * TIER2_MULTIPLIER);
+            const priceTier3 = Math.ceil(rawCost * TIER3_MULTIPLIER);
+
+            // 3. Ekrana Yazdır
+            const formatCurrency = (num) => new Intl.NumberFormat('tr-TR').format(num);
+
+            document.getElementById('costDisplay').innerHTML = `Ham Maliyet: <span class="text-white font-semibold">${formatCurrency(rawCost.toFixed(2))} ₺</span>`;
+            
+            // Animasyonlu sayı değişimi efekti (opsiyonel ama şık durur, şimdilik direkt basıyoruz)
+            document.getElementById('priceTier1').innerText = formatCurrency(priceTier1);
+            document.getElementById('priceTier2').innerText = formatCurrency(priceTier2);
+            document.getElementById('priceTier3').innerText = formatCurrency(priceTier3);
+        }
+    </script>
+</body>
+</html>
