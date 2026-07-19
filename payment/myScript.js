@@ -3,7 +3,7 @@ import { getAuth, onAuthStateChanged, signInAnonymously } from "firebase/auth";
 import { getDatabase, ref, set, push, onValue, get } from "firebase/database";
 import { getFunctions, httpsCallable } from "firebase/functions";
 
-// Reuse Config
+// Config Sabit Tutuldu
 const firebaseConfig = {
 	apiKey: "AIzaSyBM7oB0EkTjGJiOHdo67ByXA6qxVcvPS8Y",
 	authDomain: "engrar3d.firebaseapp.com",
@@ -27,12 +27,12 @@ let appliedDiscount = null;
 
 $(document).ready(function() {
     loadCart();
-    
-    // Auth State
+        
+    // Auth State Yönetimi
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             if (user.isAnonymous) {
-                // GUEST MODE
+                // GUEST (MİSAFİR) MODU
                 $('#guest-info-section').show();
                 $('#user-address-section').hide();
                 $('#user-profile-header').hide();
@@ -40,8 +40,8 @@ $(document).ready(function() {
                 // REGISTERED USER MODE
                 $('#guest-info-section').hide();
                 $('#user-address-section').show();
-                
-                // Load Profile Info
+                                
+                // Profil Bilgilerini Yükle
                 const profileRef = ref(db, `users/${user.uid}/profile`);
                 const snapshot = await get(profileRef);
                 if (snapshot.exists()) {
@@ -54,7 +54,7 @@ $(document).ready(function() {
                     }
                     $('#user-profile-header').css('display', 'flex');
                 } else {
-                    // Fallback to Auth Data if no DB profile
+                    // Veritabanında profil yoksa Auth verisine dön
                     $('#checkout-user-name').text(user.displayName || "Kullanıcı");
                     $('#checkout-user-email').text(user.email);
                     $('#user-profile-header').css('display', 'flex');
@@ -63,12 +63,11 @@ $(document).ready(function() {
                 loadUserAddresses(user.uid);
             }
         } else {
-            // Should usually be signed in anonymously by main page, but safety fallback
             signInAnonymously(auth);
         }
     });
 
-    // Shipping Toggle
+    // Kargo Seçimi Değişimi
     $('input[name="shipping-method"]').change(function() {
         shippingCost = parseFloat($(this).data('price'));
         $('.delivery-option').removeClass('active');
@@ -76,7 +75,7 @@ $(document).ready(function() {
         updateTotals();
     });
 
-    // Payment Tabs
+    // Ödeme Sekmeleri Geçişleri
     $('.pay-tab').click(function() {
         $('.pay-tab').removeClass('active');
         $(this).addClass('active');
@@ -85,23 +84,24 @@ $(document).ready(function() {
         $(`#pay-${method}`).fadeIn();
     });
 
-    // Address Actions
+    // Yeni Adres Ekleme Tetikleyici
     $('#btn-add-address').click(() => $('#new-address-form').slideToggle());
-    
+        
+    // Adres Kaydetme
     $('#btn-save-address').click(async () => {
         const user = auth.currentUser;
         if(!user) return;
-        
+                
         const addr = {
-            title: $('#new-addr-title').val(),
-            name: $('#new-addr-name').val(),
-            surname: $('#new-addr-surname').val(),
-            address: $('#new-addr-full').val(),
-            city: $('#new-addr-city').val(),
-            phone: $('#new-addr-phone').val()
+            title: $('#new-addr-title').val().trim(),
+            name: $('#new-addr-name').val().trim(),
+            surname: $('#new-addr-surname').val().trim(),
+            address: $('#new-addr-full').val().trim(),
+            city: $('#new-addr-city').val().trim(),
+            phone: $('#new-addr-phone').val().trim()
         };
 
-        if(!addr.title || !addr.address) {
+        if(!addr.title || !addr.address || !addr.name || !addr.surname) {
             showToast("Lütfen zorunlu alanları doldurun.", "error");
             return;
         }
@@ -109,22 +109,22 @@ $(document).ready(function() {
         const newRef = push(ref(db, `users/${user.uid}/addresses`));
         await set(newRef, addr);
         $('#new-address-form').slideUp();
-        $('#new-address-form input').val(''); // Clear
+        $('#new-address-form input').val(''); // Temizle
         showToast("Adres kaydedildi.", "success");
     });
 
-    // Address Select
+    // Adres Seçimi Değişimi
     $('#saved-address-select').change(function() {
         const val = $(this).val();
         if(val) selectedAddress = JSON.parse(decodeURIComponent(val));
     });
 
-    // Discount Button
+    // İndirim Kodu Uygulama Butonu
     $('#btn-apply-discount').click(async function() {
         const code = $('#discount-code-input').val().trim();
         const $msg = $('#discount-message');
         $msg.text('').removeClass('success error');
-        
+                
         if(!code) return;
 
         $(this).prop('disabled', true).text('Kontrol...');
@@ -136,13 +136,13 @@ $(document).ready(function() {
 
             if (data.valid) {
                 appliedDiscount = data;
-                
-                // UI Updates for Success
+                                
+                // Başarılı Arayüz Güncellemeleri
                 $('#discount-input-container').hide();
-                $('#discount-applied-container').css('display', 'flex'); // Flex for alignment
+                $('#discount-applied-container').css('display', 'flex'); 
                 $('#applied-code-text').text(code);
                 $msg.text(`İndirim uygulandı: ${code}`).addClass('success');
-                
+                                
                 updateTotals();
                 showToast("İndirim kodu uygulandı.", "success");
             } else {
@@ -158,7 +158,7 @@ $(document).ready(function() {
         }
     });
 
-    // Remove Discount Button
+    // İndirim Kodunu Kaldırma Butonu
     $('#btn-remove-discount').click(function() {
         appliedDiscount = null;
         $('#discount-code-input').val('');
@@ -169,7 +169,7 @@ $(document).ready(function() {
         showToast("İndirim kaldırıldı.", "success");
     });
 
-    // Pay Button
+    // Siparişi Tamamla Butonu Tetikleyicisi
     $('#btn-complete-order').click(processPayment);
 });
 
@@ -187,33 +187,36 @@ function renderCartSummary() {
     let subtotal = 0;
 
     cart.forEach(item => {
-        subtotal += item.price;
-        // Use snapshot or placeholder
+        const qty = parseInt(item.quantity || item.configuration?.quantity || 1);
+        subtotal += item.price * qty;
+
         const img = item.image || "../content/product2.jpeg";
-        const color = (item.configuration && item.configuration.colorName) ? item.configuration.colorName : "Standart";
+        const textDisplay = item.customText ? `Yazı: "${item.customText}"` : "Standart Baskı";
 
         $list.append(`
             <div class="summary-item">
                 <img src="${img}" class="item-img">
                 <div class="item-info" style="flex:1">
                     <div class="item-name">${item.name}</div>
-                    <div class="item-meta">Renk: ${color}</div>
-                    <div class="item-meta">Adet: ${item.configuration?.quantity || 1}</div>
+                    <div class="item-meta">${textDisplay}</div>
+                    <div class="item-meta">Adet: ${qty}</div>
                 </div>
-                <div class="item-price">₺${item.price.toLocaleString('tr-TR')}</div>
+                <div class="item-price">₺${(item.price * qty).toLocaleString('tr-TR')}</div>
             </div>
         `);
     });
 
-    // Update Totals
     $('#summ-subtotal').text(formatTL(subtotal));
     updateTotals();
 }
 
 function updateTotals() {
     let subtotal = 0;
-    cart.forEach(i => subtotal += i.price);
-    
+    cart.forEach(i => {
+        const qty = parseInt(i.quantity || i.configuration?.quantity || 1);
+        subtotal += i.price * qty;
+    });
+        
     let discountAmount = 0;
     if (appliedDiscount) {
         if (appliedDiscount.type === 'percent') {
@@ -221,12 +224,11 @@ function updateTotals() {
         } else if (appliedDiscount.type === 'fixed') {
             discountAmount = appliedDiscount.value;
         }
-        // Cap discount at subtotal
         if (discountAmount > subtotal) discountAmount = subtotal;
     }
 
     $('#summ-shipping').text(formatTL(shippingCost));
-    
+        
     if (discountAmount > 0) {
         $('#summ-discount-row').show();
         $('#summ-discount').text('-' + formatTL(discountAmount));
@@ -235,7 +237,8 @@ function updateTotals() {
     }
 
     const total = Math.max(0, subtotal + shippingCost - discountAmount);
-    
+        
+    // Buton ve genel ara yüz fiyatlarını eşitle
     $('#summ-total').text(formatTL(total));
     $('#final-price-btn').text(formatTL(total));
 }
@@ -249,7 +252,7 @@ function loadUserAddresses(uid) {
         const $select = $('#saved-address-select');
         $select.empty();
         $select.append('<option value="" disabled selected>Kayıtlı Adresinizi Seçin</option>');
-        
+                
         if (snapshot.exists()) {
             const data = snapshot.val();
             Object.values(data).forEach(addr => {
@@ -257,7 +260,6 @@ function loadUserAddresses(uid) {
                 $select.append(`<option value="${val}">${addr.title} - ${addr.address}</option>`);
             });
         } else {
-            // Auto open new form if no addresses
             $('#new-address-form').show();
         }
     });
@@ -270,39 +272,40 @@ async function processPayment() {
         return;
     }
 
-    const shippingMethod = $('input[name="shipping-method"]:checked').val();
-    const paymentMethod = $('.pay-tab.active').data('method');
+    const shippingMethod = $('input[name="shipping-method"]:checked').val() || "standard";
+    const paymentMethod = $('.pay-tab.active').data('method') || "iyzico";
     let shippingInfo = {};
 
-    // Validate Address
     if (user.isAnonymous) {
-        // Collect from Guest Form
         shippingInfo = {
-            email: $('#contact-email').val(),
-            name: $('#ship-name').val(),
-            surname: $('#ship-surname').val(),
-            address: $('#ship-address').val(),
-            city: $('#ship-city').val(),
-            phone: $('#ship-phone').val()
+            email: $('#contact-email').val().trim(),
+            name: $('#ship-name').val().trim(),
+            surname: $('#ship-surname').val().trim(),
+            address: $('#ship-address').val().trim(),
+            city: $('#ship-city').val().trim(),
+            phone: $('#ship-phone').val().trim()
         };
         
-        if (!shippingInfo.email || !shippingInfo.address || !shippingInfo.phone) {
+        if (!shippingInfo.email || !shippingInfo.address || !shippingInfo.phone || !shippingInfo.name || !shippingInfo.surname) {
             showToast("Lütfen tüm teslimat bilgilerini doldurun.", "error");
             return;
         }
     } else {
-        // Use Selected Saved Address
         if (!selectedAddress) {
             showToast("Lütfen bir teslimat adresi seçin veya yeni ekleyin.", "error");
             return;
         }
-        shippingInfo = selectedAddress;
-        shippingInfo.email = user.email; // Ensure email is captured
+        shippingInfo = {
+            name: selectedAddress.name || '',
+            surname: selectedAddress.surname || '',
+            address: selectedAddress.address || '',
+            city: selectedAddress.city || '',
+            phone: selectedAddress.phone || '',
+            email: user.email
+        };
     }
 
-    // Prepare Order Data
-    // Recalculate totals for data
-    const subtotal = cart.reduce((a, b) => a + b.price, 0);
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * parseInt(item.quantity || item.configuration?.quantity || 1)), 0);
     let discountAmount = 0;
     if (appliedDiscount) {
          if (appliedDiscount.type === 'percent') {
@@ -325,83 +328,68 @@ async function processPayment() {
         subtotal: subtotal,
         discountAmount: discountAmount,
         totalAmount: totalAmount,
-        status: "pending_payment", 
-        createdAt: Date.now()
+        status: "pending_payment"
     };
-    
-    // Disable button to prevent double click
+        
     const $btn = $('#btn-complete-order');
     $btn.prop('disabled', true).text('İşleniyor...');
 
     try {
-        // Use Backend Function instead of direct DB write
         const createOrder = httpsCallable(functions, 'createOrder');
-        const result = await createOrder({
+        const orderResult = await createOrder({
             orderData: orderData,
             discountCode: appliedDiscount ? appliedDiscount.code : null
         });
 
-        const response = result.data;
-        if (response.success) {
-            const orderId = response.orderId;
-            
-            // Clear Cart
-            localStorage.removeItem('engrare_cart');
+        const orderResponse = orderResult.data;
+        if (orderResponse && orderResponse.success) {
+            const orderId = orderResponse.orderId;
 
-            // --- REDIRECT LOGIC ---
-            if (response.totalAmount === 0) {
-                 // Free Order (100% Discount) -> Direct Success Page (or IBAN page styled as success)
-                 // We can reuse IBAN page for generic success or create a success.html.
-                 // For now, redirect to main page with alert as per "auto add to DB" requirement which is done.
-                 // Or better, show success message here.
-                 
-                 // Reuse Success Container for Free Order
-                 $('.checkout-form-section > :not(#payment-success-container)').hide();
-                 $('.checkout-summary').hide();
-                 $('.checkout-wrapper').css('grid-template-columns', '1fr');
-                 $('#success-order-id').text('#' + orderId);
-                 $('#success-order-ref').text("ÜCRETSİZ");
-                 $('.iban-box').html('<h3 style="color:#10B981; margin-top:20px;">Ödeme Tamamlandı</h3><p>Siparişiniz ücretsiz olarak oluşturuldu.</p>');
-                 $('#payment-success-container').fadeIn();
-                 window.scrollTo(0, 0);
-                 
-            } else if (paymentMethod === 'iban') {
-                // Redirect to new IBAN Page
-                window.location.href = `paywithiban.html?orderId=${orderId}`;
+            if (paymentMethod === 'iban' || totalAmount === 0) {
+                localStorage.removeItem('engrare_cart');
+
+                $('.checkout-form-section > :not(#payment-success-container)').hide();
+                $('.checkout-summary').hide();
+                $('.checkout-wrapper').css('grid-template-columns', '1fr');
                 
-            } else if (paymentMethod === 'iyzico') {
-                // Call Iyzico Function
+                $('#success-order-id').text('#' + orderId);
+                $('#success-order-ref').text(orderId);
+                
+                if (totalAmount === 0) {
+                    $('.iban-box').html('<h3 style="color:#10B981; margin-top:20px;">Ödeme Tamamlandı</h3><p>Siparişiniz ücretsiz olarak başarıyla oluşturuldu.</p>');
+                } else {
+                    window.location.href = `paywithiban.html?orderId=${orderId}`;
+                    return;
+                }
+                $('#payment-success-container').fadeIn();
+                window.scrollTo(0, 0);
+                return;
+            }
+
+            if (paymentMethod === 'iyzico') {
                 $btn.text('Ödeme Sayfası Hazırlanıyor...');
                 
-                try {
-                    const createIyzicoPayment = httpsCallable(functions, 'createIyzicoPayment');
-                    const payResult = await createIyzicoPayment({ 
-                        orderId: orderId,
-                        userId: user.uid
-                    });
-                    
-                    if (payResult.data.status === 'success') {
-                        // Redirect to Iyzico
-                         window.location.href = payResult.data.paymentPageUrl;
-                    } else {
-                        throw new Error("Ödeme linki oluşturulamadı.");
-                    }
-                } catch (payErr) {
-                    console.error("Iyzico Error:", payErr);
-                    showToast("Ödeme sistemi hatası: " + payErr.message, "error");
-                    // Re-enable to allow trying another method
-                     $btn.prop('disabled', false).html('<span id="final-price-btn">' + formatTL(totalAmount) + '</span> Öde');
+                const createIyzicoPayment = httpsCallable(functions, 'createIyzicoPayment');
+                const payResult = await createIyzicoPayment({ 
+                    orderId: orderId,
+                    origin: window.location.origin
+                });
+                
+                if (payResult.data && payResult.data.status === 'success' && payResult.data.paymentPageUrl) {
+                    localStorage.removeItem('engrare_cart');
+                    showToast("Ödeme sayfasına aktarılıyorsunuz...", "success");
+                    window.location.href = payResult.data.paymentPageUrl;
+                } else {
+                    throw new Error("Ödeme linki oluşturulamadı.");
                 }
             }
         } else {
-             throw new Error("Sipariş oluşturulamadı.");
+             throw new Error("Sipariş kaydı veritabanına ulaştırılamadı.");
         }
 
     } catch (e) {
-        console.error(e);
-        let msg = "Sipariş oluşturulurken hata oluştu.";
-        if (e.message && e.message.includes('Limit')) msg = "İndirim kodu limiti dolmuş.";
-        showToast(msg, "error");
+        console.error("Payment Process Error:", e);
+        showToast("Sipariş işlenirken bir hata oluştu: " + (e.message || ""), "error");
         $btn.prop('disabled', false).html('<span id="final-price-btn">' + formatTL(totalAmount) + '</span> Öde');
     }
 }
@@ -409,7 +397,7 @@ async function processPayment() {
 function showToast(msg, type) {
     const color = type === 'error' ? 'red' : 'green';
     const div = document.createElement('div');
-    div.style.cssText = `position:fixed; bottom:20px; right:20px; background:white; padding:15px 25px; border-left:4px solid ${color}; box-shadow:0 5px 15px rgba(0,0,0,0.1); border-radius:8px; z-index:99999; animation: slideIn 0.3s;`;
+    div.style.cssText = `position:fixed; bottom:20px; right:20px; background:white; padding:15px 25px; border-left:4px solid ${color}; box-shadow:0 5px 15px rgba(0,0,0,0.1); border-radius:8px; z-index:99999;`;
     div.innerText = msg;
     document.body.appendChild(div);
     setTimeout(() => div.remove(), 3000);

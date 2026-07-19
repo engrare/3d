@@ -3,31 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Engrare 3D</title>
+    <title>Engrare</title>
     <link rel="icon" type="image/png" href="https://www.engrare.com/files/photos/title_icon.png" sizes="48x48">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/tr.js"></script>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-NLSV32JMM2"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
 
-  gtag('config', 'G-NLSV32JMM2');
-</script>
-<script type="importmap">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-NLSV32JMM2"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-NLSV32JMM2');
+    </script>
+
+    <script type="importmap">
         {
             "imports": {
-                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
                 "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
                 "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
                 "firebase/database": "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js",
@@ -36,549 +34,78 @@
             }
         }
     </script>
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-	<link rel="stylesheet" href="./myStyle.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./myStyle.css">
 </head>
 <body>
 
+    <!-- NAVBAR -->
     <nav class="navbar">
         <div class="nav-container">
             <div class="brand-logo"><img src="./content/engrare_logo_elegant.png" height="65px" alt="Engrare" onerror="this.style.display='none'; this.parentElement.innerText='ENGRARE.'"></div>
-<ul class="nav-menu">
-                <li data-target="#home-page" class="active">Keşfet</li>
-                <li data-target="#models-page">Modeller</li>
-                <li data-target="#upload-page">Stüdyo</li>
-				<li data-target="#checkout-page" title="Sepet"><i class="fa-solid fa-cart-shopping" style="font-size: 1.2rem;"></i> <span id="cart-badge">0</span></li>
-                
+            <ul class="nav-menu">
+                <li data-target="#products-page" class="active">Ürünlerimiz</li>
+                <li data-target="#checkout-page" title="Sepet"><i class="fa-solid fa-cart-shopping" style="font-size: 1.2rem;"></i> <span id="cart-badge">0</span></li>
                 <li id="nav-user-container" style="margin-left: auto; display: flex; align-items: center;">
                     <div id="nav-login-btn" class="nav-trigger" data-target="#login-page" style="cursor: pointer; padding: 10px;"><i class="fa-regular fa-user" style="font-size: 1.2rem;"></i></div>
                     <div id="nav-user-profile" style="display: none; position: relative;">
-                        <img id="nav-user-img" src="./content/default_user.png" alt="Kullanıcı" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border);">
-                        <div class="profile-dropdown">
-                            <div class="dropdown-item" data-target="#dashboard-page">Kontrol Paneli</div>
-                            <div class="dropdown-item" id="action-logout">Çıkış Yap</div>
-                        </div>
-                    </div>
+						<img id="nav-user-img" src="./content/default_user.png" alt="Kullanıcı" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); cursor: pointer;">
+						<div class="profile-dropdown">
+							<!-- data-target eklendi -->
+							<div class="dropdown-item" data-target="#dashboard-page">Kontrol Paneli</div>
+							<div class="dropdown-item" id="action-logout">Çıkış Yap</div>
+						</div>
+					</div>
                 </li>
             </ul>
         </div>
     </nav>
 
-    <section id="home-page" class="page active">
-        <header class="hero-section">
-            <div class="blob blob-1"></div>
-            <div class="blob blob-2"></div>
-            <div class="precision_manuf"><img src="./content/vase.png"></div>
-            <div class="hero-overlay"></div> 
-			<div class="hero-content">
-                <h1>Kişiye Özel Tasarım<br>3 Boyutlu Sanat.</h1>
-                <p>Eviniz, ofisiniz ve sevdikleriniz için butik 3D baskı ve tasarım atölyesi. Hazır modelleri keşfedin veya hayalinizdeki tasarımı gerçeğe dönüştürün.</p>
-                <div class="hero-actions">
-                    <button class="btn primary nav-trigger" data-target="#upload-page"><span>Tasarım Yükle</span></button>
-                    <button class="btn secondary scroll-trigger" data-scroll="#library-section">Katalog Görüntüle</button>
-                </div>
-            </div>
-        </header>
-
-        <div id="library-section" class="container">
-            <div class="section-header">
-                <span class="section-subtitle">Baskıya Hazır Ürünler</span>
-                <h3>En Popüler Ürünler</h3>
-                <p>Anında üretime hazır doğrulanmış tasarımlar.</p>
-            </div>
-            
-            <div class="grid-3" id="home-models-grid">
-            </div>
+    <!-- PRODUCTS PAGE -->
+    <section id="products-page" class="page active">
+        <div class="products-header">
+            <h1>Kişiye Özel Tasarımlar</h1>
+            <p>Seçtiğiniz ürünün üzerine dilediğiniz metni yazdırın, siparişinizi verin.</p>
         </div>
-
-        <div class="bg-surface border-top">
-            <div class="container">
-                <div class="section-header">
-                    <span class="section-subtitle">Hizmetler</span> <h3>Hayalini Kişiselleştir</h3>
-                    <p>Sadece bir baskı değil, sana özel bir sanat eseri yaratıyorum.</p>
-                </div>
-                <div class="grid-3">
-                    <div class="feature-box">
-                        <div class="icon-box">🎨</div>
-                        <h4>Sana Özel Tasarım</h4> 
-                        <p>Stüdyo sayfamızda kendi modellerini yükle, boyutlandır ve dilediğin gibi yapılandır. Tamamen sana ait bir üretim süreci.</p>
-                    </div>
-                    <div class="feature-box">
-                        <div class="icon-box">✍️</div>
-                        <h4>Metin ve Logo Ekle</h4> 
-                        <p>Seçili modeller üzerine kendi ismini yazabilir veya firmanın logosunu ekleyebilirsin. 3D baskıda kişiselleştirmenin sınırlarını zorla.</p>
-                    </div>
-                    <div class="feature-box">
-                        <div class="icon-box">🎁</div>
-                        <h4>Eşsiz Hediyeler</h4> 
-                        <p>Sevdiklerin için başka hiçbir yerde bulunmayan, sadece onlara özel tasarlanmış ve üretilmiş unutulmaz hediyeler oluşturabilirsin.</p>
-                    </div>
-                </div>
-            </div>
+        <div class="container" style="padding-top: 20px;">
+            <div class="grid-3" id="products-grid-container"></div>
         </div>
+    </section>
 
+    <!-- PRODUCT DETAIL PAGE -->
+    <section id="product-detail-page" class="page">
         <div class="container">
-            <div class="tech-layout">
-                <div class="tech-text">
-                    <span>Atölyem</span> <h3>Üretim Teknolojim</h3>
-                    <p>Siparişlerinizi özel atölyemizde, yüksek hassasiyetli <strong>Bambu Lab</strong> yazıcılar kullanarak özenle üretiyoruz.</p>
-                    
-                    <div class="tech-item">
-                        <h5>FDM Hassas Baskı</h5>
-                        <p>0.08mm katman kalınlığına kadar inebilen detaylı ve pürüzsüz yüzey kalitesi.</p>
-                    </div>
-                    <div class="tech-item">
-                        <h5>Doğa Dostu Malzeme</h5> <p>Mısır nişastasından üretilen, sağlığa zararsız ve geri dönüştürülebilir PLA filamentler kullanıyorum.</p>
-                    </div>
+            <div class="product-detail-layout">
+                <div class="product-images">
+                    <img id="detail-main-img" src="" alt="Ürün">
                 </div>
-                <div class="tech-visual">
-                    <img src="content/bambufoto.png" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=1000&auto=format&fit=crop'">
-                </div>
-            </div>
-        </div>
-    </section>
+                <div class="product-info">
+                    <button class="btn-back nav-trigger" data-target="#products-page"><i class="fa-solid fa-arrow-left"></i> Geri Dön</button>
+                    <h2 id="detail-title">Ürün Adı</h2>
+                    <p id="detail-desc">Açıklama</p>
+                    <div class="detail-price" id="detail-price">₺0.00</div>
 
-    <section id="models-page" class="page">
-        <div class="models-hero">
-            <div class="blob-mini blob-3"></div>
-            <div class="blob-mini blob-4"></div>
-            
-            <div class="models-hero-content">
-                <h1>Modelleri Keşfet.</h1>
-                <p>Yüksek performanslı 3D modellerimizin seçilmiş koleksiyonunu keşfedin.</p>
-                
-                <div class="search-container">
-                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                    <input type="text" id="model-search-bar" placeholder="Parçalar, dişliler, dronları arayın...">
-                </div>
-            </div>
-        </div>
-
-        <div class="container" style="padding-top: 40px;">
-            <div class="grid-3" id="models-grid-container">
-            </div>
-        </div>
-    </section>
-
-    <div id="model-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-close">&times;</div>
-            <div class="modal-image">
-                <img id="modal-img" src="" alt="3D Model">
-                <div class="modal-carousel-controls" style="display: none;">
-                    <button id="modal-prev-btn" class="carousel-nav carousel-prev" title="Önceki">‹</button>
-                    <button id="modal-next-btn" class="carousel-nav carousel-next" title="Sonraki">›</button>
-                    <div id="modal-image-counter" class="image-counter">1 / 1</div>
-                </div>
-            </div>
-            <div class="modal-details">
-                <span class="section-subtitle">Baskı Için Hazır</span>
-                <h2 id="modal-title">Model Adı</h2>
-                <p id="modal-desc" style="margin-bottom: 30px;">Açıklama burada görünür.</p>
-                
-                <div class="price-row">
-                    <span class="price-label">Başlangıç fiyatı</span>
-                    <span id="modal-price" class="total-price" style="font-size: 1.5rem;">₺0.00</span>
-                </div>
-
-                <div style="margin-top: auto; display: flex; gap: 15px;">
-                    <button id="modal-show-studio-btn" class="btn primary" style="width: 100%;">Stüdyoda Göster</button>
-                    <button id="modal-fav-btn" class="btn secondary" style="padding: 16px; min-width: 58px;" title="Favorilere Ekle"><i class="fa-regular fa-heart" style="font-size: 1.2rem;"></i></button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <section id="upload-page" class="page">
-        <div class="container" style="padding-top: 20px;"> 
-            <div class="upload-layout">
-                
-                <div class="viewer-container">
-                    <div id="drop-zone-overlay">
-                        Dosyanızı Buraya Sürükleyin
-                    </div>
-                    
-                    <div id="3d-viewer" class="canvas-wrapper"></div>
-                    
-                    <div class="viewer-controls">
-                        <span id="file-name-display" class="file-status">Dosya yüklenmedi</span>
-                        <div style="width: 1px; height: 20px; background: #ddd;"></div>
-                        <button id="upload-btn" class="btn primary" style="padding: 8px 16px; font-size: 0.9rem;">
-                            Dosya Yükle
-                        </button>
-                        <input type="file" id="real-file-input" hidden accept=".stl,.3mf">
-                    </div>
-                </div>
-
-                <div class="config-sidebar">
-                    <div class="sidebar-header">
-                        <h4>Yapılandırma</h4>
-                        <div class="sidebar-tabs">
-                            <button class="tab-btn active" data-mode="basic">Temel</button>
-                            <button class="tab-btn" data-mode="advanced">Pro Mod</button>
+                    <div class="customization-box">
+                        <div class="form-group">
+                            <label>Ürün Üzerine Yazılacak Metin</label>
+                            <input type="text" id="custom-text-input" class="input-box" placeholder="Örn: ENGRARE">
                         </div>
-                    </div>
-
-                    <div class="sidebar-content">
-
-                        <div id="panel-basic" class="config-panel">
-							<div id="custom-text-group" style="display:none; background: linear-gradient(135deg, #f0f9ff 0%, #eff6ff 100%); padding: 16px; border-radius: 12px; border: 1px solid #bfdbfe; margin-bottom: 20px;">
-                                <div class="form-group" style="margin-bottom: 20px;">
-                                    <label style="color: #1e40af; display:block; font-weight: 700; font-size: 0.9rem; margin-bottom: 12px;">Özel Metin</label>
-                                    <textarea id="custom-text-input" class="input-box" placeholder="Burada yazın..." style="border-color: #60a5fa; color: #1e3a8a; font-weight: 600; min-height: 80px; resize: vertical; padding: 12px; line-height: 1.4;">ENGRARE</textarea>
-                                </div>
-                                
-                                <!-- Font Selection -->
-                                <div class="form-group" style="margin-bottom: 20px;">
-                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Yazı Tipi</label>
-                                    <select id="text-font-select" class="select-box" style="margin-bottom: 15px; border-color: #60a5fa; background: white;">
-                                        <option value="helvetiker_bold">Helvetica Kalın</option>
-                                        <option value="helvetiker_regular">Helvetica Normal</option>
-                                        <option value="optimer_bold">Optimer Kalın</option>
-                                        <option value="optimer_regular">Optimer Normal</option>
-                                        <option value="droid_sans_bold">Droid Sans Kalın</option>
-                                        <option value="droid_sans_regular">Droid Sans Normal</option>
-                                    </select>
-                                </div>
-
-                                <!-- Text Size -->
-                                <div class="form-group" style="margin-bottom: 20px;">
-                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Yazı Boyutu</label>
-                                    <div style="display: flex; gap: 8px; align-items: center;">
-                                        <input type="range" id="text-size-slider" class="slider-input" min="1" max="100" value="10" style="flex: 1; cursor: pointer;">
-                                        <input type="number" id="text-size-input" class="input-box" value="10" min="1" max="100" style="width: 60px; padding: 4px; text-align: center; border-color: #60a5fa;">
-                                    </div>
-                                </div>
-
-                                <!-- Text Depth -->
-                                <div class="form-group" style="margin-bottom: 20px;">
-                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Yazı Derinliği</label>
-                                    <div style="display: flex; gap: 8px; align-items: center;">
-                                        <input type="range" id="text-depth-slider" class="slider-input" min="1" max="50" value="4" style="flex: 1; cursor: pointer;">
-                                        <input type="number" id="text-depth-input" class="input-box" value="4" min="1" max="50" style="width: 60px; padding: 4px; text-align: center; border-color: #60a5fa;">
-                                    </div>
-                                </div>
-
-                                <!-- Letter Spacing -->
-                                <div class="form-group" style="margin-bottom: 20px;">
-                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Harf Aralığı</label>
-                                    <div style="display: flex; gap: 8px; align-items: center;">
-                                        <input type="range" id="letter-spacing-slider" class="slider-input" min="0" max="10" step="0.1" value="0" style="flex: 1; cursor: pointer;">
-                                        <input type="number" id="letter-spacing-input" class="input-box" value="0" min="0" max="10" step="0.1" style="width: 60px; padding: 4px; text-align: center; border-color: #60a5fa;">
-                                    </div>
-                                </div>
-
-                                <!-- Text Alignment -->
-                                <div class="form-group" style="margin-bottom: 20px;">
-                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Hizalama</label>
-                                    <div style="display: flex; gap: 10px;">
-                                        <label class="delivery-option" style="flex:1; justify-content:center; padding: 8px; margin-bottom:0;" title="Sola Yasla">
-                                            <i class="fa-solid fa-align-left"></i>
-                                            <input type="radio" name="text-align" value="left">
-                                        </label>
-                                        <label class="delivery-option active" style="flex:1; justify-content:center; padding: 8px; margin-bottom:0;" title="Ortala">
-                                            <i class="fa-solid fa-align-center"></i>
-                                            <input type="radio" name="text-align" value="center" checked>
-                                        </label>
-                                        <label class="delivery-option" style="flex:1; justify-content:center; padding: 8px; margin-bottom:0;" title="Sağa Yasla">
-                                            <i class="fa-solid fa-align-right"></i>
-                                            <input type="radio" name="text-align" value="right">
-                                        </label>
-                                    </div>
-                                </div>
-                                
-                                <!-- Text Color -->
-                                <div class="form-group" style="margin-bottom: 20px;">
-                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Metin Rengi</label>
-                                    <div class="color-grid" style="margin-bottom: 15px;">
-                                        <div class="text-color-option" style="background:#111;" data-hex="#111111" title="Siyah"></div>
-                                        <div class="text-color-option selected" style="background:#fff;" data-hex="#FFFFFF" title="Beyaz"></div>
-                                        <div class="text-color-option" style="background:#9ca3af;" data-hex="#9ca3af" title="Gri"></div>
-                                        <div class="text-color-option" style="background:#ef4444;" data-hex="#ef4444" title="Kırmızı"></div>
-                                        <div class="text-color-option" style="background:#3b82f6;" data-hex="#3b82f6" title="Mavi"></div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Text Rotation Section -->
-                                <div style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
-                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 12px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Dönüş (°)</label>
-                                    
-                                    <!-- Text Rotation X -->
-                                    <div class="form-group" style="margin-bottom: 12px;">
-                                        <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 4px; font-weight: 600;">X</label>
-                                        <div style="display: flex; gap: 8px;">
-                                            <input type="range" id="text-rotation-x" class="slider-input" min="-180" max="180" value="0" style="flex: 1; cursor: pointer;">
-                                            <span id="text-rotation-x-value" style="color: #1e40af; font-weight: 700; min-width: 40px; text-align: right; font-size: 0.85rem;">0°</span>
-                                        </div>
-                                    </div>
-
-                                    <!-- Text Rotation Y -->
-                                    <div class="form-group" style="margin-bottom: 12px;">
-                                        <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 4px; font-weight: 600;">Y</label>
-                                        <div style="display: flex; gap: 8px;">
-                                            <input type="range" id="text-rotation-y" class="slider-input" min="-180" max="180" value="0" style="flex: 1; cursor: pointer;">
-                                            <span id="text-rotation-y-value" style="color: #1e40af; font-weight: 700; min-width: 40px; text-align: right; font-size: 0.85rem;">0°</span>
-                                        </div>
-                                    </div>
-
-                                    <!-- Text Rotation Z -->
-                                    <div class="form-group" style="margin-bottom: 0;">
-                                        <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 4px; font-weight: 600;">Z</label>
-                                        <div style="display: flex; gap: 8px;">
-                                            <input type="range" id="text-rotation-z" class="slider-input" min="-180" max="180" value="0" style="flex: 1; cursor: pointer;">
-                                            <span id="text-rotation-z-value" style="color: #1e40af; font-weight: 700; min-width: 40px; text-align: right; font-size: 0.85rem;">0°</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Position Section -->
-                                <div style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
-                                    <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 12px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Konum (Sürükleyerek de ayarlayabilirsiniz)</label>
-                                    
-                                    <div class="form-group" style="margin-bottom: 8px;">
-                                        <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 3px; font-weight: 600;">X</label>
-                                        <input type="number" id="text-pos-x" class="input-box" value="0" step="0.5" style="border-color: #60a5fa; font-size: 0.85rem;">
-                                    </div>
-                                    
-                                    <div class="form-group" style="margin-bottom: 8px;">
-                                        <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 3px; font-weight: 600;">Y</label>
-                                        <input type="number" id="text-pos-y" class="input-box" value="0" step="0.5" style="border-color: #60a5fa; font-size: 0.85rem;">
-                                    </div>
-                                    
-                                    <div class="form-group" style="margin-bottom: 12px;">
-                                        <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 3px; font-weight: 600;">Z</label>
-                                        <input type="number" id="text-pos-z" class="input-box" value="10" step="0.5" style="border-color: #60a5fa; font-size: 0.85rem;">
-                                    </div>
-                                    
-                                    <button type="button" id="reset-custom-params" class="btn primary" style="width: 100%; padding: 8px 12px; font-size: 0.85rem; background: #ef4444;">
-                                        <i class="fa-solid fa-redo" style="margin-right: 6px;"></i> Sıfırla
-                                    </button>
-                                </div>
-
-                                <!-- CUSTOM LOGO SECTION MERGED HERE -->
-                                <div id="custom-logo-container" style="padding-top: 10px; margin-top: 10px;">
-                                    <div class="form-group" style="margin-bottom: 20px;">
-                                        <label style="color: #1e40af; display:block; font-weight: 700; font-size: 0.9rem; margin-bottom: 12px;">Özel Logo (SVG)</label>
-                                        
-                                        <div style="margin-bottom: 15px;">
-                                            <div id="logo-upload-box" class="custom-file-upload" onclick="document.getElementById('logo-file-input').click();">
-                                                <i class="fa-solid fa-cloud-arrow-up" style="font-size: 1.5rem; color: #3b82f6; margin-bottom: 8px;"></i>
-                                                <span style="font-weight: 600; color: #1e40af; font-size: 0.9rem;">SVG Logo Yükle</span>
-                                                <span style="font-size: 0.75rem; color: #64748B;">veya sürükleyip bırakın</span>
-                                                <input type="file" id="logo-file-input" accept=".svg" hidden>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Logo Size -->
-                                    <div class="form-group" style="margin-bottom: 20px;">
-                                        <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Logo Boyutu</label>
-                                        <div style="display: flex; gap: 8px; align-items: center;">
-                                            <input type="range" id="logo-size-slider" class="slider-input" min="0.1" max="5" step="0.1" value="1" style="flex: 1; cursor: pointer;">
-                                            <input type="number" id="logo-size-input" class="input-box" value="1" min="0.1" max="5" step="0.1" style="width: 60px; padding: 4px; text-align: center; border-color: #60a5fa;">
-                                        </div>
-                                    </div>
-
-                                    <!-- Logo Depth -->
-                                    <div class="form-group" style="margin-bottom: 20px; display: none;">
-                                        <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Logo Derinliği</label>
-                                        <div style="display: flex; gap: 8px; align-items: center;">
-                                            <input type="range" id="logo-depth-slider" class="slider-input" min="1" max="50" value="4" style="flex: 1; cursor: pointer;">
-                                            <input type="number" id="logo-depth-input" class="input-box" value="4" min="1" max="50" style="width: 60px; padding: 4px; text-align: center; border-color: #60a5fa;">
-                                        </div>
-                                    </div>
-
-                                    <!-- Logo Color -->
-                                    <div class="form-group" style="margin-bottom: 20px;">
-                                        <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 8px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Logo Rengi</label>
-                                        <div class="color-grid" style="margin-bottom: 15px;">
-                                            <div class="logo-color-option" style="background:#111;" data-hex="#111111" title="Siyah"></div>
-                                            <div class="logo-color-option selected" style="background:#fff;" data-hex="#FFFFFF" title="Beyaz"></div>
-                                            <div class="logo-color-option" style="background:#9ca3af;" data-hex="#9ca3af" title="Gri"></div>
-                                            <div class="logo-color-option" style="background:#ef4444;" data-hex="#ef4444" title="Kırmızı"></div>
-                                            <div class="logo-color-option" style="background:#3b82f6;" data-hex="#3b82f6" title="Mavi"></div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Logo Rotation Section -->
-                                    <div style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
-                                        <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 12px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Dönüş (°)</label>
-                                        
-                                        <div class="form-group" style="margin-bottom: 12px;">
-                                            <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 4px; font-weight: 600;">X</label>
-                                            <div style="display: flex; gap: 8px;">
-                                                <input type="range" id="logo-rotation-x" class="slider-input" min="-180" max="180" value="0" style="flex: 1; cursor: pointer;">
-                                                <span id="logo-rotation-x-value" style="color: #1e40af; font-weight: 700; min-width: 40px; text-align: right; font-size: 0.85rem;">0°</span>
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group" style="margin-bottom: 12px;">
-                                            <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 4px; font-weight: 600;">Y</label>
-                                            <div style="display: flex; gap: 8px;">
-                                                <input type="range" id="logo-rotation-y" class="slider-input" min="-180" max="180" value="0" style="flex: 1; cursor: pointer;">
-                                                <span id="logo-rotation-y-value" style="color: #1e40af; font-weight: 700; min-width: 40px; text-align: right; font-size: 0.85rem;">0°</span>
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 4px; font-weight: 600;">Z</label>
-                                            <div style="display: flex; gap: 8px;">
-                                                <input type="range" id="logo-rotation-z" class="slider-input" min="-180" max="180" value="0" style="flex: 1; cursor: pointer;">
-                                                <span id="logo-rotation-z-value" style="color: #1e40af; font-weight: 700; min-width: 40px; text-align: right; font-size: 0.85rem;">0°</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Logo Position Section -->
-                                    <div style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
-                                        <label style="color: #1e40af; font-size: 0.75rem; margin-bottom: 12px; display:block; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">Konum</label>
-                                        
-                                        <div class="form-group" style="margin-bottom: 8px;">
-                                            <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 3px; font-weight: 600;">X</label>
-                                            <input type="number" id="logo-pos-x" class="input-box" value="0" step="0.5" style="border-color: #60a5fa; font-size: 0.85rem;">
-                                        </div>
-                                        
-                                        <div class="form-group" style="margin-bottom: 8px;">
-                                            <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 3px; font-weight: 600;">Y</label>
-                                            <input type="number" id="logo-pos-y" class="input-box" value="0" step="0.5" style="border-color: #60a5fa; font-size: 0.85rem;">
-                                        </div>
-                                        
-                                        <div class="form-group" style="margin-bottom: 12px;">
-                                            <label style="font-size: 0.7rem; color: #60a5fa; display: block; margin-bottom: 3px; font-weight: 600;">Z</label>
-                                            <input type="number" id="logo-pos-z" class="input-box" value="10" step="0.5" style="border-color: #60a5fa; font-size: 0.85rem;">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Malzeme Seçimi</label>
-                                <select id="material-select" class="select-box">
-                                    <option value="PLA">PLA+ (Standart)</option>
-                                    <option value="PETG">PETG (Mühendislik)</option>
-                                    <option value="SPECIAL">Carbon / Special</option>
-                                    <option value="TPU">TPU (Esnek 95A)</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Renk</label>
-                                <div class="color-grid">
-                                    <div class="color-option selected" style="background:#111;" data-color="Siyah" data-hex="#111111"></div>
-                                    <div class="color-option" style="background:#fff;" data-color="Beyaz" data-hex="#FFFFFF"></div>
-                                    <div class="color-option" style="background:#9ca3af;" data-color="Gri" data-hex="#9ca3af"></div>
-                                    <div class="color-option" style="background:#ef4444;" data-color="Kırmızı" data-hex="#ef4444"></div>
-                                    <div class="color-option" style="background:#3b82f6;" data-color="Mavi" data-hex="#3b82f6"></div>
-                                </div>
-                                <div id="selected-color-name" style="margin-top:8px; font-size:0.85rem; color:var(--text-light)">Siyah</div>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Dolgu Yoğunluğu</label>
-                                <select id="infill-select" class="select-box">
-                                    <option value="15">15% (Hafif)</option>
-                                    <option value="20" selected>20% (Standart)</option>
-                                    <option value="50">50% (Ağır İş)</option>
-                                    <option value="100">100% (Katı)</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Miktar</label>
-                                <input type="number" id="quantity-input" class="input-box" value="1" min="1">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Teslimat Önceliği</label>
-                                <div class="delivery-list">
-                                    <label class="delivery-option active">
-                                        <div>
-                                            <span class="del-title">Standart</span>
-                                            <span class="del-desc" style="font-size: 0.75rem; color: #64748B;">3-5 Gün</span>
-                                        </div>
-                                        <input type="radio" name="delivery" value="1" checked>
-                                    </label>
-                                    <label class="delivery-option">
-                                        <div>
-                                            <span class="del-title">Hızlı</span>
-                                            <span class="del-desc" style="font-size: 0.75rem; color: #64748B;">1-2 Gün</span>
-                                        </div>
-                                        <input type="radio" name="delivery" value="1.5">
-                                    </label>
-                                </div>
-                            </div>
-                            
-                            <button type="button" id="btn-reset-basic" class="btn secondary" style="width: 100%; margin-top: 10px; border-color: #ef4444; color: #ef4444;">
-                                <i class="fa-solid fa-rotate-left" style="margin-right: 8px;"></i> Ayarları Sıfırla
-                            </button>
+                        <div class="form-group">
+                            <label>Miktar</label>
+                            <input type="number" id="quantity-input" class="input-box" value="1" min="1">
                         </div>
-
-                        <div id="panel-advanced" class="config-panel" style="display: none;">
-                            <div style="background: #FFFBEB; padding: 10px; border-radius: 6px; font-size: 0.75rem; color: #92400E; margin-bottom: 15px;">
-                                ⚠️ Senkronizasyon Aktif: Buradaki değerleri değiştirmek Temel ayarları günceller.
-                            </div>
-
-                            <div class="pro-section">
-                                <h5 class="pro-header">1. Kalite</h5>
-                                <div class="form-grid-2">
-                                    <div class="form-group">
-                                        <label>Katman Yükseklikleri (mm)</label>
-                                        <input type="number" id="pro-layer-height" class="input-box" value="0.2" step="0.04">
-                                    </div>
-                                    <div class="form-group">
-                                        <label>İlk Katman</label>
-                                        <input type="number" class="input-box" value="0.2">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="pro-section">
-                                <h5 class="pro-header">2. Dayanıklılık</h5>
-                                <div class="form-grid-2">
-                                    <div class="form-group">
-                                        <label>Dolgu %</label>
-                                        <input type="number" id="pro-infill" class="input-box" value="20" min="0" max="100">
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Duvar Döngüleri</label>
-                                        <input type="number" class="input-box" value="3">
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Üst/Alt Kabuklar</label>
-                                        <input type="number" class="input-box" value="4">
-                                    </div>
-                                </div>
-                            </div>
-                            </div>
-                    </div>
-
-                    <div class="sidebar-footer">
-                         <div class="dimensions-box" style="margin-bottom: 15px; font-size: 0.8rem; color: var(--text-muted); display:none;">
-                            <strong>Boyutlar:</strong> <span id="dim-x"></span> x <span id="dim-y"></span> x <span id="dim-z"></span> mm<br>
-                            <strong>Hacim:</strong> <span id="model-vol-display"></span> cm³
-                        </div>
-                        <div class="price-row">
-                            <span class="price-label">Tahmini Maliyet</span>
-                            <span id="price-display" class="total-price">₺0.00</span>
-                        </div>
-                        <span id="model-vol" data-raw="0" style="display:none"></span>
-                        
-                        <button id="add-to-cart" class="btn primary full-width" style="width:100%" disabled>
-                            Sepete Ekle
-                        </button>
+                        <button id="add-to-cart" class="btn primary" style="width: 100%;">Sepete Ekle</button>
                     </div>
                 </div>
             </div>
         </div>
     </section>
-	
-	<section id="checkout-page" class="page">
+    
+    <!-- CHECKOUT PAGE -->
+    <section id="checkout-page" class="page">
         <div class="container narrow">
             <h2 style="text-align: center;">Siparişiniz</h2>
-            
-            <div class="cart-list" id="cart-items-area">
-                </div>
-
+            <div class="cart-list" id="cart-items-area"></div>
             <div class="summary-panel">
                 <div class="price-row"><span>Ara Toplam</span><span id="val-subtotal">₺0.00</span></div>
                 <div class="price-row"><span>Kargo ve İşleme</span><span id="shipping-display">₺50.00</span></div>
@@ -592,227 +119,86 @@
         </div>
     </section>
 
-<section id="login-page" class="page">
+    <!-- LOGIN PAGE -->
+    <section id="login-page" class="page">
+        <!-- İÇERİĞİ MEVCUT KODLA BİREBİR AYNI -->
         <div class="login-container">
             <div class="login-card">
-                
                 <div id="view-signin">
                     <div class="login-header">
                         <h2>Tekrar Hoş Geldiniz</h2>
-                        <p>Projelerinize erişmek için giriş yapın.</p>
                     </div>
                     <form class="login-form">
-                        <div class="form-group">
-                            <input type="email" id="signin-email" class="login-input" placeholder="E-posta Adresi">
-                        </div>
-                        <div class="form-group">
-                            <input type="password" id="signin-password" class="login-input" placeholder="Şifre">
-                        </div>
+                        <div class="form-group"><input type="email" id="signin-email" class="login-input" placeholder="E-posta Adresi"></div>
+                        <div class="form-group"><input type="password" id="signin-password" class="login-input" placeholder="Şifre"></div>
                         <button type="button" id="btn-signin" class="btn primary" style="width: 100%;">Giriş Yap</button>
                     </form>
                     <div class="login-links">
-                        <span class="link-text" onclick="$('#view-signin').hide(); $('#view-reset').fadeIn();">Şifremi unuttum?</span>
                         <span class="link-text" onclick="$('#view-signin').hide(); $('#view-signup').fadeIn();">Hesap Oluştur ↗</span>
                     </div>
                 </div>
-
                 <div id="view-signup" style="display: none;">
-                    <div class="login-header">
-                        <h2>Hesap Oluştur</h2>
-                        <p>Bugün Engrare'ye katılın.</p>
-                    </div>
+                    <div class="login-header"><h2>Hesap Oluştur</h2></div>
                     <form class="login-form">
-                        <!-- Profile Photo Section -->
-                        <div class="form-group" style="text-align: center; margin-bottom: 25px;">
-                            <label style="display:block; margin-bottom:15px; font-size:0.9rem; color:#334155; font-weight:700;">Profil Fotoğrafı</label>
-                            
-                            <div class="profile-selection-container">
-                                <div class="profile-preview" id="profile-preview-box">
-                                    <img id="signup-profile-preview" src="./content/default_user.png" alt="Profil Önizleme">
-                                    <i id="signup-profile-icon" class="" style="display:none; font-size: 3.5rem; color: white;"></i>
-                                </div>
-                                
-                                <div class="profile-actions-wrapper">
-                                    <div class="profile-section-label">Bir Avatar Seçin</div>
-                                    <div class="profile-options">
-                                        <div class="profile-option-btn selected" data-type="default" data-src="./content/default_user.png" title="Varsayılan">
-                                            <i class="fa-regular fa-user"></i>
-                                        </div>
-                                        <div class="profile-option-btn" data-type="icon" data-icon="f013" data-color="#3b82f6" title="Dişli"> <!-- fa-gear -->
-                                            <i class="fa-solid fa-gear"></i>
-                                        </div>
-                                        <div class="profile-option-btn" data-type="icon" data-icon="f719" data-color="#ef4444" title="Makara"> <!-- fa-dharmachakra -->
-                                            <i class="fa-solid fa-dharmachakra"></i>
-                                        </div>
-                                        <div class="profile-option-btn" data-type="icon" data-icon="f53f" data-color="#10b981" title="Sanat"> <!-- fa-palette -->
-                                            <i class="fa-solid fa-palette"></i>
-                                        </div>
-                                    </div>
-
-                                    <div class="divider-text">v e y a</div>
-
-                                    <button type="button" id="profile-upload-trigger" class="btn-upload-trigger">
-                                        <i class="fa-solid fa-cloud-arrow-up"></i> Kendi Fotoğrafını Yükle
-                                    </button>
-                                </div>
-                                
-                                <input type="file" id="signup-file-input" accept="image/*" hidden>
-                                <div id="upload-file-name" style="font-size: 0.75rem; color: var(--accent); margin-top: 5px; display: none;"></div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <input type="text" id="signup-fullname" class="login-input" placeholder="Tam Ad (Ad Soyad)" required>
-                        </div>
-                        <div class="form-group">
-                            <input type="text" id="signup-username" class="login-input" placeholder="Kullanıcı Adı" required>
-                        </div>
-                        <div class="form-group">
-                            <label style="display:block; margin-bottom:8px; font-size:0.8rem; color:#64748B; font-weight:600;">Doğum Tarihi</label>
-                            <div class="elegant-date-wrapper">
-                                <input type="text" id="signup-dob" class="elegant-date-input" placeholder="Gün / Ay / Yıl" required>
-                                <i class="fa-regular fa-calendar-days date-icon"></i>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <input type="email" id="signup-email" class="login-input" placeholder="E-posta Adresi" required>
-                        </div>
-                        <div class="form-group">
-                            <input type="password" id="signup-password" class="login-input" placeholder="Şifre" required>
-                        </div>
+                        <div class="form-group"><input type="text" id="signup-fullname" class="login-input" placeholder="Tam Ad (Ad Soyad)" required></div>
+                        <div class="form-group"><input type="text" id="signup-username" class="login-input" placeholder="Kullanıcı Adı" required></div>
+                        <div class="form-group"><input type="email" id="signup-email" class="login-input" placeholder="E-posta Adresi" required></div>
+                        <div class="form-group"><input type="password" id="signup-password" class="login-input" placeholder="Şifre" required></div>
                         <div class="form-group" style="display:flex; align-items:flex-start; gap:10px;">
                             <input type="checkbox" id="signup-kvkk" style="margin-top:4px;" required>
                             <label for="signup-kvkk" style="font-size:0.85rem; color:#666; cursor:pointer; line-height:1.4;">
-                                <a href="./payment/kvkk.html" target="_blank" style="color:#0F172A; text-decoration:underline;">KVKK Aydınlatma Metni</a>'ni okudum ve kabul ediyorum.
+                                <a href="./payment/kvkk.html" target="_blank" style="color:#0F172A; text-decoration:underline;">KVKK Aydınlatma Metni</a>'ni okudum.
                             </label>
                         </div>
                         <button type="button" id="btn-signup" class="btn primary" style="width: 100%;">Kaydol</button>
                     </form>
                     <div class="login-links" style="justify-content: center;">
-                        <span class="link-text" onclick="$('#view-signup').hide(); $('#view-signin').fadeIn();">Zaten bir hesabınız var mı? Giriş Yapın</span>
+                        <span class="link-text" onclick="$('#view-signup').hide(); $('#view-signin').fadeIn();">Giriş Yapın</span>
                     </div>
                 </div>
-
-                <div id="view-reset" style="display: none;">
-                    <div class="login-header">
-                        <h2>Şifre Sıfırla</h2>
-                        <p>Sıfırlama bağlantısı almak için e-postanızı girin.</p>
-                    </div>
-                    <form class="login-form">
-                        <div class="form-group">
-                            <input type="email" id="reset-email" class="login-input" placeholder="E-posta Adresi">
-                        </div>
-                        <button type="button" id="btn-reset" class="btn primary" style="width: 100%;">Bağlantı Gönder</button>
-                    </form>
-                    <div class="login-links" style="justify-content: center;">
-                        <span class="link-text" onclick="$('#view-reset').hide(); $('#view-signin').fadeIn();">Giriş Sayfasına Dön</span>
-                    </div>
-                </div>
-
             </div>
         </div>
     </section>
-	<section id="dashboard-page" class="page">
+
+    <!-- DASHBOARD PAGE -->
+    <section id="dashboard-page" class="page">
+        <!-- İÇERİĞİ SADELEŞTİRİLMİŞ HALİYLE AYNI (Siparişler ve Adresler) -->
         <div class="container">
             <h2 style="margin-bottom: 30px;">Kontrol Panelim</h2>
             <div class="dashboard-layout">
                 <div class="dash-sidebar">
                     <div class="user-brief">
-                        <img id="dash-user-img" src="./content/default_user.png">
                         <div style="font-weight: 700;" id="dash-user-name">Kullanıcı</div>
                         <div style="font-size: 0.8rem; color: var(--text-muted);" id="dash-user-email">email@example.com</div>
                     </div>
                     <ul class="dash-menu">
                         <li class="active" data-tab="orders">Siparişlerim</li>
-                        <li data-tab="favorites">Favoriler</li>
                         <li data-tab="addresses">Adreslerim</li>
-                        <li data-tab="account">Hesap Bilgileri</li>
-                        <li data-tab="support">Destek</li>
                     </ul>
                 </div>
-
                 <div class="dash-content">
                     <div id="tab-orders" class="dash-tab active">
                         <h3>Sipariş Geçmişi</h3>
-                        <div id="orders-list" style="margin-top: 20px; color: var(--text-muted);">Siparişler yükleniyor...</div>
-                    </div>
-                    <div id="tab-favorites" class="dash-tab" style="display:none">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                            <h3>Favori Ürünler</h3>
-                        </div>
-                        <div id="favorites-list" class="grid-3" style="gap: 20px;">
-                            <!-- Favorite models will be loaded here -->
-                            <p style="color: var(--text-muted);">Henüz favori bir ürününüz yok.</p>
-                        </div>
+                        <div id="orders-list">Siparişler yükleniyor...</div>
                     </div>
                     <div id="tab-addresses" class="dash-tab" style="display:none">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                             <h3>Kayıtlı Adreslerim</h3>
-                            <button class="btn-sm primary" id="btn-add-address">+ Yeni Adres Ekle</button>
+                            <button class="btn-sm primary" id="btn-add-address">+ Yeni Adres</button>
                         </div>
-                        <div id="addresses-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
-                            <!-- Addresses will be loaded here -->
-                            <p style="color: var(--text-muted);">Henüz bir adres kaydetmediniz.</p>
-                        </div>
-                    </div>
-                    <div id="tab-account" class="dash-tab" style="display:none">
-                        <h3 style="margin-bottom: 25px;">Hesap Ayarları</h3>
-                        
-                        <div class="settings-grid">
-                            <!-- Profile Photo Section -->
-                            <div class="settings-card">
-                                <div class="settings-section-title">Profil Fotoğrafı</div>
-                                <div style="display: flex; align-items: center; gap: 20px; margin-top: 15px;">
-                                    <div class="profile-preview" style="width: 80px; height: 80px; flex-shrink: 0;">
-                                        <img id="settings-profile-img" src="./content/default_user.png" alt="Profil">
-                                    </div>
-                                    <div style="flex: 1;">
-                                        <p style="font-size: 0.8rem; margin-bottom: 10px;">Yeni bir fotoğraf yükleyerek profilinizi kişiselleştirin.</p>
-                                        <button class="btn-sm" onclick="$('#settings-photo-input').click()" style="width: auto;">Fotoğraf Değiştir</button>
-                                        <input type="file" id="settings-photo-input" accept="image/*" hidden>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Basic Info Section -->
-                            <div class="settings-card">
-                                <div class="settings-section-title">Hesap Bilgileri</div>
-                                <div class="form-group" style="margin-top: 15px;">
-                                    <label>Görünüm Adı</label>
-                                    <input type="text" class="input-box" id="update-display-name" placeholder="Ad Soyad">
-                                </div>
-                                <div class="form-group">
-                                    <label>E-posta Adresi</label>
-                                    <input type="email" class="input-box" id="update-email" placeholder="E-posta">
-                                </div>
-                                <div style="margin-top: 25px; border-top: 1px solid var(--border); padding-top: 20px;">
-                                    <button class="btn primary" id="btn-update-profile" style="width: 100%;">Değişiklikleri Kaydet</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="tab-support" class="dash-tab" style="display:none">
-                        <h3>Destek</h3>
-                        <p>Yardıma mı ihtiyacınız var? destek@engrare.com adresinden bize ulaşın</p>
+                        <div id="addresses-list"></div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
+    <!-- FOOTER -->
     <footer class="main-footer">
         <div class="container footer-grid">
             <div class="footer-col">
                 <div class="brand-logo" style="color:white; margin-bottom: 15px;">ENGRARE.</div>
                 <p style="color: #94A3B8; font-size: 0.9rem;">Kişisel 3D baskı ve tasarım atölyesi.</p>
-            </div>
-            <div class="footer-col">
-                <h5>Hizmetler</h5>
-                <ul>
-                    <li>Tasarım Özelleştirme</li>
-                    <li>Kişiye Özel Üretim</li>
-                    <li>3D Modelleme</li>
-                </ul>
             </div>
             <div class="footer-col">
                 <h5>Kurumsal</h5>
@@ -827,91 +213,70 @@
             <div class="footer-col">
                 <h5>Güvenli Ödeme</h5>
                 <div class="payment-methods">
-                    <i class="fa-brands fa-cc-visa" title="Visa"></i>
-                    <i class="fa-brands fa-cc-mastercard" title="Mastercard"></i>
+                    <i class="fa-brands fa-cc-visa"></i>
+                    <i class="fa-brands fa-cc-mastercard"></i>
                     <div class="iyzico-badge">iyzico</div>
-                    <div class="fast-badge">Havale / FAST</div>
                 </div>
-                <p style="color: #94A3B8; font-size: 0.75rem; margin-top: 12px; line-height: 1.4;">
-                    <i class="fa-solid fa-shield-halved" style="margin-right: 5px; color: #10B981;"></i> 
-                    256-bit SSL ile %100 Güvenli Ödeme
-                </p>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <div class="container" style="padding: 20px 5px;">
-                © 2026 ENGRARE. Tüm hakları saklıdır.
             </div>
         </div>
     </footer>
 
+    <!-- MODALS -->
     <div id="auth-decision-modal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 400px; min-height: auto; flex-direction: column; text-align: center; padding: 40px;">
+        <div class="modal-content" style="max-width: 400px; flex-direction: column; text-align: center; padding: 40px;">
             <div class="modal-close">&times;</div>
             <h3 style="margin-bottom: 10px;">Devam Etmek İçin</h3>
-            <p style="margin-bottom: 30px;">Siparişinizi tamamlamak için nasıl devam etmek istersiniz?</p>
-            
             <button id="modal-btn-login" class="btn primary" style="width: 100%; margin-bottom: 15px;">Giriş Yap / Üye Ol</button>
             <button id="modal-btn-guest" class="btn secondary" style="width: 100%;">Üye Olmadan Devam Et</button>
         </div>
     </div>
 
-    <div id="address-modal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 500px; min-height: auto; flex-direction: column; padding: 30px;">
+    <!-- SİPARİŞ DETAY MODALI -->
+    <div id="order-detail-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px; flex-direction: column; padding: 30px;">
             <div class="modal-close">&times;</div>
-            <h3 id="address-modal-title" style="margin-bottom: 20px;">Adres Ekle</h3>
-            <form id="address-form" class="login-form">
-                <input type="hidden" id="address-id">
+            <h3 style="margin-bottom: 15px; color: var(--primary);">Sipariş Detayı</h3>
+            <div id="order-modal-content" style="text-align: left;">
+                <!-- İçerik JavaScript ile doldurulacak -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ADRES MODALI -->
+    <div id="address-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px; flex-direction: column; padding: 30px;">
+            <div class="modal-close">&times;</div>
+            <h3 id="address-modal-title" style="margin-bottom: 15px; color: var(--primary);">Yeni Adres Ekle</h3>
+            <form id="address-form" style="text-align: left; width: 100%;">
+                <input type="hidden" id="addr-id">
                 <div class="form-group">
                     <label>Adres Başlığı (Örn: Ev, İş)</label>
-                    <input type="text" id="addr-title" class="input-box" placeholder="Ev" required>
+                    <input type="text" id="addr-title" class="input-box" required>
                 </div>
                 <div class="form-group">
                     <label>Ad Soyad</label>
-                    <input type="text" id="addr-fullname" class="input-box" placeholder="Ad Soyad" required>
+                    <input type="text" id="addr-fullname" class="input-box" required>
                 </div>
                 <div class="form-group">
-                    <label>Telefon</label>
-                    <input type="tel" id="addr-phone" class="input-box" placeholder="05xx xxx xx xx" required>
+                    <label>Telefon Numarası</label>
+                    <input type="tel" id="addr-phone" class="input-box" required>
+                </div>
+                <div class="form-group" style="display: flex; gap: 15px;">
+                    <div style="flex: 1;">
+                        <label>İl</label>
+                        <input type="text" id="addr-city" class="input-box" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>İlçe</label>
+                        <input type="text" id="addr-district" class="input-box" required>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label>Şehir</label>
-                    <input type="text" id="addr-city" class="input-box" placeholder="İstanbul" required>
+                    <label>Açık Adres</label>
+                    <textarea id="addr-details" class="input-box" rows="3" required style="resize: vertical; font-family: inherit;"></textarea>
                 </div>
-                <div class="form-group">
-                    <label>İlçe</label>
-                    <input type="text" id="addr-district" class="input-box" placeholder="Kadıköy" required>
-                </div>
-                <div class="form-group">
-                    <label>Tam Adres</label>
-                    <textarea id="addr-details" class="input-box" style="min-height: 80px;" placeholder="Mahalle, Sokak, No, Daire..." required></textarea>
-                </div>
-                <button type="button" id="btn-save-address" class="btn primary" style="width: 100%;">Kaydet</button>
+                <button type="submit" class="btn primary" style="width: 100%;">Kaydet</button>
             </form>
-        </div>
-    </div>
-
-    <div id="order-details-modal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 700px; min-height: auto; flex-direction: column; padding: 40px;">
-            <div class="modal-close">&times;</div>
-            <div id="order-details-content">
-                <!-- Order details will be loaded here dynamically -->
-            </div>
-        </div>
-    </div>
-
-    <div id="confirm-modal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 400px; min-height: auto; flex-direction: column; text-align: center; padding: 40px; border-radius: 24px;">
-            <div id="confirm-icon-box" style="width: 70px; height: 70px; background: #FEF2F2; color: #EF4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; font-size: 2rem;">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-            </div>
-            <h3 id="confirm-title" style="margin-bottom: 10px; font-size: 1.5rem;">Emin misiniz?</h3>
-            <p id="confirm-message" style="margin-bottom: 30px; color: var(--text-muted); line-height: 1.5;">Bu işlem geri alınamaz.</p>
-            
-            <div style="display: flex; gap: 15px;">
-                <button id="confirm-btn-cancel" class="btn secondary" style="flex: 1; padding: 12px;">Vazgeç</button>
-                <button id="confirm-btn-yes" class="btn primary" style="flex: 1; padding: 12px; background: #EF4444; border-color: #EF4444;">Evet, Sil</button>
-            </div>
         </div>
     </div>
 
