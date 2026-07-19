@@ -37,7 +37,29 @@ body {
     position: sticky;
     top: 0;
     height: 100vh;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.summary-list {
+    flex: 1;
     overflow-y: auto;
+    padding-right: 10px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+/* Scrollbar styling for summary list */
+.summary-list::-webkit-scrollbar {
+    width: 6px;
+}
+.summary-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+.summary-list::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 4px;
 }
 
 /* Breadcrumb */
@@ -90,7 +112,7 @@ h3 { margin: 30px 0 20px; font-size: 1.2rem; font-weight: 700; }
 .item-price { font-weight: 600; margin-left: auto; }
 
 /* Totals */
-.summary-totals { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); }
+.summary-totals { padding-top: 20px; border-top: 1px solid var(--border); }
 .price-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.95rem; color: var(--text-muted); }
 .price-row.total { 
     margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--border);
@@ -107,9 +129,9 @@ h3 { margin: 30px 0 20px; font-size: 1.2rem; font-weight: 700; }
 
 /* Discount Section */
 .discount-section {
-    margin-top: 20px; 
     padding-top: 20px; 
     border-top: 1px solid var(--border);
+    margin-bottom: 20px;
 }
 
 .discount-input-group {

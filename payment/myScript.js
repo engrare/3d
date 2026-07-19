@@ -69,8 +69,7 @@ $(document).ready(function() {
 
     // Kargo Seçimi Değişimi
     $('input[name="shipping-method"]').change(function() {
-        shippingCost = parseFloat($(this).data('price'));
-        $('.delivery-option').removeClass('active');
+        $('input[name="shipping-method"]').closest('.delivery-option').removeClass('active');
         $(this).closest('.delivery-option').addClass('active');
         updateTotals();
     });
@@ -85,7 +84,16 @@ $(document).ready(function() {
     });
 
     // Yeni Adres Ekleme Tetikleyici
-    $('#btn-add-address').click(() => $('#new-address-form').slideToggle());
+    $('#btn-add-address').click(() => {
+        $('#edit-addr-id').val('');
+        $('#new-addr-title').val('');
+        $('#new-addr-name').val('');
+        $('#new-addr-surname').val('');
+        $('#new-addr-full').val('');
+        $('#new-addr-city').val('');
+        $('#new-addr-phone').val('');
+        $('#new-address-form').slideDown();
+    });
         
     // Adres Kaydetme
     $('#btn-save-address').click(async () => {
@@ -106,15 +114,47 @@ $(document).ready(function() {
             return;
         }
 
-        const newRef = push(ref(db, `users/${user.uid}/addresses`));
-        await set(newRef, addr);
+        const editId = $('#edit-addr-id').val();
+        
+        if (editId) {
+            const editRef = ref(db, `users/${user.uid}/addresses/${editId}`);
+            window.lastSavedAddressId = editId;
+            await set(editRef, addr);
+            
+            const $radio = $(`input[name="shipping-address"][data-id="${editId}"]`);
+            if ($radio.length) $radio.prop('checked', true).trigger('change');
+            
+            showToast("Adres başarıyla güncellendi ve seçildi.", "success");
+        } else {
+            const newRef = push(ref(db, `users/${user.uid}/addresses`));
+            window.lastSavedAddressId = newRef.key;
+            await set(newRef, addr);
+            showToast("Adres kaydedildi ve seçildi.", "success");
+        }
+        
         $('#new-address-form').slideUp();
         $('#new-address-form input').val(''); // Temizle
-        showToast("Adres kaydedildi.", "success");
+        $('#edit-addr-id').val('');
     });
 
+    // Adres Düzenleme Butonu
+    window.editAddress = function(id, encData) {
+        const addr = JSON.parse(decodeURIComponent(encData));
+        $('#edit-addr-id').val(id);
+        $('#new-addr-title').val(addr.title || '');
+        $('#new-addr-name').val(addr.name || addr.fullname || '');
+        $('#new-addr-surname').val(addr.surname || '');
+        $('#new-addr-full').val(addr.address || addr.details || '');
+        $('#new-addr-city').val(addr.city || '');
+        $('#new-addr-phone').val(addr.phone || '');
+        $('#new-address-form').slideDown();
+    };
+
     // Adres Seçimi Değişimi
-    $('#saved-address-select').change(function() {
+    $(document).on('change', 'input[name="shipping-address"]', function() {
+        $('.address-option').removeClass('active');
+        $(this).closest('.address-option').addClass('active');
+        window.currentSelectedAddressId = $(this).data('id');
         const val = $(this).val();
         if(val) selectedAddress = JSON.parse(decodeURIComponent(val));
     });
@@ -190,7 +230,10 @@ function renderCartSummary() {
         const qty = parseInt(item.quantity || item.configuration?.quantity || 1);
         subtotal += item.price * qty;
 
-        const img = item.image || "../content/product2.jpeg";
+        let img = item.image || "../content/product2.jpeg";
+        if (img.startsWith("./content/")) {
+            img = "." + img;
+        }
         const textDisplay = item.customText ? `Yazı: "${item.customText}"` : "Standart Baskı";
 
         $list.append(`
@@ -216,6 +259,14 @@ function updateTotals() {
         const qty = parseInt(i.quantity || i.configuration?.quantity || 1);
         subtotal += i.price * qty;
     });
+        
+    const standardCost = subtotal >= 500 ? 0 : 50;
+    const expressCost = subtotal >= 500 ? 70 : 120;
+    $('#standard-shipping-price').text(standardCost === 0 ? 'Ücretsiz' : formatTL(standardCost));
+    $('#express-shipping-price').text(formatTL(expressCost));
+
+    const selectedShipping = $('input[name="shipping-method"]:checked').val() || 'standard';
+    shippingCost = selectedShipping === 'standard' ? standardCost : expressCost;
         
     let discountAmount = 0;
     if (appliedDiscount) {
@@ -249,18 +300,46 @@ function formatTL(price) {
 
 function loadUserAddresses(uid) {
     onValue(ref(db, `users/${uid}/addresses`), (snapshot) => {
-        const $select = $('#saved-address-select');
-        $select.empty();
-        $select.append('<option value="" disabled selected>Kayıtlı Adresinizi Seçin</option>');
+        const $container = $('#saved-addresses-container');
+        $container.empty();
                 
         if (snapshot.exists()) {
             const data = snapshot.val();
-            Object.values(data).forEach(addr => {
+            
+            let targetId = window.lastSavedAddressId || window.currentSelectedAddressId || Object.keys(data)[0];
+            if (!data[targetId]) targetId = Object.keys(data)[0];
+            
+            window.currentSelectedAddressId = targetId;
+            selectedAddress = data[targetId];
+            window.lastSavedAddressId = null;
+
+            Object.entries(data).forEach(([id, addr]) => {
                 const val = encodeURIComponent(JSON.stringify(addr));
-                $select.append(`<option value="${val}">${addr.title} - ${addr.address}</option>`);
+                const addressText = addr.address || addr.details || '';
+                const titleText = addr.title || 'Adresim';
+                const isChecked = (id === targetId);
+                
+                $container.append(`
+                    <label class="delivery-option address-option ${isChecked ? 'active' : ''}">
+                        <input type="radio" name="shipping-address" data-id="${id}" value="${val}" ${isChecked ? 'checked' : ''} style="display:none;">
+                        <i class="fa-solid fa-circle-check check-icon"></i>
+                        <div style="flex:1;">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 10px;">
+                                <div class="del-icon-wrapper" style="margin-bottom:0; width: 40px; height: 40px; font-size: 1.1rem;"><i class="fa-solid fa-location-dot"></i></div>
+                                <button type="button" onclick="editAddress('${id}', '${val}'); return false;" class="btn-sm" style="background: none; border: 1px solid var(--border); color: var(--text-muted); font-size: 0.75rem; border-radius: 6px; padding: 4px 8px; transition: 0.2s;" onmouseover="this.style.color='var(--primary)'; this.style.borderColor='var(--primary)';" onmouseout="this.style.color='var(--text-muted)'; this.style.borderColor='var(--border)';"><i class="fa-solid fa-pen"></i> Düzenle</button>
+                            </div>
+                            <span class="del-title" style="font-weight:700; font-size:1.05rem; display:block; margin-bottom: 6px; color: var(--primary);">${titleText}</span>
+                            <span class="del-desc" style="font-size:0.85rem; color:var(--text-muted); display:block; line-height: 1.4;">${addr.name} ${addr.surname}</span>
+                            <span class="del-desc" style="font-size:0.85rem; color:var(--text-muted); display:block; line-height: 1.4; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${addressText}</span>
+                            <span class="del-desc" style="font-size:0.85rem; color:var(--text-muted); display:block; line-height: 1.4; margin-top: 4px;">${addr.city}</span>
+                        </div>
+                    </label>
+                `);
             });
+            $('#new-address-form').hide();
         } else {
             $('#new-address-form').show();
+            selectedAddress = null;
         }
     });
 }
@@ -274,37 +353,11 @@ async function processPayment() {
 
     const shippingMethod = $('input[name="shipping-method"]:checked').val() || "standard";
     const paymentMethod = $('.pay-tab.active').data('method') || "iyzico";
+    const $btn = $('#btn-complete-order');
+    
     let shippingInfo = {};
 
-    if (user.isAnonymous) {
-        shippingInfo = {
-            email: $('#contact-email').val().trim(),
-            name: $('#ship-name').val().trim(),
-            surname: $('#ship-surname').val().trim(),
-            address: $('#ship-address').val().trim(),
-            city: $('#ship-city').val().trim(),
-            phone: $('#ship-phone').val().trim()
-        };
-        
-        if (!shippingInfo.email || !shippingInfo.address || !shippingInfo.phone || !shippingInfo.name || !shippingInfo.surname) {
-            showToast("Lütfen tüm teslimat bilgilerini doldurun.", "error");
-            return;
-        }
-    } else {
-        if (!selectedAddress) {
-            showToast("Lütfen bir teslimat adresi seçin veya yeni ekleyin.", "error");
-            return;
-        }
-        shippingInfo = {
-            name: selectedAddress.name || '',
-            surname: selectedAddress.surname || '',
-            address: selectedAddress.address || '',
-            city: selectedAddress.city || '',
-            phone: selectedAddress.phone || '',
-            email: user.email
-        };
-    }
-
+    // Toplam Tutar Matematik Hesabı
     const subtotal = cart.reduce((sum, item) => sum + (item.price * parseInt(item.quantity || item.configuration?.quantity || 1)), 0);
     let discountAmount = 0;
     if (appliedDiscount) {
@@ -317,6 +370,51 @@ async function processPayment() {
     }
     const totalAmount = Math.max(0, subtotal + shippingCost - discountAmount);
 
+    $btn.prop('disabled', true).text('İşleniyor...');
+
+    // 🛡️ ADRES DOĞRULAMA VE VERİ TOPLAMA BLOĞU (HTML ID'lerine göre tam eşitleme sağlandı)
+    if (user.isAnonymous) {
+        shippingInfo = {
+            email: ($('#contact-email').val() || '').trim(),
+            phone: ($('#contact-phone').val() || '').trim(),
+            name: ($('#ship-name').val() || '').trim(),
+            surname: ($('#ship-surname').val() || '').trim(),
+            address: ($('#ship-address').val() || '').trim(),
+            city: ($('#ship-city').val() || '').trim(),
+            zip: ($('#ship-zip').val() || '').trim()
+        };
+        
+        if (!shippingInfo.email || !shippingInfo.phone || !shippingInfo.name || !shippingInfo.surname || !shippingInfo.address || !shippingInfo.city) {
+            showToast("Lütfen tüm teslimat bilgilerini eksiksiz doldurun.", "error");
+            $btn.prop('disabled', false).html('<span id="final-price-btn">' + formatTL(totalAmount) + '</span> Öde');
+            return;
+        }
+    } else {
+        if (!selectedAddress) {
+            showToast("Lütfen bir teslimat adresi seçin veya yeni ekleyin.", "error");
+            $btn.prop('disabled', false).html('<span id="final-price-btn">' + formatTL(totalAmount) + '</span> Öde');
+            return;
+        }
+        let firstName = selectedAddress.name || '';
+        let lastName = selectedAddress.surname || '';
+        if (!firstName && !lastName && selectedAddress.fullname) {
+            const parts = selectedAddress.fullname.split(' ');
+            firstName = parts[0] || '';
+            lastName = parts.slice(1).join(' ') || '';
+        }
+        
+        shippingInfo = {
+            name: firstName,
+            surname: lastName,
+            fullname: selectedAddress.fullname || (firstName + ' ' + lastName).trim(),
+            address: selectedAddress.address || selectedAddress.details || '',
+            city: selectedAddress.city || '',
+            phone: selectedAddress.phone || '',
+            email: user.email || '',
+            zip: selectedAddress.zip || ''
+        };
+    }
+
     const orderData = {
         userId: user.uid,
         isGuest: user.isAnonymous,
@@ -328,26 +426,24 @@ async function processPayment() {
         subtotal: subtotal,
         discountAmount: discountAmount,
         totalAmount: totalAmount,
-        status: "pending_payment"
+        status: paymentMethod === 'iban' ? "pending_payment" : "incomplete_attempt"
     };
-        
-    const $btn = $('#btn-complete-order');
-    $btn.prop('disabled', true).text('İşleniyor...');
 
     try {
-        const createOrder = httpsCallable(functions, 'createOrder');
-        const orderResult = await createOrder({
-            orderData: orderData,
-            discountCode: appliedDiscount ? appliedDiscount.code : null
-        });
+        // --- 1. AŞAMA: HAVALE / IBAN VEYA ÜCRETSİZ SİPARİŞ AKIŞI ---
+        if (paymentMethod === 'iban' || totalAmount === 0) {
+            const createOrder = httpsCallable(functions, 'createOrder');
+            const orderResult = await createOrder({
+                orderData: orderData,
+                discountCode: appliedDiscount ? appliedDiscount.code : null
+            });
 
-        const orderResponse = orderResult.data;
-        if (orderResponse && orderResponse.success) {
-            const orderId = orderResponse.orderId;
-
-            if (paymentMethod === 'iban' || totalAmount === 0) {
+            const orderResponse = orderResult.data;
+            if (orderResponse && orderResponse.success) {
+                const orderId = orderResponse.orderId;
                 localStorage.removeItem('engrare_cart');
 
+                // Havale durumunda doğrudan sayfa içi başarı kutusunu gösteriyoruz
                 $('.checkout-form-section > :not(#payment-success-container)').hide();
                 $('.checkout-summary').hide();
                 $('.checkout-wrapper').css('grid-template-columns', '1fr');
@@ -357,34 +453,30 @@ async function processPayment() {
                 
                 if (totalAmount === 0) {
                     $('.iban-box').html('<h3 style="color:#10B981; margin-top:20px;">Ödeme Tamamlandı</h3><p>Siparişiniz ücretsiz olarak başarıyla oluşturuldu.</p>');
-                } else {
-                    window.location.href = `paywithiban.html?orderId=${orderId}`;
-                    return;
                 }
+                
                 $('#payment-success-container').fadeIn();
                 window.scrollTo(0, 0);
                 return;
             }
+        }
 
-            if (paymentMethod === 'iyzico') {
-                $btn.text('Ödeme Sayfası Hazırlanıyor...');
-                
-                const createIyzicoPayment = httpsCallable(functions, 'createIyzicoPayment');
-                const payResult = await createIyzicoPayment({ 
-                    orderId: orderId,
-                    origin: window.location.origin
-                });
-                
-                if (payResult.data && payResult.data.status === 'success' && payResult.data.paymentPageUrl) {
-                    localStorage.removeItem('engrare_cart');
-                    showToast("Ödeme sayfasına aktarılıyorsunuz...", "success");
-                    window.location.href = payResult.data.paymentPageUrl;
-                } else {
-                    throw new Error("Ödeme linki oluşturulamadı.");
-                }
+        // --- 2. AŞAMA: GERÇEK IYZICO KREDİ KARTI AKIŞI ---
+        if (paymentMethod === 'iyzico') {
+            $btn.text('Ödeme Sayfası Hazırlanıyor...');
+            
+            const createIyzicoPayment = httpsCallable(functions, 'createIyzicoPayment');
+            const payResult = await createIyzicoPayment({ 
+                orderData: orderData, 
+                origin: window.location.origin
+            });
+            
+            if (payResult.data && payResult.data.status === 'success' && payResult.data.paymentPageUrl) {
+                showToast("Ödeme sayfasına aktarılıyorsunuz...", "success");
+                window.location.href = payResult.data.paymentPageUrl;
+            } else {
+                throw new Error("Ödeme linki oluşturulamadı.");
             }
-        } else {
-             throw new Error("Sipariş kaydı veritabanına ulaştırılamadı.");
         }
 
     } catch (e) {
@@ -397,7 +489,7 @@ async function processPayment() {
 function showToast(msg, type) {
     const color = type === 'error' ? 'red' : 'green';
     const div = document.createElement('div');
-    div.style.cssText = `position:fixed; bottom:20px; right:20px; background:white; padding:15px 25px; border-left:4px solid ${color}; box-shadow:0 5px 15px rgba(0,0,0,0.1); border-radius:8px; z-index:99999;`;
+    div.style.cssText = `position:fixed; bottom:20px; right:20px; background:white; padding:15px 25px; border-left:4px solid ${color}; box-shadow:0 5px 15px rgba(0,0,0,0.1); border-radius:8px; z-index:99999; color: #1e293b; font-weight: 500;`;
     div.innerText = msg;
     document.body.appendChild(div);
     setTimeout(() => div.remove(), 3000);

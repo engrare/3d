@@ -300,6 +300,7 @@
         });
 
         function showSuccessState(orderId) {
+            localStorage.removeItem('engrare_cart');
             $('#status-loading').hide();
             $('#success-order-id').text('#' + orderId);
             $('#status-success').fadeIn();

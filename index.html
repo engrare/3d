@@ -45,17 +45,17 @@
             <div class="brand-logo"><img src="./content/engrare_logo_elegant.png" height="65px" alt="Engrare" onerror="this.style.display='none'; this.parentElement.innerText='ENGRARE.'"></div>
             <ul class="nav-menu">
                 <li data-target="#products-page" class="active">Ürünlerimiz</li>
-                <li data-target="#checkout-page" title="Sepet"><i class="fa-solid fa-cart-shopping" style="font-size: 1.2rem;"></i> <span id="cart-badge">0</span></li>
-                <li id="nav-user-container" style="margin-left: auto; display: flex; align-items: center;">
-                    <div id="nav-login-btn" class="nav-trigger" data-target="#login-page" style="cursor: pointer; padding: 10px;"><i class="fa-regular fa-user" style="font-size: 1.2rem;"></i></div>
-                    <div id="nav-user-profile" style="display: none; position: relative;">
-						<img id="nav-user-img" src="./content/default_user.png" alt="Kullanıcı" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); cursor: pointer;">
-						<div class="profile-dropdown">
-							<!-- data-target eklendi -->
-							<div class="dropdown-item" data-target="#dashboard-page">Kontrol Paneli</div>
-							<div class="dropdown-item" id="action-logout">Çıkış Yap</div>
-						</div>
-					</div>
+                <li data-target="#checkout-page" title="Sepet" style="display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-cart-shopping" style="font-size: 1.2rem;"></i> Sepet <span id="cart-badge">0</span></li>
+                <li id="nav-login-btn" class="nav-trigger" data-target="#login-page" style="margin-left: auto; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 600; padding: 10px 0;">
+                    <i class="fa-regular fa-user" style="font-size: 1.2rem;"></i> Giriş Yap
+                </li>
+                
+                <li id="nav-user-profile" class="nav-trigger" data-target="#dashboard-page" style="margin-left: auto; display: none; cursor: pointer; align-items: center; gap: 8px; font-weight: 600; padding: 10px 0;">
+                    <i class="fa-solid fa-circle-user" style="font-size: 1.3rem;"></i> Profil
+                </li>
+                
+                <li id="nav-logout-container" style="display: none; align-items: center; margin-left: 10px;">
+                    <button id="action-logout" class="btn-sm secondary" style="cursor: pointer;">Çıkış Yap</button>
                 </li>
             </ul>
         </div>
@@ -77,7 +77,10 @@
         <div class="container">
             <div class="product-detail-layout">
                 <div class="product-images">
-                    <img id="detail-main-img" src="" alt="Ürün">
+                    <div id="detail-main-carousel" style="position: relative; width: 100%; aspect-ratio: 1; overflow-x: auto; overflow-y: hidden; border-radius: 16px; border: 1px solid var(--border); display: flex; scroll-snap-type: x mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch;">
+                        <!-- Images injected here -->
+                    </div>
+                    <div id="detail-thumbnails" style="display: flex; gap: 10px; margin-top: 15px; overflow-x: auto; padding-bottom: 5px;"></div>
                 </div>
                 <div class="product-info">
                     <button class="btn-back nav-trigger" data-target="#products-page"><i class="fa-solid fa-arrow-left"></i> Geri Dön</button>
@@ -104,9 +107,10 @@
     <!-- CHECKOUT PAGE -->
     <section id="checkout-page" class="page">
         <div class="container narrow">
-            <h2 style="text-align: center;">Siparişiniz</h2>
+            <h2 style="text-align: left;">Sepetim</h2>
             <div class="cart-list" id="cart-items-area"></div>
             <div class="summary-panel">
+                <div id="free-shipping-progress-container"></div>
                 <div class="price-row"><span>Ara Toplam</span><span id="val-subtotal">₺0.00</span></div>
                 <div class="price-row"><span>Kargo ve İşleme</span><span id="shipping-display">₺50.00</span></div>
                 <div style="height:1px; background:var(--border); margin: 20px 0;"></div>
