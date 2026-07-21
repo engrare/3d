@@ -230,8 +230,10 @@ function renderCartSummary() {
         const qty = parseInt(item.quantity || item.configuration?.quantity || 1);
         subtotal += item.price * qty;
 
-        let img = item.image || "../content/product2.jpeg";
-        if (img.startsWith("./content/")) {
+        let img = item.image;
+        if (typeof img === 'object' && img !== null) img = img.src;
+        img = img || "../content/product2.jpeg";
+        if (typeof img === 'string' && img.startsWith("./content/")) {
             img = "." + img;
         }
         const textDisplay = item.customText ? `Yazı: "${item.customText}"` : "Standart Baskı";

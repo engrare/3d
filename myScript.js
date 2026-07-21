@@ -418,10 +418,15 @@ function renderCart() {
     let sub = 0;
     cart.forEach((item, index) => {
         sub += item.price * item.quantity;
+        
+        let img = item.image;
+        if (typeof img === 'object' && img !== null) img = img.src;
+        img = img || "./content/product2.jpeg";
+        
         $area.append(`
             <div class="cart-item">
                 <div style="display:flex; align-items:flex-start; gap: 20px; width: 100%;">
-                    <img src="${item.image}" style="width: 90px; height: 90px; object-fit: cover; border-radius: 12px; flex-shrink: 0; border: 1px solid var(--border);">
+                    <img src="${img}" style="width: 90px; height: 90px; object-fit: cover; border-radius: 12px; flex-shrink: 0; border: 1px solid var(--border);">
                     
                     <div class="info" style="flex:1; display:flex; flex-direction:column; justify-content: space-between; min-height: 90px;">
                         <div style="font-weight:700; font-size: 1rem; color: var(--primary); margin-bottom: 8px;">${item.name}</div>
