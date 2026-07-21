@@ -42,7 +42,7 @@
     <!-- NAVBAR -->
     <nav class="navbar">
         <div class="nav-container">
-            <div class="brand-logo"><img src="./content/engrare_logo_elegant.png" height="65px" alt="Engrare" onerror="this.style.display='none'; this.parentElement.innerText='ENGRARE.'"></div>
+            <div class="brand-logo nav-trigger" data-target="#products-page" style="cursor: pointer;"><img src="./content/engrare_logo_elegant.png" height="65px" alt="Engrare" onerror="this.style.display='none'; this.parentElement.innerText='ENGRARE.'"></div>
             <ul class="nav-menu">
                 <li data-target="#products-page" class="active">Ürünlerimiz</li>
                 <li data-target="#checkout-page" title="Sepet" style="display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-cart-shopping" style="font-size: 1.2rem;"></i> Sepet <span id="cart-badge">0</span></li>
@@ -77,8 +77,16 @@
         <div class="container">
             <div class="product-detail-layout">
                 <div class="product-images">
-                    <div id="detail-main-carousel" style="position: relative; width: 100%; aspect-ratio: 1; overflow-x: auto; overflow-y: hidden; border-radius: 16px; border: 1px solid var(--border); display: flex; scroll-snap-type: x mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch;">
-                        <!-- Images injected here -->
+                    <div style="position: relative;">
+                        <div id="detail-main-carousel" style="position: relative; width: 100%; aspect-ratio: 1; overflow-x: auto; overflow-y: hidden; border-radius: 16px; border: 1px solid var(--border); display: flex; scroll-snap-type: x mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; transition: transform 0.2s ease-out;">
+                            <!-- Images injected here -->
+                        </div>
+                        <button id="carousel-prev" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); width: 45px; height: 45px; border-radius: 50%; background: rgba(255,255,255,0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 4px 12px rgba(0,0,0,0.1); color: var(--primary); font-size: 1.2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; z-index: 10;" onmouseover="this.style.background='rgba(255,255,255,0.95)'; this.style.transform='translateY(-50%) scale(1.05)';" onmouseout="this.style.background='rgba(255,255,255,0.7)'; this.style.transform='translateY(-50%) scale(1)';">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <button id="carousel-next" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); width: 45px; height: 45px; border-radius: 50%; background: rgba(255,255,255,0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 4px 12px rgba(0,0,0,0.1); color: var(--primary); font-size: 1.2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; z-index: 10;" onmouseover="this.style.background='rgba(255,255,255,0.95)'; this.style.transform='translateY(-50%) scale(1.05)';" onmouseout="this.style.background='rgba(255,255,255,0.7)'; this.style.transform='translateY(-50%) scale(1)';">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
                     </div>
                     <div id="detail-thumbnails" style="display: flex; gap: 10px; margin-top: 15px; overflow-x: auto; padding-bottom: 5px;"></div>
                 </div>
@@ -92,10 +100,138 @@
                         <div class="form-group">
                             <label>Ürün Üzerine Yazılacak Metin</label>
                             <input type="text" id="custom-text-input" class="input-box" placeholder="Örn: ENGRARE">
+                            <div style="margin-top: 12px; padding: 12px; background: rgba(250, 204, 21, 0.15); border: 1px solid rgba(250, 204, 21, 0.4); border-radius: 8px; display: flex; align-items: flex-start; gap: 10px; color: #92400E;">
+                                <i class="fa-solid fa-circle-info" style="margin-top: 3px; font-size: 1.1rem; color: #D97706;"></i>
+                                <span style="font-size: 0.85rem; font-weight: 500; line-height: 1.4;">Ürün baskıya gönderilmeden önce görünüşü mail olarak atılarak revize yapılabilecektir.</span>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>Miktar</label>
-                            <input type="number" id="quantity-input" class="input-box" value="1" min="1">
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; font-weight: 600;">Yazı Tipi (Font)</label>
+                            <select id="custom-font-input" class="input-box">
+                                <option value="'Plus Jakarta Sans', sans-serif">Modern (Varsayılan)</option>
+                                <option value="'Times New Roman', serif">Klasik (Serif)</option>
+                                <option value="'Courier New', monospace">Daktilo (Monospace)</option>
+                                <option value="'Brush Script MT', cursive">El Yazısı (Kıvrımlı)</option>
+                            </select>
+                        </div>
+                        <style>
+                            .pla-color-select {
+                                position: relative;
+                                width: 32px;
+                                height: 32px;
+                                border-radius: 50%;
+                                border: 2px solid white;
+                                box-shadow: 0 0 0 1px var(--border), 0 2px 6px rgba(0,0,0,0.1);
+                                cursor: pointer;
+                                transition: transform 0.2s;
+                            }
+                            .pla-color-select:hover {
+                                transform: scale(1.1);
+                            }
+                            .pla-options-dropdown {
+                                position: absolute;
+                                bottom: calc(100% + 15px);
+                                left: 50%;
+                                transform: translateX(-50%);
+                                background: white;
+                                border: 1px solid var(--border);
+                                border-radius: 12px;
+                                padding: 10px;
+                                display: none;
+                                grid-template-columns: repeat(5, 1fr);
+                                gap: 10px;
+                                box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+                                z-index: 100;
+                            }
+                            .pla-options-dropdown::after {
+                                content: '';
+                                position: absolute;
+                                bottom: -6px;
+                                left: 50%;
+                                transform: translateX(-50%) rotate(45deg);
+                                width: 12px;
+                                height: 12px;
+                                background: white;
+                                border-right: 1px solid var(--border);
+                                border-bottom: 1px solid var(--border);
+                            }
+                            .pla-options-dropdown.open {
+                                display: grid;
+                                animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                            }
+                            @keyframes popIn {
+                                0% { opacity: 0; transform: translateX(-50%) translateY(10px) scale(0.9); }
+                                100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+                            }
+                            .pla-swatch {
+                                width: 26px;
+                                height: 26px;
+                                border-radius: 50%;
+                                border: 2px solid white;
+                                box-shadow: 0 0 0 1px var(--border);
+                                cursor: pointer;
+                                transition: transform 0.15s;
+                            }
+                            .pla-swatch:hover {
+                                transform: scale(1.2);
+                            }
+                        </style>
+                        <div style="display: flex; gap: 20px; margin-bottom: 25px; align-items: flex-end; flex-wrap: wrap;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; font-weight: 600;">Miktar</label>
+                                <div style="display:flex; align-items:center; background: #fff; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; height: 45px; width: 130px;">
+                                    <button type="button" id="detail-qty-minus" style="flex:1; height: 100%; background: none; border: none; border-right: 1px solid var(--border); cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='#F1F5F9';" onmouseout="this.style.background='none';"><i class="fa-solid fa-minus"></i></button>
+                                    <input type="text" id="quantity-input" value="1" style="width: 50px; height: 100%; padding: 0; margin: 0; text-align: center; border: none; background: transparent; font-size: 1.1rem; font-weight: 700; color: var(--primary); outline: none;" readonly>
+                                    <button type="button" id="detail-qty-plus" style="flex:1; height: 100%; background: none; border: none; border-left: 1px solid var(--border); cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='#F1F5F9';" onmouseout="this.style.background='none';"><i class="fa-solid fa-plus"></i></button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; font-weight: 600;">Renk Seçimi</label>
+                                <div style="display: flex; gap: 15px; height: 45px; align-items: center; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 0 15px;">
+                                    
+                                    <div style="display: flex; align-items: center; gap: 8px; position: relative;">
+                                        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Yazı:</span>
+                                        <div class="pla-color-select" id="custom-text-color-btn" style="background-color: #FBC02D;" data-target="dropdown-text-color"></div>
+                                        <input type="hidden" id="custom-text-color" value="#FBC02D">
+                                        
+                                        <div class="pla-options-dropdown" id="dropdown-text-color">
+                                            <div class="pla-swatch" data-color="#FFFFFF" data-input="custom-text-color" style="background-color: #FFFFFF;" title="Beyaz"></div>
+                                            <div class="pla-swatch" data-color="#222222" data-input="custom-text-color" style="background-color: #222222;" title="Siyah"></div>
+                                            <div class="pla-swatch" data-color="#C0C0C0" data-input="custom-text-color" style="background-color: #C0C0C0;" title="Gümüş"></div>
+                                            <div class="pla-swatch" data-color="#D32F2F" data-input="custom-text-color" style="background-color: #D32F2F;" title="Kırmızı"></div>
+                                            <div class="pla-swatch" data-color="#1976D2" data-input="custom-text-color" style="background-color: #1976D2;" title="Mavi"></div>
+                                            <div class="pla-swatch" data-color="#388E3C" data-input="custom-text-color" style="background-color: #388E3C;" title="Yeşil"></div>
+                                            <div class="pla-swatch" data-color="#FBC02D" data-input="custom-text-color" style="background-color: #FBC02D;" title="Sarı"></div>
+                                            <div class="pla-swatch" data-color="#F57C00" data-input="custom-text-color" style="background-color: #F57C00;" title="Turuncu"></div>
+                                            <div class="pla-swatch" data-color="#E91E63" data-input="custom-text-color" style="background-color: #E91E63;" title="Pembe"></div>
+                                            <div class="pla-swatch" data-color="#D4AF37" data-input="custom-text-color" style="background-color: #D4AF37;" title="Altın"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="width: 1px; height: 20px; background: var(--border);"></div>
+                                    
+                                    <div style="display: flex; align-items: center; gap: 8px; position: relative;">
+                                        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Obje:</span>
+                                        <div class="pla-color-select" id="custom-obj-color-btn" style="background-color: #222222;" data-target="dropdown-obj-color"></div>
+                                        <input type="hidden" id="custom-obj-color" value="#222222">
+                                        
+                                        <div class="pla-options-dropdown" id="dropdown-obj-color">
+                                            <div class="pla-swatch" data-color="#FFFFFF" data-input="custom-obj-color" style="background-color: #FFFFFF;" title="Beyaz"></div>
+                                            <div class="pla-swatch" data-color="#222222" data-input="custom-obj-color" style="background-color: #222222;" title="Siyah"></div>
+                                            <div class="pla-swatch" data-color="#C0C0C0" data-input="custom-obj-color" style="background-color: #C0C0C0;" title="Gümüş"></div>
+                                            <div class="pla-swatch" data-color="#D32F2F" data-input="custom-obj-color" style="background-color: #D32F2F;" title="Kırmızı"></div>
+                                            <div class="pla-swatch" data-color="#1976D2" data-input="custom-obj-color" style="background-color: #1976D2;" title="Mavi"></div>
+                                            <div class="pla-swatch" data-color="#388E3C" data-input="custom-obj-color" style="background-color: #388E3C;" title="Yeşil"></div>
+                                            <div class="pla-swatch" data-color="#FBC02D" data-input="custom-obj-color" style="background-color: #FBC02D;" title="Sarı"></div>
+                                            <div class="pla-swatch" data-color="#F57C00" data-input="custom-obj-color" style="background-color: #F57C00;" title="Turuncu"></div>
+                                            <div class="pla-swatch" data-color="#E91E63" data-input="custom-obj-color" style="background-color: #E91E63;" title="Pembe"></div>
+                                            <div class="pla-swatch" data-color="#D4AF37" data-input="custom-obj-color" style="background-color: #D4AF37;" title="Altın"></div>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                            </div>
                         </div>
                         <button id="add-to-cart" class="btn primary" style="width: 100%;">Sepete Ekle</button>
                     </div>
