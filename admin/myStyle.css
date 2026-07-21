@@ -1043,4 +1043,4 @@ body {
 .dropdown-item:hover {
     background: #F1F5F9;
     color: var(--accent);
-}
+}.badge-purple { background: #F3E8FF; color: #7E22CE; }

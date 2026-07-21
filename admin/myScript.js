@@ -287,193 +287,14 @@ $(document).ready(function() {
     }
 
     async function refreshFleetStatus(verificationCode = null) {
-        if (!functions) return;
-        
         const $btn = $('#btn-refresh-fleet');
         const $icon = $btn.find('i');
         const $grid = $('#device-grid');
         
-        $btn.prop('disabled', true);
-        $icon.addClass('fa-spin'); 
-        
-        if (!verificationCode) {
-             $grid.html(`
-                <div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px;">
-                    <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem; margin-bottom: 10px; color: var(--primary);"></i>
-                    <p>Cihaz durumu güncelleniyor...</p>
-                </div>
-            `);
-        } else {
-            showToast("Doğrulama kodu gönderiliyor...", "info");
-        }
-
-        try {
-            const getAllPrintersStatus = httpsCallable(functions, 'getAllPrintersStatus');
-            
-            // Send request (only code if needed)
-            const result = await getAllPrintersStatus({ 
-                emailCode: verificationCode
-            });
-            
-            console.log("Backend Response:", result.data); // DEBUG LOG
-
-            const data = result.data;
-
-            // --- 1. Top-Level 2FA Check (Priority) ---
-            if (data.status === "NEEDS_CODE") {
-                console.log("2FA Status Detected (Top Level). Triggering Modal..."); 
-                $icon.removeClass('fa-spin');
-                
-                $grid.html(`
-                    <div style="grid-column: 1/-1; text-align: center; padding: 40px; background: #FEF3C7; border-radius: 8px; color: #92400E;">
-                         <i class="fa-solid fa-shield-halved" style="font-size: 2rem; margin-bottom: 15px;"></i>
-                         <h3>Doğrulama Gerekli</h3>
-                         <p>${data.message || 'Lütfen kodu giriniz.'}</p>
-                         <button id="manual-2fa-trigger" class="btn primary" style="margin-top:10px;">Kodu Gir</button>
-                    </div>
-                `);
-
-                // Setup Manual Trigger
-                $('#manual-2fa-trigger').off().on('click', () => {
-                     promptFor2FA().then(code => {
-                         if (code === "RETRY") refreshFleetStatus();
-                         else if (code) refreshFleetStatus(code);
-                     });
-                });
-
-                // Auto-Trigger Modal
-                const code = await promptFor2FA();
-                
-                if (code === "RETRY") {
-                     refreshFleetStatus();
-                     return;
-                } else if (code) {
-                     refreshFleetStatus(code);
-                     return;
-                } else {
-                    showToast("İşlem iptal edildi.", "error");
-                    $btn.prop('disabled', false);
-                    return; 
-                }
-            }
-
-            const printers = data.printers || [];
-
-            // --- 2. Legacy/Nested 2FA Check (Fallback) ---
-            const needs2FA = printers.find(p => p.state === "AUTH_2FA");
-            
-            if (needs2FA) {
-                // ... (Same logic as above, handled by top check usually)
-                // We can keep this for safety or remove it if confident. 
-                // Let's keep the return to avoid double render if somehow top level missed it.
-                console.log("2FA State Detected (Nested).");
-                 $icon.removeClass('fa-spin');
-                 // ... reusing logic implies duplication, but for safety let's just redirect to the block above
-                 // effectively if we are here, we missed the status check.
-            }
-
-            // 2. Render Results
-            $grid.empty();
-
-            if (printers.length === 0) {
-                $grid.html('<div style="grid-column:1/-1; text-align:center; padding:20px; color:#94A3B8;">Aktif yazıcı bulunamadı.</div>');
-                return;
-            }
-
-            // MODEL MAPPING
-            const MODEL_MAP = {
-                "006": "AMS", "00M": "X1C", "01P": "P1S", "01S": "P1P",
-                "030": "A1M", "039": "A1", "03C": "AMS Lite", "03W": "X1E",
-                "094": "H2D", "19C": "AMS 2 PRO", "19F": "AMS HT", "22E": "P2S", "239": "H2D Pro"
-            };
-
-            const getModelFromSerial = (serial) => {
-                if (!serial || serial.length < 3) return "Unknown Device";
-                const prefix = serial.substring(0, 3);
-                return MODEL_MAP[prefix] || "Unknown Model";
-            };
-
-            printers.forEach(p => {
-                // STRICT Online Check
-                const isOnline = (p.online === true) || (String(p.online).toLowerCase() === "true");
-                const statusClass = isOnline ? 'online' : 'offline';
-                const progress = p.progress || 0;
-                
-                const modelName = getModelFromSerial(p.serial);
-                
-                // Safety checks for temps
-                const nozzleTemp = (p.temps && p.temps.nozzle) ? p.temps.nozzle : 0;
-                const bedTemp = (p.temps && p.temps.bed) ? p.temps.bed : 0;
-
-                // Error Handling Display
-                let stateDisplay = `<strong style="color:var(--text-main);">${p.state || 'UNKNOWN'}</strong>`;
-                let progressDisplay = `<span style="color:var(--text-muted);">${progress}%</span>`;
-                
-                if (p.state === "CONNECT_ERR" || p.state === "AUTH_ERR" || p.state === "HTTP_ERR") {
-                    stateDisplay = `<strong style="color:#EF4444;"><i class="fa-solid fa-triangle-exclamation"></i> ${p.error || 'Connection Failed'}</strong>`;
-                    progressDisplay = `<span style="font-size:0.7rem;">${p.message || 'Check logs'}</span>`;
-                }
-
-                // AMS Logic
-                let amsHtml = '';
-                if (p.ams && (p.ams.present === true || String(p.ams.present) === "true")) {
-                     const amsList = p.ams.models ? p.ams.models.join(', ') : 'Attached';
-                     amsHtml = `
-                        <div style="background:#F8FAFC; padding:8px; border-radius:6px; margin-top:10px; font-size:0.75rem; color:var(--text-muted); display:flex; align-items:center; gap:8px; border:1px solid var(--border);">
-                            <i class="fa-solid fa-layer-group" style="color:var(--accent);"></i> 
-                            <span><strong>AMS:</strong> ${amsList}</span>
-                        </div>`;
-                }
-
-                const cardHtml = `
-                    <div class="card device-card ${statusClass}">
-                        <div class="device-header">
-                            <div class="device-name">
-                                <i class="fa-solid fa-print"></i> 
-                                <div style="display:flex; flex-direction:column; line-height:1.2;">
-                                    <span title="${p.serial || 'Unknown'}" style="font-weight:700;">${modelName}</span>
-                                    <span style="font-size:0.7rem; color:var(--text-light); font-weight:400;">${p.serial || ''}</span>
-                                </div>
-                            </div>
-                            <span class="dot ${statusClass}" title="${isOnline ? 'Online' : 'Offline'}"></span>
-                        </div>
-                        
-                        ${amsHtml}
-                        
-                        <div class="device-stats" style="margin-top:15px;">
-                            <div class="stat">
-                                <span class="label">Nozzle</span>
-                                <span class="val">${nozzleTemp}°C</span>
-                            </div>
-                            <div class="stat">
-                                <span class="label">Bed</span>
-                                <span class="val">${bedTemp}°C</span>
-                            </div>
-                        </div>
-
-                        <div style="margin-top: 15px;">
-                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:5px;">
-                                ${stateDisplay}
-                                ${progressDisplay}
-                            </div>
-                            <div class="device-progress-bg">
-                                <div class="device-progress-fill" style="width: ${progress}%;"></div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                $grid.append(cardHtml);
-            });
-
-        } catch (error) {
-            console.error("Fleet Refresh Error:", error);
-            showToast("Filo durumu alınamadı: " + error.message, "error");
-        } finally {
-            // Only re-enable button if we're not inside a recursive flow (which is hard to know exactly here,
-            // but the UI will update anyway).
-            $btn.prop('disabled', false);
-            $icon.removeClass('fa-spin'); 
-        }
+        $grid.html('<div style="grid-column:1/-1; text-align:center; padding:20px; color:#94A3B8;">Filo durumu şu anlık kapalı.</div>');
+        $btn.prop('disabled', false);
+        $icon.removeClass('fa-spin'); 
+        return;
     }
 
     // --- RENDER FUNCTION ---
@@ -585,29 +406,51 @@ $(document).ready(function() {
             
             if (!status) status = 'Bilinmiyor';
 
-            // Robust matching for Turkish characters
             const s = String(status).toLocaleLowerCase('tr');
             
-            if (s.includes('hazır') || s.includes('pending') || s.includes('bekliyor')) {
+            if (s.includes('ödendi') || s.includes('paid')) {
+                icon = 'fa-sack-dollar';
+                badgeClass = 'badge-success'; // Green
+            } else if (s.includes('hazır') || s.includes('pending') || s.includes('bekliyor')) {
                 icon = 'fa-clock';
-                badgeClass = 'badge-warning';
+                badgeClass = 'badge-warning'; // Orange
             } else if (s.includes('kargo')) {
                 icon = 'fa-truck';
-                badgeClass = 'badge-info';
-            } else if (s.includes('tamam') || s.includes('paid')) {
-                icon = 'fa-check';
-                badgeClass = 'badge-success';
+                badgeClass = 'badge-info'; // Blue
+            } else if (s.includes('teslim') || s.includes('tamam')) {
+                icon = 'fa-box-open';
+                badgeClass = 'badge-purple'; // Purple (will add)
             } else if (s.includes('iptal')) {
                 icon = 'fa-ban';
-                badgeClass = 'badge-danger';
+                badgeClass = 'badge-danger'; // Red
             }
             
             return `<span class="badge ${badgeClass}"><i class="fa-solid ${icon}"></i> ${status}</span>`;
         };
 
-        // Sort orders by date (newest first)
-        const sortedOrders = Object.entries(orders).sort(([,a], [,b]) => {
-            return (b.serverTimestamp || 0) - (a.serverTimestamp || 0);
+        // Sort orders: Priority shipping first, then ID ascending
+        const sortedOrders = Object.entries(orders).sort((a, b) => {
+            const keyA = a[0];
+            const keyB = b[0];
+            const orderA = a[1];
+            const orderB = b[1];
+            
+            // Parse IDs (assuming they are numbers or can be parsed as numbers, e.g., "40", "41")
+            const idA = parseInt(keyA.replace(/\D/g, '')) || 0;
+            const idB = parseInt(keyB.replace(/\D/g, '')) || 0;
+            
+            const methodA = (orderA.shippingMethod || 'standart').toLowerCase();
+            const methodB = (orderB.shippingMethod || 'standart').toLowerCase();
+            
+            const isPriorityA = methodA.includes('öncelikli') || methodA.includes('hızlı') || methodA.includes('priority') || methodA.includes('fast') || methodA.includes('express');
+            const isPriorityB = methodB.includes('öncelikli') || methodB.includes('hızlı') || methodB.includes('priority') || methodB.includes('fast') || methodB.includes('express');
+            
+            // Priority comes first
+            if (isPriorityA && !isPriorityB) return -1;
+            if (!isPriorityA && isPriorityB) return 1;
+            
+            // If same shipping priority, sort by ID ascending
+            return idA - idB;
         });
 
         sortedOrders.forEach(([key, order]) => {
@@ -635,9 +478,10 @@ $(document).ready(function() {
                             </button>
                             <button class="btn-icon action-trigger" data-id="${key}"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                             <div class="dropdown-menu">
+                                <div class="dropdown-item" data-id="${key}" data-userid="${order.userId}" data-status="Ödendi"><i class="fa-solid fa-money-bill"></i> Ödendi</div>
                                 <div class="dropdown-item" data-id="${key}" data-userid="${order.userId}" data-status="Hazırlanıyor"><i class="fa-solid fa-clock"></i> Hazırlanıyor</div>
                                 <div class="dropdown-item" data-id="${key}" data-userid="${order.userId}" data-status="Kargolandı"><i class="fa-solid fa-truck"></i> Kargolandı</div>
-                                <div class="dropdown-item" data-id="${key}" data-userid="${order.userId}" data-status="Tamamlandı"><i class="fa-solid fa-check"></i> Tamamlandı</div>
+                                <div class="dropdown-item" data-id="${key}" data-userid="${order.userId}" data-status="Teslim Edildi"><i class="fa-solid fa-check"></i> Teslim Edildi</div>
                                 <div class="dropdown-item" data-id="${key}" data-userid="${order.userId}" data-status="İptal" style="color: #EF4444;"><i class="fa-solid fa-ban"></i> İptal</div>
                             </div>
                         </div>
@@ -685,6 +529,11 @@ $(document).ready(function() {
                     status: newStatus
                 });
                 showToast("Durum başarıyla güncellendi.", "success");
+                
+                if (globalAdminData && globalAdminData.orders && globalAdminData.orders[orderId]) {
+                    globalAdminData.orders[orderId].status = newStatus;
+                    renderOrders(globalAdminData.orders);
+                }
             } catch (error) {
                 console.error("Status Update Error:", error);
                 showToast("Hata: " + error.message, "error");
@@ -718,17 +567,43 @@ $(document).ready(function() {
         const $tbody = $('#modal-items-body');
         $tbody.empty();
         
-        if (order.items && Array.isArray(order.items)) {
-            order.items.forEach(item => {
-                const img = item.image || item.photo || item.imageUrl || '../content/placeholder.png'; // Fallback
+        if (order.items) {
+            const itemsArray = Array.isArray(order.items) ? order.items : Object.values(order.items);
+            itemsArray.forEach(item => {
+                let img = item.image || item.photo || item.imageUrl || '../content/product2.jpeg';
+                if (typeof img === 'object' && img !== null) img = img.src || '../content/product2.jpeg';
+                if (typeof img === 'string' && img.startsWith('./')) {
+                    img = '.' + img; // converts ./content/ to ../content/
+                }
+                
+                // Retroactive fix for old orders
+                let textToShow = item.customText || '';
+                if (!textToShow && item.desc && item.desc.includes('Yazı:')) {
+                    textToShow = item.desc.replace('Yazı:', '').trim();
+                }
+                
+                const fontToShow = item.font || 'Inter';
+                const textColorToShow = item.textColor || '#ffffff'; // Default white
+                const objColorToShow = item.objColor || '#333333'; // Default black
+                
+                let detailsHtml = '';
+                if (textToShow) detailsHtml += `<span style="font-size: 0.8rem; color: var(--text-main);">Yazı: <strong style="font-family: '${fontToShow}';">${textToShow}</strong></span><br>`;
+                detailsHtml += `<span style="font-size: 0.75rem; color: var(--text-light);">Font: <strong>${fontToShow}</strong></span><br>`;
+                
+                let colorsHtml = `<div style="display:flex; gap: 10px; margin-top: 4px;">
+                    <div style="display:flex; align-items:center; gap: 4px; font-size: 0.7rem; color: var(--text-light);"><div style="width:14px; height:14px; border-radius:50%; background:${textColorToShow}; border:1px solid #ccc;" title="Yazı Rengi"></div>Yazı</div>
+                    <div style="display:flex; align-items:center; gap: 4px; font-size: 0.7rem; color: var(--text-light);"><div style="width:14px; height:14px; border-radius:50%; background:${objColorToShow}; border:1px solid #ccc;" title="Obje Rengi"></div>Obje</div>
+                </div>`;
+
                 $tbody.append(`
                     <tr>
                         <td style="display: flex; align-items: center; gap: 15px;">
-                            <img src="${img}" style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border);">
+                            <img src="${img}" style="width: 60px; height: 60px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border);">
                             <div>
-                                <strong style="font-size: 0.9rem;">${item.name || 'Ürün'}</strong>
+                                <strong style="font-size: 0.95rem;">${item.name || 'Ürün'}</strong>
                                 <br>
-                                <span style="font-size: 0.75rem; color: var(--text-light);">${item.desc || ''}</span>
+                                ${detailsHtml}
+                                ${colorsHtml}
                             </div>
                         </td>
                         <td>₺${parseFloat(item.price || 0).toFixed(2)}</td>
@@ -813,6 +688,9 @@ $(document).ready(function() {
                 const userId = selectedUserIds[index];
                 if(userId) {
                     updates[`users/${userId}/orders/${orderId}/status`] = newStatus;
+                    if (globalAdminData && globalAdminData.orders && globalAdminData.orders[orderId]) {
+                        globalAdminData.orders[orderId].status = newStatus;
+                    }
                 }
             });
 
@@ -822,6 +700,8 @@ $(document).ready(function() {
             
             // Uncheck select all
             $('#select-all-orders').prop('checked', false);
+            
+            renderOrders(globalAdminData.orders);
             
         } catch (error) {
             console.error("Bulk Update Error:", error);

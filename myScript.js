@@ -175,20 +175,31 @@ $(document).ready(function() {
     });
 
     // --- ÖZEL RENK SEÇİCİ (PLA 10 Renk) ---
-    $('.pla-color-select').click(function(e) {
+    $(document).on('click', '.pla-color-select', function(e) {
         e.stopPropagation();
         const targetId = $(this).data('target');
         $('.pla-options-dropdown').not('#' + targetId).removeClass('open');
         $('#' + targetId).toggleClass('open');
     });
 
-    $('.pla-swatch').click(function(e) {
+    $(document).on('click', '.pla-swatch', function(e) {
         e.stopPropagation();
         const color = $(this).data('color');
         const inputId = $(this).data('input');
-        $('#' + inputId).val(color);
-        $('#' + inputId + '-btn').css('background-color', color);
-        $(this).closest('.pla-options-dropdown').removeClass('open');
+        const isCart = $(this).data('cart-index') !== undefined;
+        
+        if (isCart) {
+            const index = $(this).data('cart-index');
+            const type = $(this).data('type'); // 'text' or 'obj'
+            if (type === 'text') cart[index].textColor = color;
+            if (type === 'obj') cart[index].objColor = color;
+            saveCart();
+            renderCart();
+        } else {
+            $('#' + inputId).val(color);
+            $('#' + inputId + '-btn').css('background-color', color);
+            $(this).closest('.pla-options-dropdown').removeClass('open');
+        }
     });
 
     $(document).click(function() {
@@ -618,8 +629,38 @@ function renderCart() {
                             </div>
                             
                             <div style="display: flex; gap: 8px;">
-                                <div style="width: 20px; height: 20px; border-radius: 50%; background: ${item.textColor || '#fff'}; border: 1px solid var(--border);" title="Yazı Rengi"></div>
-                                <div style="width: 20px; height: 20px; border-radius: 50%; background: ${item.objColor || '#333'}; border: 1px solid var(--border);" title="Obje Rengi"></div>
+                                <div style="position: relative;">
+                                    <div class="pla-color-select" data-target="cart-dropdown-text-${index}" style="width: 20px; height: 20px; border-radius: 50%; background: ${item.textColor || '#fff'}; border: 1px solid var(--border);" title="Yazı Rengi"></div>
+                                    <div class="pla-options-dropdown" id="cart-dropdown-text-${index}" style="padding: 8px; gap: 6px; width: 160px; bottom: calc(100% + 10px);">
+                                        <div style="text-align:center; font-size:0.7rem; font-weight:700; color:var(--text-muted); grid-column: span 5; margin-bottom: 2px;">YAZI RENGİ</div>
+                                        <div class="pla-swatch" data-color="#FFFFFF" data-cart-index="${index}" data-type="text" style="background-color: #FFFFFF; width: 22px; height: 22px;" title="Beyaz"></div>
+                                        <div class="pla-swatch" data-color="#222222" data-cart-index="${index}" data-type="text" style="background-color: #222222; width: 22px; height: 22px;" title="Siyah"></div>
+                                        <div class="pla-swatch" data-color="#C0C0C0" data-cart-index="${index}" data-type="text" style="background-color: #C0C0C0; width: 22px; height: 22px;" title="Gümüş"></div>
+                                        <div class="pla-swatch" data-color="#D32F2F" data-cart-index="${index}" data-type="text" style="background-color: #D32F2F; width: 22px; height: 22px;" title="Kırmızı"></div>
+                                        <div class="pla-swatch" data-color="#1976D2" data-cart-index="${index}" data-type="text" style="background-color: #1976D2; width: 22px; height: 22px;" title="Mavi"></div>
+                                        <div class="pla-swatch" data-color="#388E3C" data-cart-index="${index}" data-type="text" style="background-color: #388E3C; width: 22px; height: 22px;" title="Yeşil"></div>
+                                        <div class="pla-swatch" data-color="#FBC02D" data-cart-index="${index}" data-type="text" style="background-color: #FBC02D; width: 22px; height: 22px;" title="Sarı"></div>
+                                        <div class="pla-swatch" data-color="#F57C00" data-cart-index="${index}" data-type="text" style="background-color: #F57C00; width: 22px; height: 22px;" title="Turuncu"></div>
+                                        <div class="pla-swatch" data-color="#E91E63" data-cart-index="${index}" data-type="text" style="background-color: #E91E63; width: 22px; height: 22px;" title="Pembe"></div>
+                                        <div class="pla-swatch" data-color="#D4AF37" data-cart-index="${index}" data-type="text" style="background-color: #D4AF37; width: 22px; height: 22px;" title="Altın"></div>
+                                    </div>
+                                </div>
+                                <div style="position: relative;">
+                                    <div class="pla-color-select" data-target="cart-dropdown-obj-${index}" style="width: 20px; height: 20px; border-radius: 50%; background: ${item.objColor || '#333'}; border: 1px solid var(--border);" title="Obje Rengi"></div>
+                                    <div class="pla-options-dropdown" id="cart-dropdown-obj-${index}" style="padding: 8px; gap: 6px; width: 160px; bottom: calc(100% + 10px);">
+                                        <div style="text-align:center; font-size:0.7rem; font-weight:700; color:var(--text-muted); grid-column: span 5; margin-bottom: 2px;">OBJE RENGİ</div>
+                                        <div class="pla-swatch" data-color="#FFFFFF" data-cart-index="${index}" data-type="obj" style="background-color: #FFFFFF; width: 22px; height: 22px;" title="Beyaz"></div>
+                                        <div class="pla-swatch" data-color="#222222" data-cart-index="${index}" data-type="obj" style="background-color: #222222; width: 22px; height: 22px;" title="Siyah"></div>
+                                        <div class="pla-swatch" data-color="#C0C0C0" data-cart-index="${index}" data-type="obj" style="background-color: #C0C0C0; width: 22px; height: 22px;" title="Gümüş"></div>
+                                        <div class="pla-swatch" data-color="#D32F2F" data-cart-index="${index}" data-type="obj" style="background-color: #D32F2F; width: 22px; height: 22px;" title="Kırmızı"></div>
+                                        <div class="pla-swatch" data-color="#1976D2" data-cart-index="${index}" data-type="obj" style="background-color: #1976D2; width: 22px; height: 22px;" title="Mavi"></div>
+                                        <div class="pla-swatch" data-color="#388E3C" data-cart-index="${index}" data-type="obj" style="background-color: #388E3C; width: 22px; height: 22px;" title="Yeşil"></div>
+                                        <div class="pla-swatch" data-color="#FBC02D" data-cart-index="${index}" data-type="obj" style="background-color: #FBC02D; width: 22px; height: 22px;" title="Sarı"></div>
+                                        <div class="pla-swatch" data-color="#F57C00" data-cart-index="${index}" data-type="obj" style="background-color: #F57C00; width: 22px; height: 22px;" title="Turuncu"></div>
+                                        <div class="pla-swatch" data-color="#E91E63" data-cart-index="${index}" data-type="obj" style="background-color: #E91E63; width: 22px; height: 22px;" title="Pembe"></div>
+                                        <div class="pla-swatch" data-color="#D4AF37" data-cart-index="${index}" data-type="obj" style="background-color: #D4AF37; width: 22px; height: 22px;" title="Altın"></div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div style="display:flex; align-items:center; background: #F8FAFC; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; height: 35px;">
@@ -773,12 +814,16 @@ function loadUserOrders(userId) {
                 
                 // Sadeleştirilmiş durum haritası
                 const statusMap = {
-                    'pending_payment': { text: 'Ödeme Bekliyor', color: '#F59E0B', bg: '#FEF3C7' },
-                    'paid': { text: 'Ödendi / Hazırlanıyor', color: '#10B981', bg: '#D1FAE5' },
-                    'shipped': { text: 'Kargoya Verildi', color: '#3B82F6', bg: '#DBEAFE' },
-                    'cancelled': { text: 'İptal Edildi', color: '#EF4444', bg: '#FEE2E2' }
+                    'pending_payment': { text: 'Ödeme Bekliyor', icon: 'fa-solid fa-clock', color: '#92400E', bg: '#FEF3C7' }, // Orange
+                    'paid': { text: 'Ödendi', icon: 'fa-solid fa-sack-dollar', color: '#166534', bg: '#DCFCE7' }, // Green
+                    'Ödendi': { text: 'Ödendi', icon: 'fa-solid fa-sack-dollar', color: '#166534', bg: '#DCFCE7' }, // Green
+                    'Hazırlanıyor': { text: 'Hazırlanıyor', icon: 'fa-solid fa-clock', color: '#92400E', bg: '#FEF3C7' }, // Orange
+                    'Kargolandı': { text: 'Kargolandı', icon: 'fa-solid fa-truck', color: '#1E40AF', bg: '#DBEAFE' }, // Blue
+                    'Teslim Edildi': { text: 'Teslim Edildi', icon: 'fa-solid fa-box-open', color: '#7E22CE', bg: '#F3E8FF' }, // Purple
+                    'İptal': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' }, // Red
+                    'cancelled': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' } // Red
                 };
-                const status = statusMap[order.status] || { text: 'Hazırlanıyor', color: '#10B981', bg: '#D1FAE5' };
+                const status = statusMap[order.status] || { text: order.status || 'Hazırlanıyor', icon: 'fa-solid fa-circle-question', color: '#475569', bg: '#F1F5F9' };
                 
                 let itemsArray = [];
                 if (order.items) {
@@ -834,7 +879,7 @@ function loadUserOrders(userId) {
                         </div>
                         <div style="text-align: right; flex-shrink: 0; margin-left: 15px;">
                             <div style="font-weight: 700; color: var(--primary); margin-bottom: 8px;">₺${total.toFixed(2)}</div>
-                            <span class="order-status-pill" style="background: ${status.bg}; color: ${status.color}; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">${status.text}</span>
+                            <span class="order-status-pill" style="background: ${status.bg}; color: ${status.color}; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;"><i class="${status.icon}" style="margin-right: 4px;"></i>${status.text}</span>
                         </div>
                     </div>
                 `);
