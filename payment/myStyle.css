@@ -213,8 +213,18 @@ h3 { margin: 30px 0 20px; font-size: 1.2rem; font-weight: 700; }
 /* Responsive */
 @media (max-width: 900px) {
     .checkout-wrapper { grid-template-columns: 1fr; }
-    .checkout-summary { order: -1; height: auto; padding: 30px 20px; }
-    .checkout-form-section { padding: 40px 20px; border-right: none; }
+    .checkout-summary { height: auto; padding: 20px 15px; border: 1px solid var(--border); border-radius: 16px; margin-bottom: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+    .checkout-summary h3 { font-size: 1.1rem; padding-bottom: 10px !important; }
+    .summary-item { margin-bottom: 10px; gap: 10px; }
+    .item-img { width: 50px; height: 50px; border-radius: 6px; }
+    .item-name { font-size: 0.85rem; }
+    .item-meta { font-size: 0.75rem; margin-bottom: 2px !important; }
+    .item-price { font-size: 0.85rem; }
+    .summary-list { margin-top: 10px; margin-bottom: 10px; }
+    .discount-section { padding-top: 10px; padding-bottom: 10px; }
+    .price-row { font-size: 0.85rem; margin-bottom: 8px; }
+    .price-row.total { font-size: 1.1rem; margin-top: 10px; padding-top: 10px; }
+    .checkout-form-section { padding: 30px 15px; border-right: none; }
 }
 
 .full-width { width: 100%; }

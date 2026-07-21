@@ -35,7 +35,7 @@
         }
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="./myStyle.css">
+    <link rel="stylesheet" href="./myStyle.css?v=5">
 </head>
 <body>
 
@@ -43,18 +43,29 @@
     <nav class="navbar">
         <div class="nav-container">
             <div class="brand-logo nav-trigger" data-target="#products-page" style="cursor: pointer;"><img src="./content/engrare_logo_elegant.png" height="65px" alt="Engrare" onerror="this.style.display='none'; this.parentElement.innerText='ENGRARE.'"></div>
-            <ul class="nav-menu">
+            
+            <!-- Mobile Menu Toggle Button -->
+            <div class="mobile-menu-toggle" id="mobile-menu-toggle" style="display: none; cursor: pointer; font-size: 1.5rem; color: var(--primary);">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+            
+            <div class="mobile-backdrop" id="mobile-backdrop"></div>
+            
+            <ul class="nav-menu" id="nav-menu">
+                <div class="mobile-menu-close" id="mobile-menu-close" style="display: none; align-self: flex-end; padding: 5px; cursor: pointer; font-size: 1.5rem; color: var(--text-main);">
+                    <i class="fa-solid fa-xmark"></i>
+                </div>
                 <li data-target="#products-page" class="active">Ürünlerimiz</li>
                 <li data-target="#checkout-page" title="Sepet" style="display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-cart-shopping" style="font-size: 1.2rem;"></i> Sepet <span id="cart-badge">0</span></li>
-                <li id="nav-login-btn" class="nav-trigger" data-target="#login-page" style="margin-left: auto; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 600; padding: 10px 0;">
+                <li id="nav-login-btn" class="nav-trigger" data-target="#login-page" style="display: none; cursor: pointer; align-items: center; gap: 8px; font-weight: 600; padding: 10px 0;">
                     <i class="fa-regular fa-user" style="font-size: 1.2rem;"></i> Giriş Yap
                 </li>
                 
-                <li id="nav-user-profile" class="nav-trigger" data-target="#dashboard-page" style="margin-left: auto; display: none; cursor: pointer; align-items: center; gap: 8px; font-weight: 600; padding: 10px 0;">
+                <li id="nav-user-profile" class="nav-trigger" data-target="#dashboard-page" style="display: none; cursor: pointer; align-items: center; gap: 8px; font-weight: 600; padding: 10px 0;">
                     <i class="fa-solid fa-circle-user" style="font-size: 1.3rem;"></i> Profil
                 </li>
                 
-                <li id="nav-logout-container" style="display: none; align-items: center; margin-left: 10px;">
+                <li id="nav-logout-container" style="display: none; align-items: center;">
                     <button id="action-logout" class="btn-sm secondary" style="cursor: pointer;">Çıkış Yap</button>
                 </li>
             </ul>

@@ -65,6 +65,24 @@ const products = [
 
 // --- DOM READY ---
 $(document).ready(function() {
+    // Mobile Menu Logic
+    $('#mobile-menu-toggle').click(function() {
+        $('#nav-menu').addClass('open');
+        $('#mobile-backdrop').addClass('open');
+    });
+    
+    $('#mobile-menu-close, #mobile-backdrop').click(function() {
+        $('#nav-menu').removeClass('open');
+        $('#mobile-backdrop').removeClass('open');
+    });
+    
+    $('.nav-menu li').click(function() {
+        if ($(window).width() <= 768) {
+            $('#nav-menu').removeClass('open');
+            $('#mobile-backdrop').removeClass('open');
+        }
+    });
+
     loadCart();
     renderProducts();
 
@@ -868,18 +886,20 @@ function loadUserOrders(userId) {
                 }
 
                 $list.append(`
-                    <div class="order-card" onclick="openOrderDetail('${order.id}')" style="padding: 20px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; background: white; cursor: pointer;">
-                        <div style="display: flex; align-items: center;">
-                            ${imagesHtml}
-                            <div>
-                                <h4 style="font-size: 1rem; color: var(--primary); margin-bottom: 5px;">Sipariş #${order.id.substring(0, 8).toUpperCase()}</h4>
-                                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">${orderItemsText}</p>
-                                <span style="font-size: 0.8rem; color: var(--text-light);"><i class="fa-regular fa-calendar"></i> ${dateStr}</span>
+                    <div class="order-card" onclick="openOrderDetail('${order.id}')" style="padding: 20px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 15px; background: white; cursor: pointer;">
+                        <div class="order-card-inner">
+                            <div class="order-card-left" style="display: flex; align-items: center; gap: 15px;">
+                                ${imagesHtml}
+                                <div>
+                                    <h4 style="font-size: 1rem; color: var(--primary); margin-bottom: 5px;">Sipariş #${order.id.substring(0, 8).toUpperCase()}</h4>
+                                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">${orderItemsText}</p>
+                                    <span style="font-size: 0.8rem; color: var(--text-light);"><i class="fa-regular fa-calendar" style="margin-right: 5px;"></i>${dateStr}</span>
+                                </div>
                             </div>
-                        </div>
-                        <div style="text-align: right; flex-shrink: 0; margin-left: 15px;">
-                            <div style="font-weight: 700; color: var(--primary); margin-bottom: 8px;">₺${total.toFixed(2)}</div>
-                            <span class="order-status-pill" style="background: ${status.bg}; color: ${status.color}; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;"><i class="${status.icon}" style="margin-right: 4px;"></i>${status.text}</span>
+                            <div class="order-card-right" style="text-align: right; flex-shrink: 0;">
+                                <div style="font-weight: 700; color: var(--primary); margin-bottom: 8px;">₺${total.toFixed(2)}</div>
+                                <span class="order-status-pill" style="background: ${status.bg}; color: ${status.color}; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;"><i class="${status.icon}" style="margin-right: 4px;"></i>${status.text}</span>
+                            </div>
                         </div>
                     </div>
                 `);

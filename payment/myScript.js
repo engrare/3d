@@ -33,12 +33,14 @@ $(document).ready(function() {
         if (user) {
             if (user.isAnonymous) {
                 // GUEST (MİSAFİR) MODU
-                $('#guest-info-section').show();
+                $('#guest-contact-section').show();
+                $('#guest-address-section').show();
                 $('#user-address-section').hide();
                 $('#user-profile-header').hide();
             } else {
                 // REGISTERED USER MODE
-                $('#guest-info-section').hide();
+                $('#guest-contact-section').hide();
+                $('#guest-address-section').hide();
                 $('#user-address-section').show();
                                 
                 // Profil Bilgilerini Yükle
@@ -66,6 +68,17 @@ $(document).ready(function() {
             signInAnonymously(auth);
         }
     });
+
+    // Mobil/Desktop Özeti Taşıma Mantığı
+    function handleSummaryPosition() {
+        if ($(window).width() <= 900) {
+            $('.checkout-summary').appendTo('#mobile-summary-placeholder');
+        } else {
+            $('.checkout-wrapper').append($('.checkout-summary'));
+        }
+    }
+    handleSummaryPosition();
+    $(window).resize(handleSummaryPosition);
 
     // Kargo Seçimi Değişimi
     $('input[name="shipping-method"]').change(function() {
