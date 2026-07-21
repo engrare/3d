@@ -74,11 +74,27 @@ $(document).ready(function() {
         'products': '#products-page',
         'checkout': '#checkout-page',
         'login': '#login-page',
-        'dashboard': '#dashboard-page'
+        'dashboard': '#dashboard-page',
+        'detail': '#product-detail-page'
     };
+    
+    // Save initial state if it doesn't exist
+    if (!window.history.state) {
+        window.history.replaceState({ page: map[path] || '#products-page' }, "", window.location.href);
+    }
+    
     if (path && map[path]) {
         switchPage(map[path], false); 
     }
+
+    // Tarayıcı Geri/İleri Tuşları İçin Popstate Dinleyicisi
+    window.addEventListener('popstate', function(event) {
+        if (event.state && event.state.page) {
+            switchPage(event.state.page, false);
+        } else {
+            switchPage('#products-page', false);
+        }
+    });
 
     // Navigasyon
     $('.nav-menu li, .nav-trigger, .dropdown-item').click(function(e) {
@@ -309,7 +325,7 @@ function switchPage(targetId, pushState = true) {
     window.scrollTo(0, 0);
 
     if (pushState) {
-        const map = { '#products-page': 'products', '#checkout-page': 'checkout', '#login-page': 'login', '#dashboard-page': 'dashboard' };
+        const map = { '#products-page': 'products', '#checkout-page': 'checkout', '#login-page': 'login', '#dashboard-page': 'dashboard', '#product-detail-page': 'detail' };
         window.history.pushState({ page: targetId }, "", window.location.pathname + '?' + (map[targetId] || 'products'));
     }
 }
