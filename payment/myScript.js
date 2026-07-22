@@ -509,3 +509,9 @@ function showToast(msg, type) {
     document.body.appendChild(div);
     setTimeout(() => div.remove(), 3000);
 }
+window.copyToClipboard = function(selector) {
+    const text = document.querySelector(selector).innerText.trim();
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('Kopyalandı!', 'success');
+    });
+};

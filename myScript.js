@@ -86,29 +86,56 @@ $(document).ready(function() {
     loadCart();
     renderProducts();
 
-    // Initial Routing
-    const path = window.location.search.replace('?', '');
-    const map = {
-        'products': '#products-page',
-        'checkout': '#checkout-page',
-        'login': '#login-page',
-        'dashboard': '#dashboard-page',
-        'detail': '#product-detail-page'
+    // Helper: Slugify for URLs
+    window.slugify = function(text) {
+        return text.toString().toLowerCase().trim()
+            .replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c')
+            .replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-');
     };
-    
+
+    // Initial Routing
+    const urlParams = new URLSearchParams(window.location.search);
+    let initialPage = '#products-page';
+    let detailProductId = null;
+
+    if (urlParams.has('detail')) {
+        const slug = urlParams.get('detail');
+        const p = products.find(x => slugify(x.name) === slug || x.id.toString() === slug);
+        if (p) {
+            initialPage = '#product-detail-page';
+            detailProductId = p.id;
+        } else if (!slug) {
+            // fallback if someone just visits ?detail without slug
+            initialPage = '#product-detail-page';
+            detailProductId = products[0]?.id; // Default to first product to prevent empty page
+        }
+    } else if (urlParams.has('checkout')) {
+        initialPage = '#checkout-page';
+    } else if (urlParams.has('login')) {
+        initialPage = '#login-page';
+    } else if (urlParams.has('dashboard')) {
+        initialPage = '#dashboard-page';
+    }
+
     // Save initial state if it doesn't exist
     if (!window.history.state) {
-        window.history.replaceState({ page: map[path] || '#products-page' }, "", window.location.href);
+        window.history.replaceState({ page: initialPage, productId: detailProductId }, "", window.location.href);
     }
     
-    if (path && map[path]) {
-        switchPage(map[path], false); 
+    if (initialPage === '#product-detail-page' && detailProductId) {
+        openProductDetail(detailProductId, false); // Initialize the detail page correctly
+    } else {
+        switchPage(initialPage, false);
     }
 
     // Tarayıcı Geri/İleri Tuşları İçin Popstate Dinleyicisi
     window.addEventListener('popstate', function(event) {
         if (event.state && event.state.page) {
-            switchPage(event.state.page, false);
+            if (event.state.page === '#product-detail-page' && event.state.productId) {
+                openProductDetail(event.state.productId, false);
+            } else {
+                switchPage(event.state.page, false);
+            }
         } else {
             switchPage('#products-page', false);
         }
@@ -380,7 +407,7 @@ function renderProducts() {
     });
 }
 
-window.openProductDetail = function(id) {
+window.openProductDetail = function(id, pushHistory = true) {
     const p = products.find(x => x.id === id);
     if(!p) return;
     
@@ -553,7 +580,12 @@ window.openProductDetail = function(id) {
         $carousel.css('scroll-behavior', 'smooth');
     }, 10);
 
-    switchPage('#product-detail-page');
+    switchPage('#product-detail-page', false);
+    
+    if (pushHistory) {
+        const slug = slugify(p.name);
+        window.history.pushState({ page: '#product-detail-page', productId: p.id }, "", window.location.pathname + '?detail=' + slug);
+    }
 };
 
 window.changeMainImage = function(idx) {

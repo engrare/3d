@@ -23,6 +23,7 @@ body {
     display: grid;
     grid-template-columns: 1fr 450px;
     min-height: 100vh;
+    padding-top: var(--nav-height, 80px); /* Account for navbar */
 }
 
 .checkout-form-section {
@@ -230,3 +231,22 @@ h3 { margin: 30px 0 20px; font-size: 1.2rem; font-weight: 700; }
 .full-width { width: 100%; }
 .mb-2 { margin-bottom: 10px; }
 .mt-2 { margin-top: 10px; }
+
+/* Elegant Success Page */
+.success-icon-wrapper { width: 80px; height: 80px; background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; font-size: 2.5rem; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: 0 auto 20px auto; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3); }
+.elegant-iban-card { background: #FFFFFF; border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 12px 32px rgba(0,0,0,0.04); text-align: left; overflow: hidden; margin-bottom: 20px; }
+.eic-header { background: #F8FAFC; padding: 18px 24px; font-weight: 700; font-size: 1.1rem; color: var(--primary); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.eic-body { padding: 10px 24px; }
+.eic-row { display: flex; flex-direction: column; padding: 16px 0; border-bottom: 1px solid #F1F5F9; }
+.eic-row:last-child { border-bottom: none; }
+.eic-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; margin-bottom: 6px; }
+.eic-value-group { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+.eic-value { font-size: 1.05rem; color: var(--primary); font-weight: 500; word-break: break-all; }
+.eic-value.highlight { font-weight: 800; font-size: 1.25rem; color: var(--accent); }
+.eic-value.monospace { font-family: 'JetBrains Mono', 'Courier New', Courier, monospace; letter-spacing: 1px; }
+.btn-copy { background: #F1F5F9; border: none; color: var(--text-main); width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.2s; flex-shrink: 0; }
+.btn-copy:hover { background: var(--accent); color: white; }
+.btn-copy:active { transform: scale(0.95); }
+.elegant-warning-box { background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; padding: 16px 20px; border-radius: 12px; display: flex; align-items: flex-start; gap: 12px; text-align: left; font-size: 0.9rem; line-height: 1.5; }
+.elegant-warning-box i { font-size: 1.25rem; color: #EF4444; margin-top: 2px; }
+@media (min-width: 600px) { .eic-row { flex-direction: row; align-items: center; justify-content: space-between; } .eic-label { margin-bottom: 0; width: 35%; } .eic-value-group, .eic-value { width: 65%; justify-content: flex-end; text-align: right; } .eic-value-group { justify-content: flex-end; } }
