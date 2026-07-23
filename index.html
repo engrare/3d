@@ -35,7 +35,7 @@
         }
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="./myStyle.css?v=5">
+    <link rel="stylesheet" href="./myStyle.css?v=7">
 </head>
 <body>
 
@@ -272,7 +272,6 @@
 
     <!-- LOGIN PAGE -->
     <section id="login-page" class="page">
-        <!-- İÇERİĞİ MEVCUT KODLA BİREBİR AYNI -->
         <div class="login-container">
             <div class="login-card">
                 <div id="view-signin">
@@ -281,11 +280,15 @@
                     </div>
                     <form class="login-form">
                         <div class="form-group"><input type="email" id="signin-email" class="login-input" placeholder="E-posta Adresi"></div>
-                        <div class="form-group"><input type="password" id="signin-password" class="login-input" placeholder="Şifre"></div>
+                        <div class="form-group" style="position: relative;">
+                            <input type="password" id="signin-password" class="login-input" placeholder="Şifre" style="padding-right: 40px;">
+                            <i class="fa-solid fa-eye toggle-password" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #64748b;"></i>
+                        </div>
                         <button type="button" id="btn-signin" class="btn primary" style="width: 100%;">Giriş Yap</button>
                     </form>
-                    <div class="login-links">
-                        <span class="link-text" onclick="$('#view-signin').hide(); $('#view-signup').fadeIn();">Hesap Oluştur ↗</span>
+                    <div class="login-links" style="display: flex; justify-content: space-between;">
+                        <span class="link-text" onclick="$('#view-signin').hide(); $('#view-signup').fadeIn();">Hesap Oluştur</span>
+                        <span class="link-text" onclick="$('#view-signin').hide(); $('#view-forgot-password').fadeIn();">Şifremi Unuttum</span>
                     </div>
                 </div>
                 <div id="view-signup" style="display: none;">
@@ -294,7 +297,14 @@
                         <div class="form-group"><input type="text" id="signup-fullname" class="login-input" placeholder="Tam Ad (Ad Soyad)" required></div>
                         <div class="form-group"><input type="text" id="signup-username" class="login-input" placeholder="Kullanıcı Adı" required></div>
                         <div class="form-group"><input type="email" id="signup-email" class="login-input" placeholder="E-posta Adresi" required></div>
-                        <div class="form-group"><input type="password" id="signup-password" class="login-input" placeholder="Şifre" required></div>
+                        <div class="form-group" style="position: relative;">
+                            <input type="password" id="signup-password" class="login-input" placeholder="Şifre" required style="padding-right: 40px;">
+                            <i class="fa-solid fa-eye toggle-password" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #64748b;"></i>
+                        </div>
+                        <div class="form-group" style="position: relative;">
+                            <input type="password" id="signup-password-confirm" class="login-input" placeholder="Şifre Tekrar" required style="padding-right: 40px;">
+                            <i class="fa-solid fa-eye toggle-password" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #64748b;"></i>
+                        </div>
                         <div class="form-group" style="display:flex; align-items:flex-start; gap:10px;">
                             <input type="checkbox" id="signup-kvkk" style="margin-top:4px;" required>
                             <label for="signup-kvkk" style="font-size:0.85rem; color:#666; cursor:pointer; line-height:1.4;">
@@ -305,6 +315,16 @@
                     </form>
                     <div class="login-links" style="justify-content: center;">
                         <span class="link-text" onclick="$('#view-signup').hide(); $('#view-signin').fadeIn();">Giriş Yapın</span>
+                    </div>
+                </div>
+                <div id="view-forgot-password" style="display: none;">
+                    <div class="login-header"><h2>Şifre Sıfırlama</h2></div>
+                    <form class="login-form">
+                        <div class="form-group"><input type="email" id="forgot-email" class="login-input" placeholder="E-posta Adresi" required></div>
+                        <button type="button" id="btn-forgot-password" class="btn primary" style="width: 100%;">Bağlantı Gönder</button>
+                    </form>
+                    <div class="login-links" style="justify-content: center;">
+                        <span class="link-text" onclick="$('#view-forgot-password').hide(); $('#view-signin').fadeIn();">Giriş Ekranına Dön</span>
                     </div>
                 </div>
             </div>

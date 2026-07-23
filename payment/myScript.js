@@ -224,6 +224,14 @@ $(document).ready(function() {
 
     // Siparişi Tamamla Butonu Tetikleyicisi
     $('#btn-complete-order').click(processPayment);
+
+    // Geri tuşu ile gelindiğinde (bfcache) butonun takılı kalmasını önleme
+    $(window).on('pageshow', function(e) {
+        if (e.originalEvent && e.originalEvent.persisted) {
+            $('#btn-complete-order').prop('disabled', false);
+            updateTotals();
+        }
+    });
 });
 
 function loadCart() {

@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, signInAnonymously } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, signInAnonymously, sendPasswordResetEmail } from "firebase/auth";
 import { getDatabase, ref, set, push, onValue, remove, get } from "firebase/database";
 import { getStorage } from "firebase/storage";
 
@@ -27,13 +27,13 @@ let currentProduct = null;
 const products = [
     {
         id: 1,
-        name: "Dik Duran Kişiye Özel Ad Plakası",
-        desc: "Masanızda şık duracak, isim veya unvan yazdırabileceğiniz özel plaka.",
-        price: 180,
+        name: "Araba İçi Numaratör",
+        desc: "Basarak aç kapa yapılabilen elegant numaratör.",
+        price: 179.90,
         images: [
-            { src: "./content/products/1/1.jpg", mockup: { top: "42%", left: "55%", width: "70%", height: "40%", transform: "translate(-50%, -50%) rotateZ(-17deg)", faceColor: "#E0E0E0", extrusionColor: "#4a4a4a", depth: 7, angle: -120 } },
+            { src: "./content/products/1/3.jpg", mockup: { top: "42%", left: "55%", width: "70%", height: "40%", transform: "translate(-50%, -50%) rotateZ(-17deg)", faceColor: "#E0E0E0", extrusionColor: "#4a4a4a", depth: 7, angle: -120 } },
             { src: "./content/products/1/2.jpg", mockup: { top: "60%", left: "70%", width: "35%", height: "12%", transform: "translate(-50%, -50%) rotateZ(10deg)", faceColor: "#f5f5f5", extrusionColor: "#222222", depth: 10, angle: 45 } },
-            { src: "./content/products/1/3.jpg", mockup: { top: "20%", left: "50%", width: "55%", height: "18%", transform: "translate(-50%, -50%)", faceColor: "#FFFFFF", extrusionColor: "#666666", depth: 25, angle: 90 } },
+            { src: "./content/products/1/1.jpg", mockup: { top: "20%", left: "50%", width: "55%", height: "18%", transform: "translate(-50%, -50%)", faceColor: "#FFFFFF", extrusionColor: "#666666", depth: 25, angle: 90 } },
             { src: "./content/products/1/4.jpg", mockup: { top: "80%", left: "20%", width: "25%", height: "8%", transform: "translate(-50%, -50%) rotateZ(-15deg)", faceColor: "#cccccc", extrusionColor: "#111111", depth: 5, angle: -45 } }
         ]
     },
@@ -204,19 +204,32 @@ $(document).ready(function() {
 
     // Modal Kapatma Mantığı (Dışa Tıklama / Tıklayıp Sürükleyip Bırakınca Yanlışlıkla Kapanmama)
     let mousedownTarget = null;
-    $(document).on('mousedown', function(e) {
+    $(document).on('mousedown', '.modal-overlay', function(e) {
         mousedownTarget = e.target;
     });
     
-    $(document).on('mouseup', function(e) {
+    $(document).on('mouseup', '.modal-overlay', function(e) {
         // Tıklama dışarıda başladıysa ve dışarıda bittiyse ve overlay ise kapat
         if (mousedownTarget === e.target && $(e.target).hasClass('modal-overlay')) {
             $(e.target).removeClass('open');
+            $('body').removeClass('no-scroll');
         }
     });
 
     $(document).on('click', '.modal-close', function() {
         $(this).closest('.modal-overlay').removeClass('open');
+        $('body').removeClass('no-scroll');
+    });
+
+    // --- ŞİFRE GÖSTER/GİZLE ---
+    $(document).on('click', '.toggle-password', function() {
+        $(this).toggleClass("fa-eye fa-eye-slash");
+        const input = $(this).siblings("input");
+        if (input.attr("type") === "password") {
+            input.attr("type", "text");
+        } else {
+            input.attr("type", "password");
+        }
     });
 
     // --- ÖZEL RENK SEÇİCİ (PLA 10 Renk) ---
@@ -796,14 +809,52 @@ function showToast(message, type = "info") {
         }
     });
 
+    $('#signin-email, #signin-password').on('keypress', function(e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            $('#btn-signin').click();
+        }
+    });
+
+    // Şifremi Unuttum İşlemi
+    $('#btn-forgot-password').click(async () => {
+        const email = $('#forgot-email').val().trim();
+        if(!email) return showToast("Lütfen e-posta adresinizi girin.", "error");
+
+        const $btn = $('#btn-forgot-password');
+        $btn.prop('disabled', true).text('Gönderiliyor...');
+
+        try {
+            await sendPasswordResetEmail(auth, email);
+            showToast("Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.", "success");
+            $('#forgot-email').val('');
+            $('#view-forgot-password').hide();
+            $('#view-signin').fadeIn();
+        } catch (error) {
+            console.error("Şifre sıfırlama hatası:", error);
+            showToast("İşlem başarısız. Lütfen e-posta adresinizi kontrol edin.", "error");
+        } finally {
+            $btn.prop('disabled', false).text('Bağlantı Gönder');
+        }
+    });
+
+    $('#forgot-email').on('keypress', function(e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            $('#btn-forgot-password').click();
+        }
+    });
+
     // Kayıt Ol İşlemi
     $('#btn-signup').click(async () => {
         const fullname = $('#signup-fullname').val().trim();
         const email = $('#signup-email').val().trim();
         const pass = $('#signup-password').val().trim();
+        const passConfirm = $('#signup-password-confirm').val().trim();
         const isKvkk = $('#signup-kvkk').is(':checked');
 
-        if (!fullname || !email || !pass) return showToast("Lütfen tüm alanları doldurun.", "error");
+        if (!fullname || !email || !pass || !passConfirm) return showToast("Lütfen tüm alanları doldurun.", "error");
+        if (pass !== passConfirm) return showToast("Şifreler uyuşmuyor.", "error");
         if (!isKvkk) return showToast("Lütfen KVKK metnini onaylayın.", "error");
 
         const $btn = $('#btn-signup');
@@ -818,6 +869,7 @@ function showToast(message, type = "info") {
             $('#signup-fullname').val('');
             $('#signup-email').val('');
             $('#signup-password').val('');
+            $('#signup-password-confirm').val('');
             $('#signup-kvkk').prop('checked', false);
         } catch (error) {
             showToast("Kayıt Hatası: " + error.message, "error");
@@ -864,14 +916,19 @@ function loadUserOrders(userId) {
                 
                 // Sadeleştirilmiş durum haritası
                 const statusMap = {
-                    'pending_payment': { text: 'Ödeme Bekliyor', icon: 'fa-solid fa-clock', color: '#92400E', bg: '#FEF3C7' }, // Orange
-                    'paid': { text: 'Ödendi', icon: 'fa-solid fa-sack-dollar', color: '#166534', bg: '#DCFCE7' }, // Green
-                    'Ödendi': { text: 'Ödendi', icon: 'fa-solid fa-sack-dollar', color: '#166534', bg: '#DCFCE7' }, // Green
-                    'Hazırlanıyor': { text: 'Hazırlanıyor', icon: 'fa-solid fa-clock', color: '#92400E', bg: '#FEF3C7' }, // Orange
-                    'Kargolandı': { text: 'Kargolandı', icon: 'fa-solid fa-truck', color: '#1E40AF', bg: '#DBEAFE' }, // Blue
-                    'Teslim Edildi': { text: 'Teslim Edildi', icon: 'fa-solid fa-box-open', color: '#7E22CE', bg: '#F3E8FF' }, // Purple
-                    'İptal': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' }, // Red
-                    'cancelled': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' } // Red
+                    'pending_payment': { text: 'Ödeme Bekliyor', icon: 'fa-solid fa-circle-exclamation', color: '#EF4444', bg: '#FEE2E2' },
+                    'paid': { text: 'Ödendi', icon: 'fa-solid fa-sack-dollar', color: '#166534', bg: '#DCFCE7' },
+                    'Ödendi': { text: 'Ödendi', icon: 'fa-solid fa-sack-dollar', color: '#166534', bg: '#DCFCE7' },
+                    'Hazirlaniyor': { text: 'Hazırlanıyor', icon: 'fa-solid fa-clock', color: '#92400E', bg: '#FEF3C7' },
+                    'Hazırlanıyor': { text: 'Hazırlanıyor', icon: 'fa-solid fa-clock', color: '#92400E', bg: '#FEF3C7' },
+                    'Kargolandi': { text: 'Kargolandı', icon: 'fa-solid fa-truck', color: '#1E40AF', bg: '#DBEAFE' },
+                    'Kargolandı': { text: 'Kargolandı', icon: 'fa-solid fa-truck', color: '#1E40AF', bg: '#DBEAFE' },
+                    'Teslim Edildi': { text: 'Teslim Edildi', icon: 'fa-solid fa-box-open', color: '#7E22CE', bg: '#F3E8FF' },
+                    'Iptal': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' },
+                    'İptal': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' },
+                    'Iptal Edildi': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' },
+                    'İptal Edildi': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' },
+                    'cancelled': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' }
                 };
                 const status = statusMap[order.status] || { text: order.status || 'Hazırlanıyor', icon: 'fa-solid fa-circle-question', color: '#475569', bg: '#F1F5F9' };
                 
@@ -993,11 +1050,60 @@ window.openOrderDetail = function(orderId) {
     }
     const total = order.totalAmount || order.total || 0;
 
+    const statusMap = {
+        'pending_payment': { text: 'Ödeme Bekliyor', icon: 'fa-solid fa-circle-exclamation', color: '#EF4444', bg: '#FEE2E2' },
+        'paid': { text: 'Ödendi', icon: 'fa-solid fa-sack-dollar', color: '#166534', bg: '#DCFCE7' },
+        'Ödendi': { text: 'Ödendi', icon: 'fa-solid fa-sack-dollar', color: '#166534', bg: '#DCFCE7' },
+        'Hazirlaniyor': { text: 'Hazırlanıyor', icon: 'fa-solid fa-clock', color: '#92400E', bg: '#FEF3C7' },
+        'Hazırlanıyor': { text: 'Hazırlanıyor', icon: 'fa-solid fa-clock', color: '#92400E', bg: '#FEF3C7' },
+        'Kargolandi': { text: 'Kargolandı', icon: 'fa-solid fa-truck', color: '#1E40AF', bg: '#DBEAFE' },
+        'Kargolandı': { text: 'Kargolandı', icon: 'fa-solid fa-truck', color: '#1E40AF', bg: '#DBEAFE' },
+        'Teslim Edildi': { text: 'Teslim Edildi', icon: 'fa-solid fa-box-open', color: '#7E22CE', bg: '#F3E8FF' },
+        'Iptal': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' },
+        'İptal': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' },
+        'Iptal Edildi': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' },
+        'İptal Edildi': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' },
+        'cancelled': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' }
+    };
+    const statusObj = statusMap[order.status] || { text: order.status || 'Hazırlanıyor', icon: 'fa-solid fa-circle-question', color: '#475569', bg: '#F1F5F9' };
+    const statusBadge = `<span style="background: ${statusObj.bg}; color: ${statusObj.color}; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;"><i class="${statusObj.icon}" style="margin-right: 4px;"></i>${statusObj.text}</span>`;
+
+    let ibanWarningHtml = '';
+    // Check if the order is havale/iban and payment is pending
+    if ((order.paymentMethod === 'havale' || order.paymentMethod === 'iban') && 
+        (!order.status || order.status === 'pending_payment' || order.status === 'Hazirlaniyor')) {
+        ibanWarningHtml = `
+            <div style="margin-top: 10px; margin-bottom: 25px; padding: 15px; background-color: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 8px; color: #991B1B;">
+                <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.2rem; margin-right: 10px; color: #DC2626;"></i>
+                    <strong style="font-size: 1.1rem;">Ödeme Bekleniyor (Havale/EFT)</strong>
+                </div>
+                <p style="margin-bottom: 10px; font-size: 0.95rem;">
+                    Siparişinizin onaylanması için ödemenizin banka hesaplarımıza ulaşması gerekmektedir. 
+                    Lütfen ödemenizi yaparken açıklama kısmına <strong>${order.id.substring(0, 8).toUpperCase()}</strong> sipariş numaranızı yazmayı unutmayınız.
+                </p>
+                <div style="background-color: white; padding: 10px; border-radius: 6px; border: 1px solid #FECACA; font-family: monospace; font-size: 1rem; margin-bottom: 10px; text-align: center;">
+                    <strong>Alıcı:</strong> ENGRARE MÜHENDİSLİK A.Ş.<br>
+                    <strong>IBAN:</strong> TR12 0006 4000 0012 3456 7890 01
+                </div>
+                <p style="font-size: 0.85rem; color: #7F1D1D; margin-top: 10px;">
+                    <i class="fa-solid fa-circle-info" style="margin-right: 5px;"></i> Ödemenizi havale olarak yaptıysanız ve 1 iş günü beklediyseniz, lütfen <strong>destek@engrare.com</strong> adresine mail atınız.
+                </p>
+            </div>
+        `;
+    }
+
     $('#order-modal-content').html(`
-        <div style="margin-bottom: 15px; line-height: 1.5;">
-            <strong>Sipariş No:</strong> #${order.id.substring(0, 8).toUpperCase()}<br>
-            <strong>Tarih:</strong> ${dateStr}
+        <div style="margin-bottom: 15px; line-height: 1.5; display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+                <strong>Sipariş No:</strong> #${order.id.substring(0, 8).toUpperCase()}<br>
+                <strong>Tarih:</strong> ${dateStr}
+            </div>
+            <div>
+                ${statusBadge}
+            </div>
         </div>
+        ${ibanWarningHtml}
         <div style="margin-bottom: 15px;">
             <h4 style="margin-bottom: 10px; color: var(--primary);">Ürünler</h4>
             ${itemsHtml}
@@ -1008,6 +1114,7 @@ window.openOrderDetail = function(orderId) {
     `);
     
     $('#order-detail-modal').addClass('open');
+    $('body').addClass('no-scroll');
 };
 
 // --- KONTROL PANELİ: ADRESLERİ DETAYLI YÜKLEME VE DÜZENLEME ---
