@@ -108,21 +108,21 @@
                     <div class="detail-price" id="detail-price">₺0.00</div>
 
                     <div class="customization-box">
-                        <div class="form-group">
-                            <label>Ürün Üzerine Yazılacak Metin</label>
+                        <div class="form-group" id="customization-text-group">
+                            <label id="custom-text-label">Ürün Üzerine Yazılacak Metin</label>
                             <input type="text" id="custom-text-input" class="input-box" placeholder="Örn: ENGRARE">
                             <div style="margin-top: 12px; padding: 12px; background: rgba(250, 204, 21, 0.15); border: 1px solid rgba(250, 204, 21, 0.4); border-radius: 8px; display: flex; align-items: flex-start; gap: 10px; color: #92400E;">
                                 <i class="fa-solid fa-circle-info" style="margin-top: 3px; font-size: 1.1rem; color: #D97706;"></i>
                                 <span style="font-size: 0.85rem; font-weight: 500; line-height: 1.4;">Ürün baskıya gönderilmeden önce görünüşü mail olarak atılarak revize yapılabilecektir.</span>
                             </div>
                         </div>
-                        <div class="form-group" style="margin-bottom: 20px;">
+                        <div class="form-group" id="customization-font-group" style="margin-bottom: 20px;">
                             <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; font-weight: 600;">Yazı Tipi (Font)</label>
-                            <select id="custom-font-input" class="input-box">
-                                <option value="'Plus Jakarta Sans', sans-serif">Modern (Varsayılan)</option>
-                                <option value="'Times New Roman', serif">Klasik (Serif)</option>
-                                <option value="'Courier New', monospace">Daktilo (Monospace)</option>
-                                <option value="'Brush Script MT', cursive">El Yazısı (Kıvrımlı)</option>
+                            <select id="custom-font-input" class="input-box" style="font-family: 'Plus Jakarta Sans', sans-serif;">
+                                <option value="'Plus Jakarta Sans', sans-serif" style="font-family: 'Plus Jakarta Sans', sans-serif;">Modern (Varsayılan)</option>
+                                <option value="'Times New Roman', serif" style="font-family: 'Times New Roman', serif;">Klasik (Serif)</option>
+                                <option value="'Courier New', monospace" style="font-family: 'Courier New', monospace;">Daktilo (Monospace)</option>
+                                <option value="'Brush Script MT', cursive" style="font-family: 'Brush Script MT', cursive;">El Yazısı (Kıvrımlı)</option>
                             </select>
                         </div>
                         <style>
@@ -192,7 +192,7 @@
                                 <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; font-weight: 600;">Miktar</label>
                                 <div style="display:flex; align-items:center; background: #fff; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; height: 45px; width: 130px;">
                                     <button type="button" id="detail-qty-minus" style="flex:1; height: 100%; background: none; border: none; border-right: 1px solid var(--border); cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='#F1F5F9';" onmouseout="this.style.background='none';"><i class="fa-solid fa-minus"></i></button>
-                                    <input type="text" id="quantity-input" value="1" style="width: 50px; height: 100%; padding: 0; margin: 0; text-align: center; border: none; background: transparent; font-size: 1.1rem; font-weight: 700; color: var(--primary); outline: none;" readonly>
+                                    <input type="number" id="quantity-input" value="1" min="1" style="width: 50px; height: 100%; padding: 0; margin: 0; text-align: center; border: none; background: transparent; font-size: 1.1rem; font-weight: 700; color: var(--primary); outline: none;">
                                     <button type="button" id="detail-qty-plus" style="flex:1; height: 100%; background: none; border: none; border-left: 1px solid var(--border); cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='#F1F5F9';" onmouseout="this.style.background='none';"><i class="fa-solid fa-plus"></i></button>
                                 </div>
                             </div>
@@ -452,6 +452,6 @@
     </div>
 
     <div id="toast-container"></div>
-    <script type="module" src="myScript.js"></script>
+    <script type="module" src="myScript.js?v=14"></script>
 </body>
 </html>

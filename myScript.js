@@ -29,6 +29,8 @@ const products = [
         id: 1,
         name: "Araba İçi Numaratör",
         desc: "Basarak aç kapa yapılabilen elegant numaratör.",
+		customTextLabel: "araç içinde görünecek telefon numaranızı giriniz.",
+		customTextPlaceholder: "Örn: 0541 555 55 55",
         price: 179.90,
         images: [
             { src: "./content/products/1/3.jpg", mockup: { top: "42%", left: "55%", width: "70%", height: "40%", transform: "translate(-50%, -50%) rotateZ(-17deg)", faceColor: "#E0E0E0", extrusionColor: "#4a4a4a", depth: 7, angle: -120 } },
@@ -371,9 +373,17 @@ $(document).ready(function() {
     $('#custom-font-input').on('change', function() {
         const font = $(this).val();
         $('.mockup-svg-text').attr('font-family', font);
+        $(this).css('font-family', font);
     });
 
-    // Detay Sayfası Miktar Artırma/Azaltma
+    // Detay Sayfası Miktar Artırma/Azaltma ve Manuel Giriş
+    $('#quantity-input').on('change', function() {
+        let val = parseInt($(this).val());
+        if (val < 1 || isNaN(val)) {
+            val = 1;
+        }
+        $(this).val(val);
+    });
     $('#detail-qty-minus').click(function() {
         let val = parseInt($('#quantity-input').val()) || 1;
         if (val > 1) $('#quantity-input').val(val - 1);
@@ -569,6 +579,17 @@ window.openProductDetail = function(id, pushHistory = true) {
     $('#detail-title').text(p.name);
     $('#detail-desc').text(p.desc);
     $('#detail-price').text(`₺${p.price.toFixed(2)}`);
+    
+    // Ürün özelleştirme alanlarını yönetme
+    if (p.disableTextInput) {
+        $('#customization-text-group').hide();
+        $('#customization-font-group').hide();
+    } else {
+        $('#customization-text-group').show();
+        $('#customization-font-group').show();
+        $('#custom-text-label').text(p.customTextLabel || 'Ürün Üzerine Yazılacak Metin');
+        $('#custom-text-input').attr('placeholder', p.customTextPlaceholder || 'Örn: ENGRARE');
+    }
     
     // Formu ve galeri pozisyonunu temizle
     $('#custom-text-input').val('');
