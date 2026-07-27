@@ -13,5 +13,5 @@ Plaka Numaralığı
 
 
 function deploy:
-cd C:\Users\kayas\Desktop\3d-main
+cd C:\Users\KayaPC\Desktop\3d-main
 firebase deploy --only functions

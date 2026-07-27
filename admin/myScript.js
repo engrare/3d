@@ -403,26 +403,33 @@ $(document).ready(function() {
         const getStatusBadge = (status) => {
             let icon = 'fa-circle-question';
             let badgeClass = 'badge-muted';
-            
             if (!status) status = 'Bilinmiyor';
-
             const s = String(status).toLocaleLowerCase('tr');
             
-            if (s.includes('ödendi') || s.includes('paid')) {
+            if (s.includes('ödeme bekliyor') || s.includes('pending_payment') || s.includes('pending payment')) {
+                icon = 'fa-circle-exclamation';
+                badgeClass = 'badge-danger'; // Red/Warning style
+                status = 'Ödeme Bekliyor';
+            } else if (s.includes('ödendi') || s.includes('paid')) {
                 icon = 'fa-sack-dollar';
                 badgeClass = 'badge-success'; // Green
-            } else if (s.includes('hazır') || s.includes('pending') || s.includes('bekliyor')) {
+                status = 'Ödendi';
+            } else if (s.includes('hazır') || s.includes('pending')) {
                 icon = 'fa-clock';
                 badgeClass = 'badge-warning'; // Orange
+                status = 'Hazırlanıyor';
             } else if (s.includes('kargo')) {
                 icon = 'fa-truck';
                 badgeClass = 'badge-info'; // Blue
+                status = 'Kargolandı';
             } else if (s.includes('teslim') || s.includes('tamam')) {
                 icon = 'fa-box-open';
                 badgeClass = 'badge-purple'; // Purple (will add)
-            } else if (s.includes('iptal')) {
+                status = 'Teslim Edildi';
+            } else if (s.includes('iptal') || s.includes('cancel')) {
                 icon = 'fa-ban';
                 badgeClass = 'badge-danger'; // Red
+                status = 'İptal Edildi';
             }
             
             return `<span class="badge ${badgeClass}"><i class="fa-solid ${icon}"></i> ${status}</span>`;
@@ -478,6 +485,7 @@ $(document).ready(function() {
                             </button>
                             <button class="btn-icon action-trigger" data-id="${key}"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                             <div class="dropdown-menu">
+                                <div class="dropdown-item" data-id="${key}" data-userid="${order.userId}" data-status="Ödeme Bekliyor" style="color: #EF4444;"><i class="fa-solid fa-circle-exclamation"></i> Ödeme Bekliyor</div>
                                 <div class="dropdown-item" data-id="${key}" data-userid="${order.userId}" data-status="Ödendi"><i class="fa-solid fa-money-bill"></i> Ödendi</div>
                                 <div class="dropdown-item" data-id="${key}" data-userid="${order.userId}" data-status="Hazırlanıyor"><i class="fa-solid fa-clock"></i> Hazırlanıyor</div>
                                 <div class="dropdown-item" data-id="${key}" data-userid="${order.userId}" data-status="Kargolandı"><i class="fa-solid fa-truck"></i> Kargolandı</div>

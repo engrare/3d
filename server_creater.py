@@ -1,6 +1,7 @@
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import sys
 import socket
+import os  # Dizin değiştirmek için gerekli kütüphane
 
 class CORSRequestHandler(SimpleHTTPRequestHandler):
     def end_headers(self):
@@ -33,9 +34,12 @@ def get_local_ip():
         return "127.0.0.1"
 
 if __name__ == '__main__':
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
+    # Sunucu başlamadan önce çalışma dizinini bu Python dosyasının olduğu klasör yap
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     
-    # Tüm ağ arayüzlerini dinle (0.0.0.0)
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
+    
+    # Telefonun bağlanabilmesi için TÜM ağ arayüzlerini dinle (0.0.0.0)
     server_address = ('0.0.0.0', port)
     
     # Allow address reuse
@@ -49,7 +53,8 @@ if __name__ == '__main__':
     print(f"Sunucu çalışıyor (No-Cache Modu):")
     print(f"- Yerel adres: http://localhost:{port}")
     print(f"- Ağ adresi:   http://{local_ip}:{port}")
-    print(f"- Telefondan erişmek için: http://{local_ip}:{port}/Desktop/3d-main/")
+    print(f"- Telefondan erişmek için: http://{local_ip}:{port}/index.html")
+    
     print(f"\nSunucuyu durdurmak için: Ctrl+C")
     
     try: 

@@ -186,6 +186,16 @@
                             .pla-swatch:hover {
                                 transform: scale(1.2);
                             }
+                            
+                            /* Hide number input arrows */
+                            input[type=number]::-webkit-inner-spin-button, 
+                            input[type=number]::-webkit-outer-spin-button { 
+                                -webkit-appearance: none; 
+                                margin: 0; 
+                            }
+                            input[type=number] {
+                                -moz-appearance: textfield; /* Firefox */
+                            }
                         </style>
                         <div style="display: flex; gap: 20px; margin-bottom: 25px; align-items: flex-end; flex-wrap: wrap;">
                             <div class="form-group" style="margin-bottom: 0;">
@@ -452,6 +462,6 @@
     </div>
 
     <div id="toast-container"></div>
-    <script type="module" src="myScript.js?v=14"></script>
+    <script type="module" src="myScript.js?v=16"></script>
 </body>
 </html>
