@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, signInAnonymously, sendPasswordResetEmail } from "firebase/auth";
 import { getDatabase, ref, set, push, onValue, remove, get } from "firebase/database";
-import { getStorage } from "firebase/storage";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 
 // --- FIREBASE CONFIG ---
 const firebaseConfig = {
@@ -31,25 +31,31 @@ const products = [
         desc: "Basarak aç kapa yapılabilen elegant numaratör.",
 		customTextLabel: "araç içinde görünecek telefon numaranızı giriniz.",
 		customTextPlaceholder: "Örn: 0541 555 55 55",
+		customTextPlaceholderPreview: "0541 555 55 55",
         price: 179.90,
         images: [
-            { src: "./content/products/1/3.jpg", mockup: { top: "42%", left: "55%", width: "70%", height: "40%", transform: "translate(-50%, -50%) rotateZ(-17deg)", faceColor: "#E0E0E0", extrusionColor: "#4a4a4a", depth: 7, angle: -120 } },
-            { src: "./content/products/1/2.jpg", mockup: { top: "60%", left: "70%", width: "35%", height: "12%", transform: "translate(-50%, -50%) rotateZ(10deg)", faceColor: "#f5f5f5", extrusionColor: "#222222", depth: 10, angle: 45 } },
-            { src: "./content/products/1/1.jpg", mockup: { top: "20%", left: "50%", width: "55%", height: "18%", transform: "translate(-50%, -50%)", faceColor: "#FFFFFF", extrusionColor: "#666666", depth: 25, angle: 90 } },
-            { src: "./content/products/1/4.jpg", mockup: { top: "80%", left: "20%", width: "25%", height: "8%", transform: "translate(-50%, -50%) rotateZ(-15deg)", faceColor: "#cccccc", extrusionColor: "#111111", depth: 5, angle: -45 } }
-        ]
+            { src: "./content/products/1/3.jpg" },
+            { src: "./content/products/1/2.jpg" },
+            { src: "./content/products/1/1.jpg" },
+            { src: "./content/products/1/4.jpg" }
+        ],
+        previewTextArea: { top: '15%', left: '10%', width: '80%', height: '70%' },
+        previewLogoArea: { top: '15%', left: '10%', width: '80%', height: '70%' }
     },
     {
         id: 2,
         name: "Duvara Yapışmalı Özel Ad Plakası",
         desc: "Kapı veya duvarlar için tasarlanmış isimlik.",
         price: 180,
+        allowLogo: true,
         images: [
-            { src: "./content/products/2/1.jpg", mockup: { top: "50%", left: "50%", width: "60%", height: "15%", transform: "translate(-50%, -50%) rotateZ(2deg)", faceColor: "#FFD700", extrusionColor: "#B8860B", depth: 12, angle: 120 } },
-            { src: "./content/products/2/2.jpg", mockup: { top: "30%", left: "40%", width: "45%", height: "10%", transform: "translate(-50%, -50%) rotateZ(-8deg)", faceColor: "#FFFFFF", extrusionColor: "#555555", depth: 8, angle: 160 } },
-            { src: "./content/products/2/3.jpg", mockup: { top: "70%", left: "60%", width: "35%", height: "12%", transform: "translate(-50%, -50%) rotateZ(5deg)", faceColor: "#E0E0E0", extrusionColor: "#333333", depth: 18, angle: 30 } },
-            { src: "./content/products/2/4.jpg", mockup: { top: "45%", left: "80%", width: "30%", height: "14%", transform: "translate(-50%, -50%) rotateZ(-20deg)", faceColor: "#F8F8FF", extrusionColor: "#A9A9A9", depth: 20, angle: -120 } }
-        ]
+            { src: "./content/products/2/1.jpg" },
+            { src: "./content/products/2/2.jpg" },
+            { src: "./content/products/2/3.jpg" },
+            { src: "./content/products/2/4.jpg" }
+        ],
+        previewTextArea: { top: '52%', left: '17.5%', width: '64.5%', height: '32%' },
+        previewLogoArea: { top: '23%', left: '17.5%', width: '64.5%', height: '30%' }
     },
     {
         id: 3,
@@ -57,11 +63,13 @@ const products = [
         desc: "Üzerine isim yazdırılabilen dekoratif kalemlik.",
         price: 180,
         images: [
-            { src: "./content/products/3/1.jpg", mockup: { top: "70%", left: "50%", width: "40%", height: "10%", transform: "translate(-50%, -50%)", faceColor: "#FFFFFF", extrusionColor: "#000000", depth: 15, angle: 45 } },
-            { src: "./content/products/3/2.jpg", mockup: { top: "50%", left: "20%", width: "30%", height: "8%", transform: "translate(-50%, -50%) rotateZ(15deg)", faceColor: "#EEEEEE", extrusionColor: "#444444", depth: 6, angle: 90 } },
-            { src: "./content/products/3/3.jpg", mockup: { top: "80%", left: "70%", width: "28%", height: "12%", transform: "translate(-50%, -50%) rotateZ(-10deg)", faceColor: "#F5F5DC", extrusionColor: "#8B4513", depth: 12, angle: 135 } },
-            { src: "./content/products/3/4.jpg", mockup: { top: "40%", left: "80%", width: "35%", height: "15%", transform: "translate(-50%, -50%) rotateZ(-25deg)", faceColor: "#FFFFFF", extrusionColor: "#2F4F4F", depth: 22, angle: -45 } }
-        ]
+            { src: "./content/products/3/1.jpg" },
+            { src: "./content/products/3/2.jpg" },
+            { src: "./content/products/3/3.jpg" },
+            { src: "./content/products/3/4.jpg" }
+        ],
+        previewTextArea: { top: '15%', left: '10%', width: '80%', height: '70%' },
+        previewLogoArea: { top: '15%', left: '10%', width: '80%', height: '70%' }
     }
 ];
 
@@ -259,6 +267,17 @@ $(document).ready(function() {
             $('#' + inputId).val(color);
             $('#' + inputId + '-btn').css('background-color', color);
             $(this).closest('.pla-options-dropdown').removeClass('open');
+            
+            if (inputId === 'custom-obj-color') {
+                $('#preview-object-color-layer').css('background-color', color);
+            } else if (inputId === 'custom-text-color') {
+                $('#preview-dynamic-text').css('color', color);
+                $('#preview-dynamic-logo').css('background-color', color); // Logoyu metin rengine boya
+                // Renk değiştiğinde filtreyi tekrar uygula
+                if (window.applyFilterToPreview && typeof currentProduct !== 'undefined' && currentProduct) {
+                    window.applyFilterToPreview(currentProduct.id, color);
+                }
+            }
         }
     });
 
@@ -276,7 +295,16 @@ $(document).ready(function() {
 
     // Sepetten Silme
     $(document).on('click', '.remove-btn', function() {
-        cart.splice($(this).data('index'), 1);
+        const itemIndex = $(this).data('index');
+        const itemToRemove = cart[itemIndex];
+        
+        // Eğer üründe logo varsa Storage'dan sil
+        if (itemToRemove && itemToRemove.logoStoragePath) {
+            const sRef = storageRef(storage, itemToRemove.logoStoragePath);
+            deleteObject(sRef).catch(err => console.error("Logo silinemedi:", err));
+        }
+        
+        cart.splice(itemIndex, 1);
         saveCart();
         renderCart();
     });
@@ -584,11 +612,33 @@ window.openProductDetail = function(id, pushHistory = true) {
     if (p.disableTextInput) {
         $('#customization-text-group').hide();
         $('#customization-font-group').hide();
+        $('#customization-logo-group').hide();
     } else {
         $('#customization-text-group').show();
         $('#customization-font-group').show();
+        
+        if (p.allowLogo) {
+            $('#customization-logo-group').show();
+        } else {
+            $('#customization-logo-group').hide();
+        }
+        
         $('#custom-text-label').text(p.customTextLabel || 'Ürün Üzerine Yazılacak Metin');
         $('#custom-text-input').attr('placeholder', p.customTextPlaceholder || 'Örn: ENGRARE');
+        
+        const $textInput = $('#custom-text-input');
+        $textInput.off('input'); // Önceki event'leri temizle
+        
+        if (p.name && p.name.toLowerCase().includes('numaratör')) {
+            $textInput.attr('type', 'tel');
+            $textInput.attr('maxlength', '11');
+            $textInput.on('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11);
+            });
+        } else {
+            $textInput.attr('type', 'text');
+            $textInput.attr('maxlength', '15');
+        }
     }
     
     // Formu ve galeri pozisyonunu temizle
@@ -599,6 +649,82 @@ window.openProductDetail = function(id, pushHistory = true) {
     $('#custom-text-color-btn').css('background-color', '#FBC02D');
     $('#custom-obj-color').val('#222222');
     $('#custom-obj-color-btn').css('background-color', '#222222');
+    
+    // Temizle Logo (Varsayılan yüklemesi aşağıda yapılacak)
+    $('#custom-logo-input').val('');
+    $('#clear-logo-btn').hide();
+    
+    // 2D Preview Box Reset
+    if (p.disableTextInput) {
+        $('#advanced-2d-preview-container').hide();
+    } else {
+        $('#advanced-2d-preview-container').show();
+        const defaultText = p.customTextPlaceholderPreview || 'ENGRARE';
+        $('#preview-dynamic-text').text(defaultText).css({
+            'color': '#FBC02D',
+            'font-size': '51px',
+            'text-align': 'center'
+        });
+        $('#preview-text-size').val(51);
+        
+        $('.align-btn').removeClass('active').css({'background': 'white', 'color': 'inherit', 'border-color': 'var(--border)'});
+        $('.align-btn[data-align="center"]').addClass('active').css({'background': 'var(--primary)', 'color': 'white', 'border-color': 'var(--primary)'});
+        
+        const textArea = p.previewTextArea || { top: '15%', left: '10%', width: '80%', height: '70%' };
+        $('#preview-printable-area').css({
+            'top': textArea.top,
+            'left': textArea.left,
+            'width': textArea.width,
+            'height': textArea.height,
+            'justify-content': 'center',
+            'border': '2px dashed rgba(0, 0, 0, 0.5)'
+        });
+        
+        if (p.allowLogo) {
+            const logoArea = p.previewLogoArea || { top: '15%', left: '10%', width: '80%', height: '70%' };
+            $('#preview-logo-area').css({
+                'display': 'flex',
+                'top': logoArea.top,
+                'left': logoArea.left,
+                'width': logoArea.width,
+                'height': logoArea.height,
+                'border': '2px dashed rgba(0, 0, 0, 0.5)'
+            });
+            
+            // Varsayılan logoyu yükle
+            const defaultLogo = './content/engrare_logo_elegant.svg';
+            const maskSize = 51 * 2.1; // size 51 * logoMultiplier 2.1
+            $('#preview-dynamic-logo').css({
+                'mask-image': `url(${defaultLogo})`,
+                '-webkit-mask-image': `url(${defaultLogo})`,
+                'mask-size': `${maskSize}%`,
+                '-webkit-mask-size': `${maskSize}%`,
+                'mask-repeat': 'no-repeat',
+                '-webkit-mask-repeat': 'no-repeat',
+                'mask-position': 'center',
+                '-webkit-mask-position': 'center',
+                'background-color': '#FBC02D'
+            }).show();
+            $('#clear-logo-btn').show();
+        } else {
+            $('#preview-logo-area').hide();
+            $('#preview-dynamic-logo').hide().css('mask-image', 'none').css('-webkit-mask-image', 'none');
+        }
+        
+        // Boyutlandırma tetiklemesini containerlar görünür olduktan SONRA yap ki tarayıcı mask-size'ı doğru hesaplasın.
+        setTimeout(() => {
+            $('#preview-text-size').trigger('input');
+        }, 10);
+        
+        $('#toggle-printable-area').prop('checked', true);
+        
+        $('#preview-object-color-layer').css('background-color', '#222222');
+        if (window.applyFilterToPreview) {
+            window.applyFilterToPreview(p.id, '#FBC02D'); // Varsayılan metin rengiyle filtrele
+        } else {
+            $('#preview-overlay-img').attr('src', `./content/products/${p.id}/preview.png`).show();
+        }
+    }
     
     // Ok tuşlarının ilk durumunu ayarla (başta en soldayız)
     $('#carousel-prev').css({ 'opacity': '0.3', 'pointer-events': 'none' });
@@ -630,7 +756,7 @@ window.changeMainImage = function(idx) {
     $carousel.scrollLeft(width * idx);
 };
 
-function addToCart() {
+async function addToCart() {
     if(!currentProduct) return;
     
     const text = $('#custom-text-input').val().trim();
@@ -638,9 +764,14 @@ function addToCart() {
     const font = $('#custom-font-input').val();
     const textColor = $('#custom-text-color').val();
     const objColor = $('#custom-obj-color').val();
+    const textSize = $('#preview-text-size').val();
+    const textAlign = $('.align-btn.active').data('align') || 'center';
     
-    if(text === "") {
-        showToast("Lütfen yazılacak metni giriniz.", "error");
+    const logoFile = $('#custom-logo-input').length > 0 ? $('#custom-logo-input')[0].files[0] : null;
+    const isLogoVisible = $('#preview-dynamic-logo').is(':visible');
+    
+    if(text === "" && !isLogoVisible) {
+        showToast("Lütfen yazılacak metni giriniz veya logo yükleyiniz.", "error");
         return;
     }
 
@@ -654,8 +785,36 @@ function addToCart() {
         font: font,
         textColor: textColor,
         objColor: objColor,
-        quantity: qty
+        quantity: qty,
+        textSize: textSize,
+        textAlign: textAlign
     };
+    
+    if (logoFile) {
+        showToast("Logo yükleniyor, lütfen bekleyin...", "info");
+        const $btn = $('#add-to-cart'); // Varsa sepete ekle butonu
+        $btn.prop('disabled', true).css('opacity', '0.7');
+        
+        try {
+            const ext = logoFile.name.split('.').pop();
+            const fileName = `logos/cart_${item.id}_${Math.random().toString(36).substring(2)}.${ext}`;
+            const sRef = storageRef(storage, fileName);
+            
+            await uploadBytes(sRef, logoFile);
+            const downloadUrl = await getDownloadURL(sRef);
+            
+            item.logoUrl = downloadUrl;
+            item.logoStoragePath = fileName;
+        } catch (error) {
+            console.error("Logo yükleme hatası:", error);
+            showToast("Logo yüklenirken bir hata oluştu.", "error");
+            $btn.prop('disabled', false).css('opacity', '1');
+            return;
+        }
+        $btn.prop('disabled', false).css('opacity', '1');
+    } else if (isLogoVisible) {
+        item.logoUrl = './content/engrare_logo_elegant.svg';
+    }
 
     cart.push(item);
     saveCart();
@@ -781,7 +940,14 @@ function renderCart() {
     `;
     $('#free-shipping-progress-container').html(progressHtml);
 
-    const shipping = sub >= 500 ? 0 : 50.00;
+    const shipping = sub === 0 ? 0 : (sub >= 500 ? 0 : 50.00);
+    if (sub === 0) {
+        $('#free-shipping-progress-container').hide();
+        $('#shipping-display').closest('.price-row').hide();
+    } else {
+        $('#free-shipping-progress-container').show();
+        $('#shipping-display').closest('.price-row').show();
+    }
     $('#shipping-display').text(shipping === 0 ? "Ücretsiz" : `₺${shipping.toFixed(2)}`);
     $('#val-subtotal').text(`₺${sub.toFixed(2)}`);
     $('#val-total').text(`₺${(sub + shipping).toFixed(2)}`);
@@ -959,11 +1125,16 @@ function loadUserOrders(userId) {
                     itemsArray = Array.isArray(order.items) ? order.items : Object.values(order.items);
                 }
                 
-                let orderItemsText = "";
+                let orderItemsHtml = "";
                 if (itemsArray.length > 0) {
-                    orderItemsText = itemsArray.map(item => `${item.name} (${item.customText || '-'})`).join(', ');
+                    orderItemsHtml = itemsArray.map(item => `
+                        <div style="margin-bottom: 6px;">
+                            <div style="font-weight: 600; color: var(--primary); font-size: 0.9rem;">${item.name} <span style="font-size: 0.8rem; color: var(--text-muted);">x${item.quantity || 1}</span></div>
+                            ${item.customText ? `<div style="font-size: 0.8rem; color: #6b7280; margin-top: 2px;">Varyant/Yazı: ${item.customText}</div>` : ''}
+                        </div>
+                    `).join('');
                 } else if (order.itemsSummary) {
-                    orderItemsText = order.itemsSummary;
+                    orderItemsHtml = `<div style="font-size: 0.85rem; color: var(--text-muted);">${order.itemsSummary}</div>`;
                 }
 
                 // Siparişin ürün görsellerini arka arkaya yuvarlak şekilde listeleme
@@ -1003,7 +1174,7 @@ function loadUserOrders(userId) {
                                 ${imagesHtml}
                                 <div>
                                     <h4 style="font-size: 1rem; color: var(--primary); margin-bottom: 5px;">Sipariş #${order.id.substring(0, 8).toUpperCase()}</h4>
-                                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">${orderItemsText}</p>
+                                    <div style="margin-bottom: 8px;">${orderItemsHtml}</div>
                                     <span style="font-size: 0.8rem; color: var(--text-light);"><i class="fa-regular fa-calendar" style="margin-right: 5px;"></i>${dateStr}</span>
                                 </div>
                             </div>
@@ -1179,3 +1350,158 @@ function loadUserAddresses(userId) {
         }
     });
 }
+
+// --- 2D PREVIEW LOGIC ---
+$(document).ready(function() {
+    const $dynText = $('#preview-dynamic-text');
+    const $printArea = $('#preview-printable-area');
+    
+    $('#custom-text-input').on('input', function() {
+        const val = $(this).val();
+        const defaultText = (typeof currentProduct !== 'undefined' && currentProduct && currentProduct.customTextPlaceholderPreview) ? currentProduct.customTextPlaceholderPreview : 'ENGRARE';
+        $dynText.text(val || defaultText);
+    });
+
+    $('#custom-font-input').on('change', function() {
+        $dynText.css('font-family', $(this).val());
+    });
+
+    $('.align-btn').on('click', function() {
+        $('.align-btn').removeClass('active').css({
+            'background': 'white', 
+            'color': 'inherit', 
+            'border-color': 'var(--border)'
+        });
+        
+        $(this).addClass('active').css({
+            'background': 'var(--primary)', 
+            'color': 'white', 
+            'border-color': 'var(--primary)'
+        });
+        
+        const align = $(this).data('align');
+        $dynText.css('text-align', align);
+        
+        if (align === 'left') $printArea.css('justify-content', 'flex-start');
+        else if (align === 'right') $printArea.css('justify-content', 'flex-end');
+        else $printArea.css('justify-content', 'center');
+    });
+
+    $('#preview-text-size').on('input', function() {
+        const size = $(this).val();
+        $dynText.css('font-size', size + 'px');
+        
+        // --- LOGO BÜYÜME ÇARPANI BURADA ---
+        // 'size' değeri 12 ile 100 arasında gelir.
+        // Logonun daha büyük olmasını isterseniz buradaki 2.1 sayısını arttırabilirsiniz (örn: 2.5 veya 3.0)
+        const logoMultiplier = 1.2; 
+        const maskSize = size * logoMultiplier;
+        
+        $('#preview-dynamic-logo').css({
+            'mask-size': `${maskSize}%`,
+            '-webkit-mask-size': `${maskSize}%`
+        });
+        
+        $('#preview-text-size-val').text(size + 'px / %');
+    });
+
+    $('#toggle-printable-area').on('change', function() {
+        if ($(this).is(':checked')) {
+            $printArea.css('border', '2px dashed rgba(0, 0, 0, 0.5)');
+            $('#preview-logo-area').css('border', '2px dashed rgba(0, 0, 0, 0.5)');
+        } else {
+            $printArea.css('border', 'none');
+            $('#preview-logo-area').css('border', 'none');
+        }
+    });
+
+    // --- LOGO YÜKLEME ---
+    $('#custom-logo-input').on('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Sadece PNG, JPG, JPEG veya SVG formatında logo yükleyebilirsiniz.');
+            $(this).val('');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            $('#preview-dynamic-logo').css({
+                'mask-image': `url(${event.target.result})`,
+                '-webkit-mask-image': `url(${event.target.result})`,
+                'mask-repeat': 'no-repeat',
+                '-webkit-mask-repeat': 'no-repeat',
+                'mask-position': 'center',
+                '-webkit-mask-position': 'center',
+                'background-color': $('#custom-text-color').val()
+            }).show();
+            $('#clear-logo-btn').show();
+            
+            setTimeout(() => {
+                $('#preview-text-size').trigger('input');
+            }, 10);
+        };
+        reader.readAsDataURL(file);
+    });
+
+    $('#clear-logo-btn').on('click', function() {
+        $('#custom-logo-input').val('');
+        $('#preview-dynamic-logo').hide().css('mask-image', 'none').css('-webkit-mask-image', 'none');
+        $(this).hide();
+    });
+});
+
+// --- DYNAMIC IMAGE FILTERING ---
+window.hexToRgb = function(hex) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : { r: 0, g: 0, b: 0 };
+};
+
+window.applyFilterToPreview = function(productId, textColorHex) {
+    if (!productId) return;
+    
+    const imgUrl = `./content/products/${productId}/preview.png`;
+    const targetRgb = window.hexToRgb(textColorHex);
+    
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.onload = function() {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        
+        try {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                // Siyah veya çok koyu gri olan (RGB < 60) ve tam şeffaf olmayan pikselleri bul
+                if (data[i] < 60 && data[i+1] < 60 && data[i+2] < 60 && data[i+3] > 0) {
+                    data[i] = targetRgb.r;     // red
+                    data[i+1] = targetRgb.g; // green
+                    data[i+2] = targetRgb.b; // blue
+                }
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            $('#preview-overlay-img').attr('src', canvas.toDataURL()).show();
+        } catch (e) {
+            console.error("Canvas filtering error:", e);
+            // Hata durumunda (örn. CORS) orijinal resmi göster
+            $('#preview-overlay-img').attr('src', imgUrl).show();
+        }
+    };
+    img.onerror = function() {
+        $('#preview-overlay-img').hide();
+    };
+    img.src = imgUrl;
+};
