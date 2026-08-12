@@ -394,6 +394,7 @@ $(document).ready(function() {
     // Dinamik Mockup Canlı Önizleme
     $('#custom-text-input').on('input', function() {
         const text = $(this).val().trim();
+		console.log("evet");
         $('.mockup-svg-text').text(text);
     });
 
@@ -874,8 +875,8 @@ function renderCart() {
                             <div style="display: flex; gap: 8px;">
                                 <div style="position: relative;">
                                     <div class="pla-color-select" data-target="cart-dropdown-text-${index}" style="width: 20px; height: 20px; border-radius: 50%; background: ${item.textColor || '#fff'}; border: 1px solid var(--border);" title="Yazı Rengi"></div>
-                                    <div class="pla-options-dropdown" id="cart-dropdown-text-${index}" style="padding: 8px; gap: 6px; width: 160px; bottom: calc(100% + 10px);">
-                                        <div style="text-align:center; font-size:0.7rem; font-weight:700; color:var(--text-muted); grid-column: span 5; margin-bottom: 2px;">YAZI RENGİ</div>
+                                    <div class="pla-options-dropdown" id="cart-dropdown-text-${index}" style="padding: 8px; gap: 8px; width: 130px; bottom: calc(100% + 10px);">
+                                        <div style="text-align:center; font-size:0.7rem; font-weight:700; color:var(--text-muted); grid-column: span 4; margin-bottom: 2px;">YAZI RENGİ</div>
                                         <div class="pla-swatch" data-color="#FFFFFF" data-cart-index="${index}" data-type="text" style="background-color: #FFFFFF; width: 22px; height: 22px;" title="Beyaz"></div>
                                         <div class="pla-swatch" data-color="#222222" data-cart-index="${index}" data-type="text" style="background-color: #222222; width: 22px; height: 22px;" title="Siyah"></div>
                                         <div class="pla-swatch" data-color="#C0C0C0" data-cart-index="${index}" data-type="text" style="background-color: #C0C0C0; width: 22px; height: 22px;" title="Gümüş"></div>
@@ -883,15 +884,13 @@ function renderCart() {
                                         <div class="pla-swatch" data-color="#1976D2" data-cart-index="${index}" data-type="text" style="background-color: #1976D2; width: 22px; height: 22px;" title="Mavi"></div>
                                         <div class="pla-swatch" data-color="#388E3C" data-cart-index="${index}" data-type="text" style="background-color: #388E3C; width: 22px; height: 22px;" title="Yeşil"></div>
                                         <div class="pla-swatch" data-color="#FBC02D" data-cart-index="${index}" data-type="text" style="background-color: #FBC02D; width: 22px; height: 22px;" title="Sarı"></div>
-                                        <div class="pla-swatch" data-color="#F57C00" data-cart-index="${index}" data-type="text" style="background-color: #F57C00; width: 22px; height: 22px;" title="Turuncu"></div>
                                         <div class="pla-swatch" data-color="#E91E63" data-cart-index="${index}" data-type="text" style="background-color: #E91E63; width: 22px; height: 22px;" title="Pembe"></div>
-                                        <div class="pla-swatch" data-color="#D4AF37" data-cart-index="${index}" data-type="text" style="background-color: #D4AF37; width: 22px; height: 22px;" title="Altın"></div>
                                     </div>
                                 </div>
                                 <div style="position: relative;">
                                     <div class="pla-color-select" data-target="cart-dropdown-obj-${index}" style="width: 20px; height: 20px; border-radius: 50%; background: ${item.objColor || '#333'}; border: 1px solid var(--border);" title="Obje Rengi"></div>
-                                    <div class="pla-options-dropdown" id="cart-dropdown-obj-${index}" style="padding: 8px; gap: 6px; width: 160px; bottom: calc(100% + 10px);">
-                                        <div style="text-align:center; font-size:0.7rem; font-weight:700; color:var(--text-muted); grid-column: span 5; margin-bottom: 2px;">OBJE RENGİ</div>
+                                    <div class="pla-options-dropdown" id="cart-dropdown-obj-${index}" style="padding: 8px; gap: 8px; width: 130px; bottom: calc(100% + 10px);">
+                                        <div style="text-align:center; font-size:0.7rem; font-weight:700; color:var(--text-muted); grid-column: span 4; margin-bottom: 2px;">OBJE RENGİ</div>
                                         <div class="pla-swatch" data-color="#FFFFFF" data-cart-index="${index}" data-type="obj" style="background-color: #FFFFFF; width: 22px; height: 22px;" title="Beyaz"></div>
                                         <div class="pla-swatch" data-color="#222222" data-cart-index="${index}" data-type="obj" style="background-color: #222222; width: 22px; height: 22px;" title="Siyah"></div>
                                         <div class="pla-swatch" data-color="#C0C0C0" data-cart-index="${index}" data-type="obj" style="background-color: #C0C0C0; width: 22px; height: 22px;" title="Gümüş"></div>
@@ -899,9 +898,7 @@ function renderCart() {
                                         <div class="pla-swatch" data-color="#1976D2" data-cart-index="${index}" data-type="obj" style="background-color: #1976D2; width: 22px; height: 22px;" title="Mavi"></div>
                                         <div class="pla-swatch" data-color="#388E3C" data-cart-index="${index}" data-type="obj" style="background-color: #388E3C; width: 22px; height: 22px;" title="Yeşil"></div>
                                         <div class="pla-swatch" data-color="#FBC02D" data-cart-index="${index}" data-type="obj" style="background-color: #FBC02D; width: 22px; height: 22px;" title="Sarı"></div>
-                                        <div class="pla-swatch" data-color="#F57C00" data-cart-index="${index}" data-type="obj" style="background-color: #F57C00; width: 22px; height: 22px;" title="Turuncu"></div>
                                         <div class="pla-swatch" data-color="#E91E63" data-cart-index="${index}" data-type="obj" style="background-color: #E91E63; width: 22px; height: 22px;" title="Pembe"></div>
-                                        <div class="pla-swatch" data-color="#D4AF37" data-cart-index="${index}" data-type="obj" style="background-color: #D4AF37; width: 22px; height: 22px;" title="Altın"></div>
                                     </div>
                                 </div>
                             </div>
@@ -1360,6 +1357,7 @@ $(document).ready(function() {
         const val = $(this).val();
         const defaultText = (typeof currentProduct !== 'undefined' && currentProduct && currentProduct.customTextPlaceholderPreview) ? currentProduct.customTextPlaceholderPreview : 'ENGRARE';
         $dynText.text(val || defaultText);
+		console.log("ready");
     });
 
     $('#custom-font-input').on('change', function() {
