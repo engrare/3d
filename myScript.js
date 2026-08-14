@@ -59,14 +59,59 @@ const products = [
     },
     {
         id: 3,
-        name: "Özel Tasarım Kalemlik",
-        desc: "Üzerine isim yazdırılabilen dekoratif kalemlik.",
+        name: "Araba Plaka Çerçevesi",
+        desc: "Plakanızın dışına yüksek kalite ile basılmış logo ve yazı ekleyebildiğiniz çerçevenizi tasarlayın.",
         price: 180,
         images: [
             { src: "./content/products/3/1.jpg" },
             { src: "./content/products/3/2.jpg" },
             { src: "./content/products/3/3.jpg" },
             { src: "./content/products/3/4.jpg" }
+        ],
+        previewTextArea: { top: '15%', left: '10%', width: '80%', height: '70%' },
+        previewLogoArea: { top: '15%', left: '10%', width: '80%', height: '70%' }
+    },
+    {
+        id: 4,
+        name: "Masaüstü USB'li fan",
+        desc: "Renklerini seçebildiğiniz size özel fan.",
+        price: 180,
+        images: [
+            { src: "./content/products/4/1.jpg" },
+            { src: "./content/products/4/2.jpg" },
+            { src: "./content/products/4/3.jpg" },
+            { src: "./content/products/4/4.jpg" }
+        ],
+        previewTextArea: { top: '15%', left: '10%', width: '80%', height: '70%' },
+        previewLogoArea: { top: '15%', left: '10%', width: '80%', height: '70%' }
+    },
+    {
+        id: 5,
+        name: "Takıma Özel Kalemlik",
+        desc: "Üzerine isim yazdırılabilen takımlı kalemlik",
+        price: 180,
+        images: [
+            { src: "./content/products/5/1.jpg" },
+            { src: "./content/products/5/2.jpg" },
+            { src: "./content/products/5/3.jpg" },
+            { src: "./content/products/5/4.jpg" }
+        ],
+        previewTextArea: { top: '15%', left: '10%', width: '80%', height: '70%' },
+        previewLogoArea: { top: '15%', left: '10%', width: '80%', height: '70%' }
+    },
+    {
+        id: 6,
+        name: "Özet Tasarım Anahtarlık",
+        desc: "Üzerine isim yazdırılabilen dekoratif anahtarlık.",
+		isCustomText: false,
+		CustomColorText1: "Üst Renk",   // Renk seçici 1'in etiketi
+		CustomColorText2: "Alt Renk",    // Renk seçici 2'nin etiketi
+        price: 180,
+        images: [
+            { src: "./content/products/6/1.jpg" },
+            { src: "./content/products/6/2.jpg" },
+            { src: "./content/products/6/3.jpg" },
+            { src: "./content/products/6/4.jpg" }
         ],
         previewTextArea: { top: '15%', left: '10%', width: '80%', height: '70%' },
         previewLogoArea: { top: '15%', left: '10%', width: '80%', height: '70%' }
@@ -391,13 +436,6 @@ $(document).ready(function() {
         $('#address-modal').addClass('open');
     });
 
-    // Dinamik Mockup Canlı Önizleme
-    $('#custom-text-input').on('input', function() {
-        const text = $(this).val().trim();
-		console.log("evet");
-        $('.mockup-svg-text').text(text);
-    });
-
     // Font Değişimi
     $('#custom-font-input').on('change', function() {
         const font = $(this).val();
@@ -614,9 +652,28 @@ window.openProductDetail = function(id, pushHistory = true) {
         $('#customization-text-group').hide();
         $('#customization-font-group').hide();
         $('#customization-logo-group').hide();
+    } else if (p.isCustomText === false) {
+        // isCustomText: false — yazı, font ve boyut gizle, renk etiketlerini özelleştir
+        $('#customization-text-group').hide();
+        $('#customization-font-group').hide();
+        $('#customization-size-group').hide();
+        if (p.allowLogo) {
+            $('#customization-logo-group').show();
+        } else {
+            $('#customization-logo-group').hide();
+        }
+        // Renk etiketlerini ürüne özel metinlerle değiştir
+        $('#color-label-text').text(p.CustomColorText1 || 'Renk 1:');
+        $('#color-label-obj').text(p.CustomColorText2 || 'Renk 2:');
+        // 2D önizlemede yazıyı gizle
+        $('#preview-dynamic-text').text('');
     } else {
         $('#customization-text-group').show();
         $('#customization-font-group').show();
+        $('#customization-size-group').show();
+        // Etiketleri varsayılana sıfırla
+        $('#color-label-text').text('Yazı:');
+        $('#color-label-obj').text('Obje:');
         
         if (p.allowLogo) {
             $('#customization-logo-group').show();
@@ -628,12 +685,12 @@ window.openProductDetail = function(id, pushHistory = true) {
         $('#custom-text-input').attr('placeholder', p.customTextPlaceholder || 'Örn: ENGRARE');
         
         const $textInput = $('#custom-text-input');
-        $textInput.off('input'); // Önceki event'leri temizle
+        $textInput.off('input.format'); // Yalnızca format handler'ını temizle, preview handler'ına dokunma
         
         if (p.name && p.name.toLowerCase().includes('numaratör')) {
             $textInput.attr('type', 'tel');
             $textInput.attr('maxlength', '11');
-            $textInput.on('input', function() {
+            $textInput.on('input.format', function() {
                 this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11);
             });
         } else {
@@ -656,7 +713,7 @@ window.openProductDetail = function(id, pushHistory = true) {
     $('#clear-logo-btn').hide();
     
     // 2D Preview Box Reset
-    if (p.disableTextInput) {
+    if (p.disableTextInput || p.isCustomText === false) {
         $('#advanced-2d-preview-container').hide();
     } else {
         $('#advanced-2d-preview-container').show();
@@ -1353,11 +1410,10 @@ $(document).ready(function() {
     const $dynText = $('#preview-dynamic-text');
     const $printArea = $('#preview-printable-area');
     
-    $('#custom-text-input').on('input', function() {
+    $('#custom-text-input').on('input.preview', function() {
         const val = $(this).val();
         const defaultText = (typeof currentProduct !== 'undefined' && currentProduct && currentProduct.customTextPlaceholderPreview) ? currentProduct.customTextPlaceholderPreview : 'ENGRARE';
         $dynText.text(val || defaultText);
-		console.log("ready");
     });
 
     $('#custom-font-input').on('change', function() {

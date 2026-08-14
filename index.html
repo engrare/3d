@@ -248,7 +248,7 @@
                                 <div style="display: flex; gap: 10px; height: 45px; align-items: center; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 0 10px;">
                                     
                                     <div style="display: flex; align-items: center; gap: 8px; position: relative;">
-                                        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Yazı:</span>
+                                        <span id="color-label-text" style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Yazı:</span>
                                         <div class="pla-color-select" id="custom-text-color-btn" style="background-color: #FBC02D;" data-target="dropdown-text-color"></div>
                                         <input type="hidden" id="custom-text-color" value="#FBC02D">
                                         
@@ -267,7 +267,7 @@
                                     <div style="width: 1px; height: 20px; background: var(--border);"></div>
                                     
                                     <div style="display: flex; align-items: center; gap: 8px; position: relative;">
-                                        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Obje:</span>
+                                        <span id="color-label-obj" style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Obje:</span>
                                         <div class="pla-color-select" id="custom-obj-color-btn" style="background-color: #222222;" data-target="dropdown-obj-color"></div>
                                         <input type="hidden" id="custom-obj-color" value="#222222">
                                         
@@ -287,7 +287,7 @@
                             </div>
                             
                             <!-- Formatting (Size Only) -->
-                            <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 100px;">
+                            <div id="customization-size-group" class="form-group" style="margin-bottom: 0; flex: 1; min-width: 100px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                     <label style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted); margin: 0; white-space: nowrap;">Boyut</label>
                                     <span id="preview-text-size-val" style="font-size: 0.8rem; color: var(--primary); font-weight: 700; white-space: nowrap;">51px / %</span>
