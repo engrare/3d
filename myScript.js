@@ -459,6 +459,170 @@ $(document).ready(function() {
         let val = parseInt($('#quantity-input').val()) || 1;
         $('#quantity-input').val(val + 1);
     });
+
+    // --- GİRİŞ YAP İŞLEMİ ---
+    $('#btn-signin').click(async () => {
+        const email = $('#signin-email').val().trim();
+        const pass  = $('#signin-password').val().trim();
+
+        if (!email || !pass) return showToast("Lütfen e-posta ve şifrenizi girin.", "error");
+
+        const $btn = $('#btn-signin');
+        $btn.prop('disabled', true).text('Giriş Yapılıyor...');
+
+        try {
+            await signInWithEmailAndPassword(auth, email, pass);
+            showToast("Başarıyla giriş yapıldı.", "success");
+            switchPage('#products-page');
+            $('#signin-email').val('');
+            $('#signin-password').val('');
+        } catch (error) {
+            showToast("Giriş Başarısız. Bilgilerinizi kontrol edin.", "error");
+        } finally {
+            $btn.prop('disabled', false).text('Giriş Yap');
+        }
+    });
+
+    $('#signin-email, #signin-password').on('keypress', function(e) {
+        if (e.which === 13) { e.preventDefault(); $('#btn-signin').click(); }
+    });
+
+    // --- ŞİFREMİ UNUTTUM İŞLEMİ ---
+    $('#btn-forgot-password').click(async () => {
+        const email = $('#forgot-email').val().trim();
+        if (!email) return showToast("Lütfen e-posta adresinizi girin.", "error");
+
+        const $btn = $('#btn-forgot-password');
+        $btn.prop('disabled', true).text('Gönderiliyor...');
+
+        try {
+            await sendPasswordResetEmail(auth, email);
+            showToast("Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.", "success");
+            $('#forgot-email').val('');
+            $('#view-forgot-password').hide();
+            $('#view-signin').fadeIn();
+        } catch (error) {
+            console.error("Şifre sıfırlama hatası:", error);
+            showToast("İşlem başarısız. Lütfen e-posta adresinizi kontrol edin.", "error");
+        } finally {
+            $btn.prop('disabled', false).text('Bağlantı Gönder');
+        }
+    });
+
+    $('#forgot-email').on('keypress', function(e) {
+        if (e.which === 13) { e.preventDefault(); $('#btn-forgot-password').click(); }
+    });
+
+    // --- KAYIT OL İŞLEMİ ---
+    $('#btn-signup').click(async () => {
+        const fullname    = $('#signup-fullname').val().trim();
+        const email       = $('#signup-email').val().trim();
+        const pass        = $('#signup-password').val().trim();
+        const passConfirm = $('#signup-password-confirm').val().trim();
+        const isKvkk      = $('#signup-kvkk').is(':checked');
+
+        if (!fullname || !email || !pass || !passConfirm) return showToast("Lütfen tüm alanları doldurun.", "error");
+        if (pass !== passConfirm) return showToast("Şifreler uyuşmuyor.", "error");
+        if (!isKvkk) return showToast("Lütfen KVKK metnini onaylayın.", "error");
+
+        const $btn = $('#btn-signup');
+        $btn.prop('disabled', true).text('Hesap Oluşturuluyor...');
+
+        try {
+            const userCred = await createUserWithEmailAndPassword(auth, email, pass);
+            await updateProfile(userCred.user, { displayName: fullname });
+            showToast("Hesap başarıyla oluşturuldu!", "success");
+            switchPage('#products-page');
+            $('#signup-fullname, #signup-email, #signup-password, #signup-password-confirm').val('');
+            $('#signup-kvkk').prop('checked', false);
+        } catch (error) {
+            showToast("Kayıt Hatası: " + error.message, "error");
+        } finally {
+            $btn.prop('disabled', false).text('Kaydol');
+        }
+    });
+
+    // --- 2D PREVIEW LISTENER'LARI ---
+    const $dynText   = $('#preview-dynamic-text');
+    const $printArea = $('#preview-printable-area');
+
+    $('#custom-text-input').on('input.preview', function() {
+        const val = $(this).val();
+        const defaultText = (typeof currentProduct !== 'undefined' && currentProduct && currentProduct.customTextPlaceholderPreview)
+            ? currentProduct.customTextPlaceholderPreview : 'ENGRARE';
+        $dynText.text(val || defaultText);
+    });
+
+    $('#custom-font-input').on('change', function() {
+        $dynText.css('font-family', $(this).val());
+    });
+
+    $('.align-btn').on('click', function() {
+        $('.align-btn').removeClass('active').css({ 'background': 'white', 'color': 'inherit', 'border-color': 'var(--border)' });
+        $(this).addClass('active').css({ 'background': 'var(--primary)', 'color': 'white', 'border-color': 'var(--primary)' });
+        const align = $(this).data('align');
+        $dynText.css('text-align', align);
+        if      (align === 'left')  $printArea.css('justify-content', 'flex-start');
+        else if (align === 'right') $printArea.css('justify-content', 'flex-end');
+        else                        $printArea.css('justify-content', 'center');
+    });
+
+    $('#preview-text-size').on('input', function() {
+        const size = $(this).val();
+        $dynText.css('font-size', size + 'px');
+        // Logonun daha büyük görünmesini isterseniz logoMultiplier'ı artırın (örn: 2.5)
+        const logoMultiplier = 1.2;
+        const maskSize = size * logoMultiplier;
+        $('#preview-dynamic-logo').css({
+            'mask-size':          `${maskSize}%`,
+            '-webkit-mask-size':  `${maskSize}%`
+        });
+        $('#preview-text-size-val').text(size + 'px / %');
+    });
+
+    $('#toggle-printable-area').on('change', function() {
+        const border = $(this).is(':checked') ? '2px dashed rgba(0, 0, 0, 0.5)' : 'none';
+        $printArea.css('border', border);
+        $('#preview-logo-area').css('border', border);
+    });
+
+    // --- LOGO YÜKLEME ---
+    $('#custom-logo-input').on('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Sadece PNG, JPG, JPEG veya SVG formatında logo yükleyebilirsiniz.');
+            $(this).val('');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            $('#preview-dynamic-logo').css({
+                'mask-image':            `url(${event.target.result})`,
+                '-webkit-mask-image':    `url(${event.target.result})`,
+                'mask-repeat':           'no-repeat',
+                '-webkit-mask-repeat':   'no-repeat',
+                'mask-position':         'center',
+                '-webkit-mask-position': 'center',
+                'background-color':      $('#custom-text-color').val()
+            }).show();
+            $('#clear-logo-btn').show();
+            setTimeout(() => { $('#preview-text-size').trigger('input'); }, 10);
+        };
+        reader.readAsDataURL(file);
+    });
+
+    $('#clear-logo-btn').on('click', function() {
+        $('#custom-logo-input').val('');
+        $('#preview-dynamic-logo').hide()
+            .css('mask-image', 'none')
+            .css('-webkit-mask-image', 'none');
+        $(this).hide();
+    });
+
 });
 
 // --- FONKSİYONLAR ---
@@ -1026,103 +1190,6 @@ function showToast(message, type = "info") {
         setTimeout(() => $toast.remove(), 300);
     }, 3000);
 }
-
-// Giriş Yap İşlemi
-    $('#btn-signin').click(async () => {
-        const email = $('#signin-email').val().trim();
-        const pass = $('#signin-password').val().trim();
-        
-        if(!email || !pass) return showToast("Lütfen e-posta ve şifrenizi girin.", "error");
-
-        const $btn = $('#btn-signin');
-        $btn.prop('disabled', true).text('Giriş Yapılıyor...');
-
-        try {
-            await signInWithEmailAndPassword(auth, email, pass);
-            showToast("Başarıyla giriş yapıldı.", "success");
-            switchPage('#products-page');
-            $('#signin-email').val('');
-            $('#signin-password').val('');
-        } catch (error) {
-            showToast("Giriş Başarısız. Bilgilerinizi kontrol edin.", "error");
-        } finally {
-            $btn.prop('disabled', false).text('Giriş Yap');
-        }
-    });
-
-    $('#signin-email, #signin-password').on('keypress', function(e) {
-        if (e.which === 13) {
-            e.preventDefault();
-            $('#btn-signin').click();
-        }
-    });
-
-    // Şifremi Unuttum İşlemi
-    $('#btn-forgot-password').click(async () => {
-        const email = $('#forgot-email').val().trim();
-        if(!email) return showToast("Lütfen e-posta adresinizi girin.", "error");
-
-        const $btn = $('#btn-forgot-password');
-        $btn.prop('disabled', true).text('Gönderiliyor...');
-
-        try {
-            await sendPasswordResetEmail(auth, email);
-            showToast("Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.", "success");
-            $('#forgot-email').val('');
-            $('#view-forgot-password').hide();
-            $('#view-signin').fadeIn();
-        } catch (error) {
-            console.error("Şifre sıfırlama hatası:", error);
-            showToast("İşlem başarısız. Lütfen e-posta adresinizi kontrol edin.", "error");
-        } finally {
-            $btn.prop('disabled', false).text('Bağlantı Gönder');
-        }
-    });
-
-    $('#forgot-email').on('keypress', function(e) {
-        if (e.which === 13) {
-            e.preventDefault();
-            $('#btn-forgot-password').click();
-        }
-    });
-
-    // Kayıt Ol İşlemi
-    $('#btn-signup').click(async () => {
-        const fullname = $('#signup-fullname').val().trim();
-        const email = $('#signup-email').val().trim();
-        const pass = $('#signup-password').val().trim();
-        const passConfirm = $('#signup-password-confirm').val().trim();
-        const isKvkk = $('#signup-kvkk').is(':checked');
-
-        if (!fullname || !email || !pass || !passConfirm) return showToast("Lütfen tüm alanları doldurun.", "error");
-        if (pass !== passConfirm) return showToast("Şifreler uyuşmuyor.", "error");
-        if (!isKvkk) return showToast("Lütfen KVKK metnini onaylayın.", "error");
-
-        const $btn = $('#btn-signup');
-        $btn.prop('disabled', true).text('Hesap Oluşturuluyor...');
-
-        try {
-            const userCred = await createUserWithEmailAndPassword(auth, email, pass);
-            await updateProfile(userCred.user, { displayName: fullname });
-            showToast("Hesap başarıyla oluşturuldu!", "success");
-            switchPage('#products-page');
-            // Formu temizle
-            $('#signup-fullname').val('');
-            $('#signup-email').val('');
-            $('#signup-password').val('');
-            $('#signup-password-confirm').val('');
-            $('#signup-kvkk').prop('checked', false);
-        } catch (error) {
-            showToast("Kayıt Hatası: " + error.message, "error");
-        } finally {
-            $btn.prop('disabled', false).text('Kaydol');
-        }
-    });
-	
-
-
-
-
 
 function loadUserOrders(userId) {
     if (!userId) return;
