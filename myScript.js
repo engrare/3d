@@ -32,6 +32,8 @@ const products = [
 		customTextLabel: "araç içinde görünecek telefon numaranızı giriniz.",
 		customTextPlaceholder: "Örn: 0541 555 55 55",
 		customTextPlaceholderPreview: "0541 555 55 55",
+		fixedTextSize: 48,
+		fixedLogoSize: 48,
         price: 179.90,
         images: [
             { src: "./content/products/1/3.jpg" },
@@ -39,8 +41,14 @@ const products = [
             { src: "./content/products/1/1.jpg" },
             { src: "./content/products/1/4.jpg" }
         ],
-        previewTextArea: { top: '15%', left: '10%', width: '80%', height: '70%' },
-        previewLogoArea: { top: '15%', left: '10%', width: '80%', height: '70%' }
+        previewTextArea: { top: '33%', left: '13%', width: '73%', height: '16%' },
+        previewLogoArea: { top: '15%', left: '10%', width: '80%', height: '70%' },
+		 colors: [
+            { color1: "#FBC02D", color2: "#222222", label1: "Yazı", label2: "Zemin" },
+            { color1: "#FFFFFF", color2: "#1976D2", label1: "Yazı", label2: "Zemin" },
+            { color1: "#222222", color2: "#FFFFFF", label1: "Yazı", label2: "Zemin" },
+            { color1: "#E91E63", color2: "#388E3C", label1: "Yazı", label2: "Zemin" }
+        ],
     },
     {
         id: 2,
@@ -54,9 +62,35 @@ const products = [
             { src: "./content/products/2/3.jpg" },
             { src: "./content/products/2/4.jpg" }
         ],
-        previewTextArea: { top: '52%', left: '17.5%', width: '64.5%', height: '32%' },
-        previewLogoArea: { top: '23%', left: '17.5%', width: '64.5%', height: '30%' }
+        previewTextArea: { top: '52%', left: '20%', width: '59.5%', height: '32%' },
+        previewLogoArea: { top: '23%', left: '17.5%', width: '64.5%', height: '30%' },
+		 colors: [
+            { color1: "#FBC02D", color2: "#222222", label1: "Yazı", label2: "Zemin" },
+            { color1: "#FFFFFF", color2: "#1976D2", label1: "Yazı", label2: "Zemin" },
+            { color1: "#222222", color2: "#FFFFFF", label1: "Yazı", label2: "Zemin" },
+            { color1: "#E91E63", color2: "#388E3C", label1: "Yazı", label2: "Zemin" }
+        ],
     },
+	{
+        id: 3,
+        name: "Takıma Özel Kalemlik",
+        desc: "Üzerine isim yazdırılabilen takımlı kalemlik",
+        price: 180,
+		isCustomObject: [
+
+            { objectName: "Fenerbahçe - 2 Adet Satıldı.", src: "./content/products/5/previewfb.png" },
+            { objectName: "Galatasaray - 1 Adet Satıldı.", src: "./content/products/5/previewgs.png" },
+            { objectName: "Trabzon - 0 Adet Satıldı.", src: "./content/products/5/previewtrabzon.png" },
+            { objectName: "Beşiktaş - 5 Adet Satıldı.", src: "./content/products/5/previewbjk.png" },
+
+        ],
+        images: [
+            { src: "./content/products/5/1.jpg" },
+            { src: "./content/products/5/2.jpg" },
+            { src: "./content/products/5/3.jpg" },
+            { src: "./content/products/5/4.jpg" }
+        ]
+    }/*,
     {
         id: 3,
         name: "Araba Plaka Çerçevesi",
@@ -86,20 +120,6 @@ const products = [
         previewLogoArea: { top: '15%', left: '10%', width: '80%', height: '70%' }
     },
     {
-        id: 5,
-        name: "Takıma Özel Kalemlik",
-        desc: "Üzerine isim yazdırılabilen takımlı kalemlik",
-        price: 180,
-        images: [
-            { src: "./content/products/5/1.jpg" },
-            { src: "./content/products/5/2.jpg" },
-            { src: "./content/products/5/3.jpg" },
-            { src: "./content/products/5/4.jpg" }
-        ],
-        previewTextArea: { top: '15%', left: '10%', width: '80%', height: '70%' },
-        previewLogoArea: { top: '15%', left: '10%', width: '80%', height: '70%' }
-    },
-    {
         id: 6,
         name: "Özet Tasarım Anahtarlık",
         desc: "Üzerine isim yazdırılabilen dekoratif anahtarlık.",
@@ -115,7 +135,7 @@ const products = [
         ],
         previewTextArea: { top: '15%', left: '10%', width: '80%', height: '70%' },
         previewLogoArea: { top: '15%', left: '10%', width: '80%', height: '70%' }
-    }
+    }*/
 ];
 
 // --- DOM READY ---
@@ -318,10 +338,23 @@ $(document).ready(function() {
             } else if (inputId === 'custom-text-color') {
                 $('#preview-dynamic-text').css('color', color);
                 $('#preview-dynamic-logo').css('background-color', color); // Logoyu metin rengine boya
-                // Renk değiştiğinde filtreyi tekrar uygula
-                if (window.applyFilterToPreview && typeof currentProduct !== 'undefined' && currentProduct) {
+                
+                if (typeof currentProduct !== 'undefined' && currentProduct && currentProduct.isCustomObject) {
+                    $('#preview-object-color-layer').css('background-color', color);
+                } else if (window.applyFilterToPreview && typeof currentProduct !== 'undefined' && currentProduct) {
+                    // Renk değiştiğinde filtreyi tekrar uygula
                     window.applyFilterToPreview(currentProduct.id, color);
                 }
+            }
+        }
+    });
+
+    $('#custom-object-input').on('change', function() {
+        if (typeof currentProduct !== 'undefined' && currentProduct && currentProduct.isCustomObject) {
+            const idx = $(this).val();
+            const obj = currentProduct.isCustomObject[idx];
+            if (obj) {
+                $('#preview-overlay-img').attr('src', obj.src);
             }
         }
     });
@@ -546,15 +579,55 @@ $(document).ready(function() {
     const $dynText   = $('#preview-dynamic-text');
     const $printArea = $('#preview-printable-area');
 
+    function updateDynamicTextSpacing() {
+        // Obje seçimi açıksa metin kutusu yoktur, işlem yapma
+        if (typeof currentProduct !== 'undefined' && currentProduct && currentProduct.isCustomObject) {
+            $dynText.css('letter-spacing', 'normal');
+            return;
+        }
+
+        const text = $dynText.text();
+        if (text.length <= 1) {
+            $dynText.css('letter-spacing', 'normal');
+            return;
+        }
+        
+        $dynText.css('letter-spacing', '0px');
+        $dynText.css('white-space', 'nowrap');
+        
+        const $measurer = $('<span>').text(text).css({
+            'font-family': $dynText.css('font-family'),
+            'font-size': $dynText.css('font-size'),
+            'font-weight': $dynText.css('font-weight'),
+            'white-space': 'nowrap',
+            'visibility': 'hidden',
+            'position': 'absolute'
+        }).appendTo('body');
+        
+        const naturalWidth = $measurer.width();
+        $measurer.remove();
+        
+        const containerWidth = $printArea.width();
+        
+        if (naturalWidth < containerWidth) {
+            const spacing = (containerWidth - naturalWidth) / (text.length - 1);
+            $dynText.css('letter-spacing', spacing + 'px');
+        } else {
+            $dynText.css('letter-spacing', 'normal');
+        }
+    }
+
     $('#custom-text-input').on('input.preview', function() {
         const val = $(this).val();
         const defaultText = (typeof currentProduct !== 'undefined' && currentProduct && currentProduct.customTextPlaceholderPreview)
             ? currentProduct.customTextPlaceholderPreview : 'ENGRARE';
         $dynText.text(val || defaultText);
+        updateDynamicTextSpacing();
     });
 
     $('#custom-font-input').on('change', function() {
         $dynText.css('font-family', $(this).val());
+        updateDynamicTextSpacing();
     });
 
     $('.align-btn').on('click', function() {
@@ -578,7 +651,10 @@ $(document).ready(function() {
             '-webkit-mask-size':  `${maskSize}%`
         });
         $('#preview-text-size-val').text(size + 'px / %');
+        updateDynamicTextSpacing();
     });
+
+    $(window).on('resize', updateDynamicTextSpacing);
 
     $('#toggle-printable-area').on('change', function() {
         const border = $(this).is(':checked') ? '2px dashed rgba(0, 0, 0, 0.5)' : 'none';
@@ -812,11 +888,30 @@ window.openProductDetail = function(id, pushHistory = true) {
     $('#detail-price').text(`₺${p.price.toFixed(2)}`);
     
     // Ürün özelleştirme alanlarını yönetme
-    if (p.disableTextInput) {
+    if (p.isCustomObject) {
+        $('#customization-object-group').show();
+        const $objSelect = $('#custom-object-input');
+        $objSelect.empty();
+        p.isCustomObject.forEach((obj, idx) => {
+            $objSelect.append(`<option value="${idx}">${obj.objectName}</option>`);
+        });
+        
+        $('#color-label-text').text('Renk:');
+        $('#color-wrapper-obj').hide();
+        $('#color-separator').hide();
+        
+        $('#customization-text-group').hide();
+        $('#customization-font-group').hide();
+        $('#customization-size-group').hide();
+        if (p.allowLogo) $('#customization-logo-group').show();
+        else $('#customization-logo-group').hide();
+    } else if (p.disableTextInput) {
+        $('#customization-object-group').hide();
         $('#customization-text-group').hide();
         $('#customization-font-group').hide();
         $('#customization-logo-group').hide();
     } else if (p.isCustomText === false) {
+        $('#customization-object-group').hide();
         // isCustomText: false — yazı, font ve boyut gizle, renk etiketlerini özelleştir
         $('#customization-text-group').hide();
         $('#customization-font-group').hide();
@@ -828,15 +923,24 @@ window.openProductDetail = function(id, pushHistory = true) {
         }
         // Renk etiketlerini ürüne özel metinlerle değiştir
         $('#color-label-text').text(p.CustomColorText1 || 'Renk 1:');
+        $('#color-wrapper-obj').show();
+        $('#color-separator').show();
         $('#color-label-obj').text(p.CustomColorText2 || 'Renk 2:');
         // 2D önizlemede yazıyı gizle
         $('#preview-dynamic-text').text('');
     } else {
+        $('#customization-object-group').hide();
         $('#customization-text-group').show();
         $('#customization-font-group').show();
-        $('#customization-size-group').show();
+        if (p.fixedTextSize) {
+            $('#customization-size-group').hide();
+        } else {
+            $('#customization-size-group').show();
+        }
         // Etiketleri varsayılana sıfırla
         $('#color-label-text').text('Yazı:');
+        $('#color-wrapper-obj').show();
+        $('#color-separator').show();
         $('#color-label-obj').text('Obje:');
         
         if (p.allowLogo) {
@@ -853,9 +957,18 @@ window.openProductDetail = function(id, pushHistory = true) {
         
         if (p.name && p.name.toLowerCase().includes('numaratör')) {
             $textInput.attr('type', 'tel');
-            $textInput.attr('maxlength', '11');
+            $textInput.attr('maxlength', '14'); // 11 digits + 3 spaces
             $textInput.on('input.format', function() {
-                this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11);
+                let clean = this.value.replace(/\D/g, '').slice(0, 11);
+                let formatted = '';
+                if (clean.length > 0) formatted += clean.substring(0, 4);
+                if (clean.length > 4) formatted += ' ' + clean.substring(4, 7);
+                if (clean.length > 7) formatted += ' ' + clean.substring(7, 9);
+                if (clean.length > 9) formatted += ' ' + clean.substring(9, 11);
+                if (this.value !== formatted) {
+                    this.value = formatted;
+                    $(this).trigger('input.preview');
+                }
             });
         } else {
             $textInput.attr('type', 'text');
@@ -881,13 +994,14 @@ window.openProductDetail = function(id, pushHistory = true) {
         $('#advanced-2d-preview-container').hide();
     } else {
         $('#advanced-2d-preview-container').show();
-        const defaultText = p.customTextPlaceholderPreview || 'ENGRARE';
+        const defaultText = p.isCustomObject ? '' : (p.customTextPlaceholderPreview || 'ENGRARE');
+        const defaultSize = p.fixedTextSize || 51;
         $('#preview-dynamic-text').text(defaultText).css({
             'color': '#FBC02D',
-            'font-size': '51px',
+            'font-size': defaultSize + 'px',
             'text-align': 'center'
         });
-        $('#preview-text-size').val(51);
+        $('#preview-text-size').val(defaultSize);
         
         $('.align-btn').removeClass('active').css({'background': 'white', 'color': 'inherit', 'border-color': 'var(--border)'});
         $('.align-btn[data-align="center"]').addClass('active').css({'background': 'var(--primary)', 'color': 'white', 'border-color': 'var(--primary)'});
@@ -899,7 +1013,7 @@ window.openProductDetail = function(id, pushHistory = true) {
             'width': textArea.width,
             'height': textArea.height,
             'justify-content': 'center',
-            'border': '2px dashed rgba(0, 0, 0, 0.5)'
+            'border': p.isCustomObject ? 'none' : '2px dashed rgba(0, 0, 0, 0.5)'
         });
         
         if (p.allowLogo) {
@@ -941,7 +1055,10 @@ window.openProductDetail = function(id, pushHistory = true) {
         $('#toggle-printable-area').prop('checked', true);
         
         $('#preview-object-color-layer').css('background-color', '#222222');
-        if (window.applyFilterToPreview) {
+        if (p.isCustomObject) {
+            $('#preview-overlay-img').attr('src', p.isCustomObject[0].src).show();
+            $('#preview-object-color-layer').css('background-color', $('#custom-text-color').val());
+        } else if (window.applyFilterToPreview) {
             window.applyFilterToPreview(p.id, '#FBC02D'); // Varsayılan metin rengiyle filtrele
         } else {
             $('#preview-overlay-img').attr('src', `./content/products/${p.id}/preview.png`).show();
@@ -961,6 +1078,11 @@ window.openProductDetail = function(id, pushHistory = true) {
         $carousel.scrollLeft(0);
         $carousel.css('scroll-behavior', 'smooth');
     }, 10);
+
+    // Call our new color generation logic
+    if (typeof renderColorCombinations === 'function') {
+        renderColorCombinations(p);
+    }
 
     switchPage('#product-detail-page', false);
     
@@ -989,10 +1111,16 @@ async function addToCart() {
     const textSize = $('#preview-text-size').val();
     const textAlign = $('.align-btn.active').data('align') || 'center';
     
+    const selectedObjectIdx = currentProduct.isCustomObject ? $('#custom-object-input').val() : null;
+    const selectedObjectName = selectedObjectIdx !== null && currentProduct.isCustomObject[selectedObjectIdx] 
+        ? currentProduct.isCustomObject[selectedObjectIdx].objectName 
+        : null;
+    
     const logoFile = $('#custom-logo-input').length > 0 ? $('#custom-logo-input')[0].files[0] : null;
     const isLogoVisible = $('#preview-dynamic-logo').is(':visible');
     
-    if(text === "" && !isLogoVisible) {
+    const textRequired = !currentProduct.isCustomObject && !currentProduct.disableTextInput && currentProduct.isCustomText !== false;
+    if(textRequired && text === "" && !isLogoVisible) {
         showToast("Lütfen yazılacak metni giriniz veya logo yükleyiniz.", "error");
         return;
     }
@@ -1009,7 +1137,8 @@ async function addToCart() {
         objColor: objColor,
         quantity: qty,
         textSize: textSize,
-        textAlign: textAlign
+        textAlign: textAlign,
+        selectedObject: selectedObjectName
     };
     
     if (logoFile) {
@@ -1086,6 +1215,7 @@ function renderCart() {
                     
                     <div class="info" style="flex:1; display:flex; flex-direction:column; justify-content: space-between; min-height: 90px;">
                         <div style="font-weight:700; font-size: 1rem; color: var(--primary); margin-bottom: 8px;">${item.name}</div>
+                        ${item.selectedObject ? `<div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px;">Takım/Obje: <span style="font-weight:600; color:var(--text-main);">${item.selectedObject}</span></div>` : ''}
                         
                         <div style="display:flex; align-items:center; gap: 15px; margin-top: auto; flex-wrap: wrap;">
                             <div style="position: relative; width: 100%; max-width: 220px;">
@@ -1108,6 +1238,7 @@ function renderCart() {
                                         <div class="pla-swatch" data-color="#E91E63" data-cart-index="${index}" data-type="text" style="background-color: #E91E63; width: 22px; height: 22px;" title="Pembe"></div>
                                     </div>
                                 </div>
+                                ${item.selectedObject ? '' : `
                                 <div style="position: relative;">
                                     <div class="pla-color-select" data-target="cart-dropdown-obj-${index}" style="width: 20px; height: 20px; border-radius: 50%; background: ${item.objColor || '#333'}; border: 1px solid var(--border);" title="Obje Rengi"></div>
                                     <div class="pla-options-dropdown" id="cart-dropdown-obj-${index}" style="padding: 8px; gap: 8px; width: 130px; bottom: calc(100% + 10px);">
@@ -1122,6 +1253,7 @@ function renderCart() {
                                         <div class="pla-swatch" data-color="#E91E63" data-cart-index="${index}" data-type="obj" style="background-color: #E91E63; width: 22px; height: 22px;" title="Pembe"></div>
                                     </div>
                                 </div>
+                                `}
                             </div>
 
                             <div style="display:flex; align-items:center; background: #F8FAFC; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; height: 35px;">
@@ -1523,3 +1655,71 @@ window.applyFilterToPreview = function(productId, textColorHex) {
     };
     img.src = imgUrl;
 };
+
+// --- DIAGONAL COLOR COMBINATIONS ---
+function renderColorCombinations(p) {
+    const $colorContainer = $('#color-combinations-container');
+    $colorContainer.empty();
+
+    if (p.colors && Array.isArray(p.colors)) {
+        p.colors.forEach((c, index) => {
+            const color1 = c.color1;
+            const color2 = c.color2;
+            const label1 = c.label1 || (p.isCustomObject ? 'Renk' : 'Yazı');
+            const label2 = c.label2 || (p.isCustomObject ? '' : 'Obje');
+
+            let btnHtml = '';
+            let tooltipHtml = '';
+
+            if (p.isCustomObject || !color2 || color1 === color2) {
+                btnHtml = `<div class="diagonal-color-btn ${index === 0 ? 'active' : ''}" data-color1="${color1}" data-color2="${color1}" style="background: ${color1};">`;
+                tooltipHtml = `<div class="elegant-tooltip"><div class="tooltip-row"><div class="tooltip-swatch" style="background: ${color1};"></div><span>${label1}</span></div></div>`;
+            } else {
+                btnHtml = `<div class="diagonal-color-btn ${index === 0 ? 'active' : ''}" data-color1="${color1}" data-color2="${color2}" style="background: linear-gradient(135deg, ${color1} 50%, ${color2} 50%);">`;
+                tooltipHtml = `<div class="elegant-tooltip"><div class="tooltip-row"><div class="tooltip-swatch" style="background: ${color1};"></div><span>${label1}</span></div><div class="tooltip-row"><div class="tooltip-swatch" style="background: ${color2};"></div><span>${label2}</span></div></div>`;
+            }
+
+            $colorContainer.append($(btnHtml + tooltipHtml + `</div>`));
+
+            if (index === 0) {
+                $('#custom-text-color').val(color1);
+                $('#custom-obj-color').val(color2 || color1);
+            }
+        });
+    }
+}
+
+$(document).on('click', '.diagonal-color-btn', function() {
+    $('.diagonal-color-btn').removeClass('active');
+    $(this).addClass('active');
+    const c1 = $(this).data('color1');
+    const c2 = $(this).data('color2');
+    $('#custom-text-color').val(c1);
+    $('#custom-obj-color').val(c2);
+
+    // Update previews
+    $('#preview-dynamic-text').css('color', c1);
+    $('#preview-dynamic-logo').css('background-color', c1);
+    
+    if (typeof currentProduct !== 'undefined' && currentProduct) {
+        if (currentProduct.isCustomObject) {
+            $('#preview-object-color-layer').css('background-color', c1);
+        } else if (window.applyFilterToPreview) {
+            window.applyFilterToPreview(currentProduct.id, c1);
+            $('#preview-object-color-layer').css('background-color', c2);
+        } else {
+            const rgb = typeof hexToRgb !== 'undefined' ? hexToRgb(c2) : window.hexToRgb(c2);
+            if (rgb) {
+                const feColorMatrix = document.getElementById('dynamic-color-matrix');
+                if (feColorMatrix) {
+                    feColorMatrix.setAttribute('values', `
+                        0 0 0 0 ${rgb.r / 255}
+                        0 0 0 0 ${rgb.g / 255}
+                        0 0 0 0 ${rgb.b / 255}
+                        0 0 0 1 0
+                    `);
+                }
+            }
+        }
+    }
+});

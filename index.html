@@ -145,6 +145,10 @@
                             <label id="custom-text-label">Ürün Üzerine Yazılacak Metin</label>
                             <input type="text" id="custom-text-input" class="input-box" placeholder="Örn: ENGRARE">
                         </div>
+                        <div class="form-group" id="customization-object-group" style="display: none; margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; font-weight: 600;">Takım / Obje Seçimi</label>
+                            <select id="custom-object-input" class="input-box" style="font-weight: 600;"></select>
+                        </div>
                         <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
                             <div class="form-group" id="customization-font-group" style="flex: 1; margin-bottom: 0;">
                                 <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; font-weight: 600;">Yazı Tipi (Font)</label>
@@ -175,41 +179,11 @@
                                 <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; font-weight: 600;">Renk Seçimi</label>
                                 <div style="display: flex; gap: 10px; height: 45px; align-items: center; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 0 10px;">
                                     
-                                    <div style="display: flex; align-items: center; gap: 8px; position: relative;">
-                                        <span id="color-label-text" style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Yazı:</span>
-                                        <div class="pla-color-select" id="custom-text-color-btn" style="background-color: #FBC02D;" data-target="dropdown-text-color"></div>
-                                        <input type="hidden" id="custom-text-color" value="#FBC02D">
-                                        
-                                        <div class="pla-options-dropdown" id="dropdown-text-color">
-                                            <div class="pla-swatch" data-color="#FFFFFF" data-input="custom-text-color" style="background-color: #FFFFFF;" title="Beyaz"></div>
-                                            <div class="pla-swatch" data-color="#222222" data-input="custom-text-color" style="background-color: #222222;" title="Siyah"></div>
-                                            <div class="pla-swatch" data-color="#C0C0C0" data-input="custom-text-color" style="background-color: #C0C0C0;" title="Gümüş"></div>
-                                            <div class="pla-swatch" data-color="#D32F2F" data-input="custom-text-color" style="background-color: #D32F2F;" title="Kırmızı"></div>
-                                            <div class="pla-swatch" data-color="#1976D2" data-input="custom-text-color" style="background-color: #1976D2;" title="Mavi"></div>
-                                            <div class="pla-swatch" data-color="#388E3C" data-input="custom-text-color" style="background-color: #388E3C;" title="Yeşil"></div>
-                                            <div class="pla-swatch" data-color="#FBC02D" data-input="custom-text-color" style="background-color: #FBC02D;" title="Sarı"></div>
-                                            <div class="pla-swatch" data-color="#E91E63" data-input="custom-text-color" style="background-color: #E91E63;" title="Pembe"></div>
-                                        </div>
+                                    <div id="color-combinations-container">
+                                        <!-- Dinamik olarak js tarafından doldurulacak -->
                                     </div>
-                                    
-                                    <div style="width: 1px; height: 20px; background: var(--border);"></div>
-                                    
-                                    <div style="display: flex; align-items: center; gap: 8px; position: relative;">
-                                        <span id="color-label-obj" style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Obje:</span>
-                                        <div class="pla-color-select" id="custom-obj-color-btn" style="background-color: #222222;" data-target="dropdown-obj-color"></div>
-                                        <input type="hidden" id="custom-obj-color" value="#222222">
-                                        
-                                        <div class="pla-options-dropdown" id="dropdown-obj-color">
-                                            <div class="pla-swatch" data-color="#FFFFFF" data-input="custom-obj-color" style="background-color: #FFFFFF;" title="Beyaz"></div>
-                                            <div class="pla-swatch" data-color="#222222" data-input="custom-obj-color" style="background-color: #222222;" title="Siyah"></div>
-                                            <div class="pla-swatch" data-color="#C0C0C0" data-input="custom-obj-color" style="background-color: #C0C0C0;" title="Gümüş"></div>
-                                            <div class="pla-swatch" data-color="#D32F2F" data-input="custom-obj-color" style="background-color: #D32F2F;" title="Kırmızı"></div>
-                                            <div class="pla-swatch" data-color="#1976D2" data-input="custom-obj-color" style="background-color: #1976D2;" title="Mavi"></div>
-                                            <div class="pla-swatch" data-color="#388E3C" data-input="custom-obj-color" style="background-color: #388E3C;" title="Yeşil"></div>
-                                            <div class="pla-swatch" data-color="#FBC02D" data-input="custom-obj-color" style="background-color: #FBC02D;" title="Sarı"></div>
-                                            <div class="pla-swatch" data-color="#E91E63" data-input="custom-obj-color" style="background-color: #E91E63;" title="Pembe"></div>
-                                        </div>
-                                    </div>
+                                    <input type="hidden" id="custom-text-color" value="#FBC02D">
+                                    <input type="hidden" id="custom-obj-color" value="#222222">
                                     
                                 </div>
                             </div>

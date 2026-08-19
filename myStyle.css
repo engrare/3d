@@ -530,3 +530,15 @@ input[type=number] {
 @media (min-width: 769px) {
     #nav-login-btn, #nav-user-profile { margin-left: auto !important; }
 }
+
+/* DIAGONAL COLOR PICKER */
+#color-combinations-container { display: flex; flex-wrap: wrap; gap: 12px; }
+.diagonal-color-btn { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s ease; }
+.diagonal-color-btn:hover { transform: scale(1.1); box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-color: var(--text-muted); }
+.diagonal-color-btn.active { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3); transform: scale(1.15); }
+.elegant-tooltip { position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%) translateY(5px); background: #ffffff; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); display: flex; flex-direction: column; gap: 6px; opacity: 0; visibility: hidden; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 100; pointer-events: none; min-width: max-content; }
+.diagonal-color-btn:hover .elegant-tooltip { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+.elegant-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border-width: 6px; border-style: solid; border-color: #ffffff transparent transparent transparent; }
+.elegant-tooltip::before { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%) translateY(1px); border-width: 6px; border-style: solid; border-color: var(--border) transparent transparent transparent; z-index: -1; }
+.tooltip-row { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: 600; color: var(--text-main); }
+.tooltip-swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.1); }
