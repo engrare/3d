@@ -1,4 +1,4 @@
 start chrome.exe http://localhost:8080
-cd C:\Users\ENGRARE\Desktop\3d-main
-python server_creater.py
+cd C:\Users\KayaPC\Desktop\3d-main
+py server_creater.py
 pause
