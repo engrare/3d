@@ -117,7 +117,7 @@
                             <!-- Printable Area for Text (Dashed Box) -->
                             <div id="preview-printable-area" style="position: absolute; top: 15%; left: 10%; width: 80%; height: 70%; border: 2px dashed rgba(0, 0, 0, 0.5); z-index: 3; display: flex; align-items: center; justify-content: center; overflow: hidden; transition: border 0.2s;">
                                 <!-- Dynamic Text -->
-                                <span id="preview-dynamic-text" style="color: #FBC02D; font-size: 24px; font-family: 'Plus Jakarta Sans', sans-serif; text-align: center; width: 100%; word-break: break-word; transition: color 0.2s, font-size 0.2s;">ENGRARE</span>
+                                <span id="preview-dynamic-text" style="color: #FBC02D; font-size: 24px; font-family: 'Plus Jakarta Sans', sans-serif; text-align: center; width: auto; word-break: break-word; display: inline-block; line-height: 1; transition: color 0.2s;">ENGRARE</span>
                             </div>
                             
                             <!-- Printable Area for Logo (Dashed Box) -->
@@ -160,10 +160,30 @@
                                 </select>
                             </div>
                             <div class="form-group" id="customization-logo-group" style="flex: 1; margin-bottom: 0; display: none;">
-                                <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; font-weight: 600;">Logo Yükle (İsteğe Bağlı)</label>
-                                <input type="file" id="custom-logo-input" accept=".png, .jpg, .jpeg, .svg" class="input-box" style="padding-top: 10px;">
-                                <button type="button" id="clear-logo-btn" class="btn-sm" style="display: none; margin-top: 5px; color: #EF4444; background: none; border: none; cursor: pointer;"><i class="fa-solid fa-trash"></i> Logoyu Kaldır</button>
-                            </div>
+    <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; font-weight: 600;">Logo Seç Veya Yükle</label>
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;" id="logo-bubbles-container">
+        <div class="logo-bubble default-logo-bubble" data-src="./content/engrare_logo_elegant.svg" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; background: #fff; flex-shrink: 0; transition: border-color 0.2s;">
+            <img src="./content/engrare_logo_elegant.svg" style="width: 25px; height: 25px; object-fit: contain; pointer-events: none;">
+        </div>
+        <div class="logo-bubble default-logo-bubble" data-src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBkPSJNNDcuNiAzMDAuNEwyMjguMyA0NjkuMWM3LjUgNyAxNy40IDEwLjkgMjcuNyAxMC45czIwLjItMy45IDI3LjctMTAuOUw0NjQuNCAzMDAuNGMzMC40LTI4LjMgNDcuNi02OCA0Ny42LTEwOS41di01LjhjMC02OS45LTUwLjUtMTI5LjUtMTE5LjQtMTQxQzM0NyAzNi41IDMwMC42IDUxLjQgMjY4IDg0TDI1NiA5NiAyNDQgODRjLTMyLjYtMzIuNi03OS00Ny41LTEyNC42LTM5LjlDNTAuNSA1NS42IDAgMTE1LjIgMCAxODUuMXY1LjhjMCA0MS41IDE3LjIgODEuMiA0Ny42IDEwOS41eiIgZmlsbD0iIzAwMCIvPjwvc3ZnPg==" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; background: #fff; flex-shrink: 0; transition: border-color 0.2s;">
+            <i class="fa-solid fa-heart" style="font-size: 1.2rem; color: #555; pointer-events: none;"></i>
+        </div>
+        <div class="logo-bubble default-logo-bubble" data-src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1NzYgNTEyIj48cGF0aCBkPSJNMzE2LjkgMThDMzExLjYgNyAzMDAuNCAwIDI4OC4xIDBzLTIzLjQgNy0yOC44IDE4TDE5NSAxNTAuMyA1MS40IDE3MS41Yy0xMiAxLjgtMjIgMTAuMi0yNS43IDIxLjdzLS43IDI0LjIgNy45IDMyLjdMMTM3LjggMzI5IDExMy4yIDQ3NC43Yy0yIDEyIDMgMjQuMiAxMi45IDMxLjNzMjMgOCAzMy44IDIuM2wxMjguMy02OC41IDEyOC4zIDY4LjVjMTAuOCA1LjcgMjMuOSA0LjkgMzMuOC0yLjNzMTQuOS0xOS4zIDEyLjktMzEuM0w0MzguNSAzMjkgNTQyLjcgMjI1LjljOC42LTguNSAxMS43LTIxLjIgNy45LTMyLjdzLTEzLjctMTkuOS0yNS43LTIxLjdMMzgxLjIgMTUwLjMgMzE2LjkgMTh6IiBmaWxsPSIjMDAwIi8+PC9zdmc+" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; background: #fff; flex-shrink: 0; transition: border-color 0.2s;">
+            <i class="fa-solid fa-star" style="font-size: 1.2rem; color: #555; pointer-events: none;"></i>
+        </div>
+        
+        <!-- Placeholder for custom uploaded logo -->
+        <div id="custom-uploaded-bubble" class="logo-bubble" style="display:none; width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; align-items: center; justify-content: center; background: #fff; overflow: hidden; flex-shrink: 0; transition: border-color 0.2s;">
+            <img id="custom-uploaded-img" src="" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;">
+        </div>
+
+        <!-- Upload trigger -->
+        <div id="upload-logo-trigger" style="width: 45px; height: 45px; border-radius: 50%; border: 2px dashed var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; background: #F8FAFC; color: var(--text-muted); transition: 0.2s; flex-shrink: 0;" onmouseover="this.style.borderColor='var(--primary)'; this.style.color='var(--primary)';" onmouseout="this.style.borderColor='var(--border)'; this.style.color='var(--text-muted)';">
+            <i class="fa-solid fa-plus" style="pointer-events: none;"></i>
+        </div>
+    </div>
+    <input type="file" id="custom-logo-input" accept=".png, .jpg, .jpeg, .svg" style="display: none;">
+</div>
                         </div>
                         <div style="display: flex; gap: 15px; margin-bottom: 25px; align-items: flex-end; flex-wrap: wrap;">
                             <div class="form-group" style="margin-bottom: 0; flex-shrink: 0;">
@@ -185,18 +205,6 @@
                                     <input type="hidden" id="custom-text-color" value="#FBC02D">
                                     <input type="hidden" id="custom-obj-color" value="#222222">
                                     
-                                </div>
-                            </div>
-                            
-                            <!-- Formatting (Size Only) -->
-                            <div id="customization-size-group" class="form-group" style="margin-bottom: 0; flex: 1; min-width: 100px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                    <label style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted); margin: 0; white-space: nowrap;">Boyut</label>
-                                    <span id="preview-text-size-val" style="font-size: 0.8rem; color: var(--primary); font-weight: 700; white-space: nowrap;">51px / %</span>
-                                </div>
-                                <div style="display: flex; gap: 8px; height: 45px; align-items: center; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 0 10px;">
-                                    <i class="fa-solid fa-text-height" style="color: var(--text-muted); font-size: 0.9rem;"></i>
-                                    <input type="range" id="preview-text-size" min="12" max="100" value="51" style="flex: 1; accent-color: var(--primary); margin: 0; height: 4px;">
                                 </div>
                             </div>
                             
@@ -410,5 +418,40 @@
 
     <div id="toast-container"></div>
     <script type="module" src="myScript.js?v=16"></script>
+
+    <!-- MOBILE BOTTOM NAV -->
+    <div class="bottom-nav-bar" id="mobile-bottom-nav">
+        <div class="bottom-nav-item active" data-target="#products-page">
+            <i class="fa-solid fa-box"></i>
+            <span>Ürünler</span>
+        </div>
+        <div class="bottom-nav-item" data-target="#checkout-page">
+            <div style="position: relative;">
+                <i class="fa-solid fa-cart-shopping"></i>
+                <span class="cart-badge-mobile" id="mobile-cart-badge">0</span>
+            </div>
+            <span>Sepet</span>
+        </div>
+        <div class="bottom-nav-item" id="mobile-nav-user" data-target="#login-page">
+            <i class="fa-regular fa-user"></i>
+            <span id="mobile-nav-user-text">Giriş Yap</span>
+        </div>
+    </div>
+    
+    <style>
+    .bottom-nav-bar { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; justify-content: space-around; padding: 10px 0; border-top: 1px solid var(--border); }
+    .bottom-nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-muted); font-size: 0.75rem; font-weight: 600; cursor: pointer; text-decoration: none; gap: 4px; }
+    .bottom-nav-item i { font-size: 1.25rem; }
+    .bottom-nav-item.active { color: var(--primary); }
+    .cart-badge-mobile { position: absolute; top: -6px; right: -10px; background: #EF4444; color: #fff; font-size: 0.6rem; font-weight: 700; padding: 2px 5px; border-radius: 10px; }
+    
+    @media (max-width: 768px) {
+        .bottom-nav-bar { display: flex; }
+        .mobile-menu-toggle { display: none !important; }
+        .nav-menu { display: none !important; }
+        body { padding-bottom: 70px; }
+    }
+    </style>
+
 </body>
 </html>

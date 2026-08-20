@@ -84,6 +84,12 @@ const products = [
             { objectName: "Beşiktaş - 5 Adet Satıldı.", src: "./content/products/5/previewbjk.png" },
 
         ],
+		 colors: [
+            { color1: "#FBC02D", label1: "Arka"},
+            { color1: "#FFFFFF", label1: "Arka"},
+            { color1: "#222222", label1: "Arka"},
+            { color1: "#E91E63", label1: "Arka"}
+        ],
         images: [
             { src: "./content/products/5/1.jpg" },
             { src: "./content/products/5/2.jpg" },
@@ -139,7 +145,102 @@ const products = [
 ];
 
 // --- DOM READY ---
+
+function cropTransparentSpace(dataUrl, callback) {
+    const img = new Image();
+    img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Ensure reasonable resolution for vector formats
+        const w = img.width || 1024;
+        const h = img.height || 1024;
+        
+        canvas.width = w;
+        canvas.height = h;
+        ctx.drawImage(img, 0, 0, w, h);
+        
+        let imageData;
+        try {
+            imageData = ctx.getImageData(0, 0, w, h);
+        } catch(e) {
+            return callback(dataUrl); // fallback if CORS or tainted
+        }
+        
+        const data = imageData.data;
+        let minX = w, minY = h, maxX = 0, maxY = 0;
+        let hasPixels = false;
+        
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                const alpha = data[(y * w + x) * 4 + 3];
+                if (alpha > 5) {
+                    if (x < minX) minX = x;
+                    if (x > maxX) maxX = x;
+                    if (y < minY) minY = y;
+                    if (y > maxY) maxY = y;
+                    hasPixels = true;
+                }
+            }
+        }
+        
+        if (!hasPixels) return callback(dataUrl);
+        
+        const cropWidth = maxX - minX + 1;
+        const cropHeight = maxY - minY + 1;
+        
+        const cropCanvas = document.createElement('canvas');
+        cropCanvas.width = cropWidth;
+        cropCanvas.height = cropHeight;
+        cropCanvas.getContext('2d').drawImage(canvas, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+        
+        callback(cropCanvas.toDataURL('image/png'));
+    };
+    img.onerror = function() {
+        callback(dataUrl);
+    };
+    img.src = dataUrl;
+}
+
 $(document).ready(function() {
+    // Check if user is logged in based on existing nav logic
+    setInterval(() => {
+        if ($('#nav-user-profile').is(':visible')) {
+            $('#mobile-nav-user').attr('data-target', '#dashboard-page');
+            $('#mobile-nav-user i').attr('class', 'fa-solid fa-circle-user');
+            $('#mobile-nav-user-text').text('Profil');
+        } else {
+            $('#mobile-nav-user').attr('data-target', '#login-page');
+            $('#mobile-nav-user i').attr('class', 'fa-regular fa-user');
+            $('#mobile-nav-user-text').text('Giriş Yap');
+        }
+        $('#mobile-cart-badge').text($('#cart-badge').text());
+    }, 1000);
+
+    $('#upload-logo-trigger').on('click', function() {
+        $('#custom-logo-input').click();
+    });
+
+    $(document).on('click', '.logo-bubble', function() {
+        $('.logo-bubble').css('border-color', 'var(--border)').removeClass('active');
+        $(this).css('border-color', 'var(--primary)').addClass('active');
+
+        const src = $(this).attr('data-src');
+        if (src) {
+            // Apply mask
+            $('#preview-dynamic-logo').css({
+                'mask-image':            `url(${src})`,
+                '-webkit-mask-image':    `url(${src})`,
+                'mask-repeat':           'no-repeat',
+                '-webkit-mask-repeat':   'no-repeat',
+                'mask-size': 'contain', '-webkit-mask-size': 'contain', 'mask-position': 'center',
+                '-webkit-mask-position': 'center',
+                'background-color':      $('#custom-text-color').val()
+            }).show();
+            $('#preview-dynamic-logo').attr('data-active-logo', src); // Custom attribute for cart
+        }
+    });
+
     // Mobile Menu Logic
     $('#mobile-menu-toggle').click(function() {
         $('#nav-menu').addClass('open');
@@ -579,51 +680,17 @@ $(document).ready(function() {
     const $dynText   = $('#preview-dynamic-text');
     const $printArea = $('#preview-printable-area');
 
-    function updateDynamicTextSpacing() {
-        // Obje seçimi açıksa metin kutusu yoktur, işlem yapma
-        if (typeof currentProduct !== 'undefined' && currentProduct && currentProduct.isCustomObject) {
-            $dynText.css('letter-spacing', 'normal');
-            return;
-        }
-
-        const text = $dynText.text();
-        if (text.length <= 1) {
-            $dynText.css('letter-spacing', 'normal');
-            return;
-        }
-        
-        $dynText.css('letter-spacing', '0px');
-        $dynText.css('white-space', 'nowrap');
-        
-        const $measurer = $('<span>').text(text).css({
-            'font-family': $dynText.css('font-family'),
-            'font-size': $dynText.css('font-size'),
-            'font-weight': $dynText.css('font-weight'),
-            'white-space': 'nowrap',
-            'visibility': 'hidden',
-            'position': 'absolute'
-        }).appendTo('body');
-        
-        const naturalWidth = $measurer.width();
-        $measurer.remove();
-        
-        const containerWidth = $printArea.width();
-        
-        if (naturalWidth < containerWidth) {
-            const spacing = (containerWidth - naturalWidth) / (text.length - 1);
-            $dynText.css('letter-spacing', spacing + 'px');
-        } else {
-            $dynText.css('letter-spacing', 'normal');
-        }
-    }
-
-    $('#custom-text-input').on('input.preview', function() {
+    function updateDynamicTextSpacing() { 
+    $('#preview-dynamic-text').css('letter-spacing', 'normal'); 
+}
+$('#custom-text-input').on('input.preview', function() {
         const val = $(this).val();
         const defaultText = (typeof currentProduct !== 'undefined' && currentProduct && currentProduct.customTextPlaceholderPreview)
             ? currentProduct.customTextPlaceholderPreview : 'ENGRARE';
         $dynText.text(val || defaultText);
-        updateDynamicTextSpacing();
-    });
+        if(typeof window.fitTextToContainer === 'function') window.fitTextToContainer();
+    updateDynamicTextSpacing();
+});
 
     $('#custom-font-input').on('change', function() {
         $dynText.css('font-family', $(this).val());
@@ -640,21 +707,34 @@ $(document).ready(function() {
         else                        $printArea.css('justify-content', 'center');
     });
 
-    $('#preview-text-size').on('input', function() {
-        const size = $(this).val();
-        $dynText.css('font-size', size + 'px');
-        // Logonun daha büyük görünmesini isterseniz logoMultiplier'ı artırın (örn: 2.5)
-        const logoMultiplier = 1.2;
-        const maskSize = size * logoMultiplier;
-        $('#preview-dynamic-logo').css({
-            'mask-size':          `${maskSize}%`,
-            '-webkit-mask-size':  `${maskSize}%`
-        });
-        $('#preview-text-size-val').text(size + 'px / %');
-        updateDynamicTextSpacing();
-    });
+    window.fitTextToContainer = function() { 
+    const $container = $('#preview-printable-area'); 
+    const $text = $('#preview-dynamic-text'); 
+    if (!$container.length || !$text.length) return; 
+    
+    const textVal = $text.text().trim(); 
+    if (!textVal) return; 
+    
+    // Yüksek performansta natural size ölçmek için minik boyuta ayarla
+    $text.css({ 'font-size': '10px', 'white-space': 'nowrap', 'transform': 'none', 'width': 'auto', 'display': 'inline-block', 'line-height': '1' }); 
+    
+    const containerW = $container.width(); 
+    const containerH = $container.height(); 
+    const textW = $text.width(); 
+    const textH = $text.height(); 
+    
+    if (textW === 0 || textH === 0) return; 
+    
+    const scale = Math.min(containerW / textW, containerH / textH); 
+    $text.css('font-size', (10 * scale * 0.98) + 'px'); 
+    
+    if(typeof updateDynamicTextSpacing === 'function') updateDynamicTextSpacing(); 
+};
 
-    $(window).on('resize', updateDynamicTextSpacing);
+    $(window).on('resize', function() { 
+    if(typeof updateDynamicTextSpacing === 'function') updateDynamicTextSpacing(); 
+    if(typeof window.fitTextToContainer === 'function') window.fitTextToContainer(); 
+});
 
     $('#toggle-printable-area').on('change', function() {
         const border = $(this).is(':checked') ? '2px dashed rgba(0, 0, 0, 0.5)' : 'none';
@@ -663,6 +743,7 @@ $(document).ready(function() {
     });
 
     // --- LOGO YÜKLEME ---
+    
     $('#custom-logo-input').on('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -676,39 +757,48 @@ $(document).ready(function() {
 
         const reader = new FileReader();
         reader.onload = function(event) {
-            $('#preview-dynamic-logo').css({
-                'mask-image':            `url(${event.target.result})`,
-                '-webkit-mask-image':    `url(${event.target.result})`,
-                'mask-repeat':           'no-repeat',
-                '-webkit-mask-repeat':   'no-repeat',
-                'mask-position':         'center',
-                '-webkit-mask-position': 'center',
-                'background-color':      $('#custom-text-color').val()
-            }).show();
-            $('#clear-logo-btn').show();
-            setTimeout(() => { $('#preview-text-size').trigger('input'); }, 10);
+            cropTransparentSpace(event.target.result, function(croppedDataUrl) {
+                // Update the custom bubble
+                $('#custom-uploaded-img').attr('src', event.target.result); // Show original in bubble
+                $('#custom-uploaded-bubble').attr('data-src', croppedDataUrl).css('display', 'flex').click(); // trigger click to set as active
+            });
         };
         reader.readAsDataURL(file);
     });
 
-    $('#clear-logo-btn').on('click', function() {
-        $('#custom-logo-input').val('');
-        $('#preview-dynamic-logo').hide()
-            .css('mask-image', 'none')
-            .css('-webkit-mask-image', 'none');
-        $(this).hide();
-    });
+    
 
 });
 
 // --- FONKSİYONLAR ---
 
+
+function updateMobileHeader(targetId) {
+    if (window.innerWidth <= 768) {
+        const logoEl = document.querySelector('.brand-logo');
+        if (targetId === '#product-detail-page') {
+            logoEl.innerHTML = '<span style="font-size: 1.2rem; font-weight: 700;">2 Boyutlu Önizleme</span>';
+        } else if (targetId === '#checkout-page') {
+            logoEl.innerHTML = '<span style="font-size: 1.2rem; font-weight: 700;">Sepetim</span>';
+        } else if (targetId === '#dashboard-page') {
+            logoEl.innerHTML = '<span style="font-size: 1.2rem; font-weight: 700;">Profilim</span>';
+        } else if (targetId === '#login-page') {
+            logoEl.innerHTML = '<span style="font-size: 1.2rem; font-weight: 700;">Giriş Yap</span>';
+        } else {
+            logoEl.innerHTML = '<img src="./content/engrare_logo_elegant.png" height="50px" alt="Engrare" style="object-fit: contain;">';
+        }
+    }
+}
+
 function switchPage(targetId, pushState = true) {
     $('.nav-menu li').removeClass('active');
     $(`.nav-menu li[data-target="${targetId}"]`).addClass('active');
+    $('.bottom-nav-item').removeClass('active');
+    $(`.bottom-nav-item[data-target="${targetId}"]`).addClass('active');
     $('.page').removeClass('active');
     $(targetId).addClass('active');
     window.scrollTo(0, 0);
+    if(typeof updateMobileHeader === 'function') updateMobileHeader(targetId);
 
     if (pushState) {
         const map = { '#products-page': 'products', '#checkout-page': 'checkout', '#login-page': 'login', '#dashboard-page': 'dashboard', '#product-detail-page': 'detail' };
@@ -987,7 +1077,7 @@ window.openProductDetail = function(id, pushHistory = true) {
     
     // Temizle Logo (Varsayılan yüklemesi aşağıda yapılacak)
     $('#custom-logo-input').val('');
-    $('#clear-logo-btn').hide();
+    
     
     // 2D Preview Box Reset
     if (p.disableTextInput || p.isCustomText === false) {
@@ -1001,7 +1091,7 @@ window.openProductDetail = function(id, pushHistory = true) {
             'font-size': defaultSize + 'px',
             'text-align': 'center'
         });
-        $('#preview-text-size').val(defaultSize);
+        // Auto scale
         
         $('.align-btn').removeClass('active').css({'background': 'white', 'color': 'inherit', 'border-color': 'var(--border)'});
         $('.align-btn[data-align="center"]').addClass('active').css({'background': 'var(--primary)', 'color': 'white', 'border-color': 'var(--primary)'});
@@ -1033,24 +1123,22 @@ window.openProductDetail = function(id, pushHistory = true) {
             $('#preview-dynamic-logo').css({
                 'mask-image': `url(${defaultLogo})`,
                 '-webkit-mask-image': `url(${defaultLogo})`,
-                'mask-size': `${maskSize}%`,
-                '-webkit-mask-size': `${maskSize}%`,
+                'mask-size': 'contain',
+                '-webkit-mask-size': 'contain',
                 'mask-repeat': 'no-repeat',
                 '-webkit-mask-repeat': 'no-repeat',
-                'mask-position': 'center',
+                'mask-size': 'contain', '-webkit-mask-size': 'contain', 'mask-position': 'center',
                 '-webkit-mask-position': 'center',
                 'background-color': '#FBC02D'
             }).show();
-            $('#clear-logo-btn').show();
+            
         } else {
             $('#preview-logo-area').hide();
             $('#preview-dynamic-logo').hide().css('mask-image', 'none').css('-webkit-mask-image', 'none');
         }
         
         // Boyutlandırma tetiklemesini containerlar görünür olduktan SONRA yap ki tarayıcı mask-size'ı doğru hesaplasın.
-        setTimeout(() => {
-            $('#preview-text-size').trigger('input');
-        }, 10);
+        setTimeout(() => { if(typeof window.fitTextToContainer === 'function') window.fitTextToContainer(); }, 10);
         
         $('#toggle-printable-area').prop('checked', true);
         
@@ -1108,7 +1196,7 @@ async function addToCart() {
     const font = $('#custom-font-input').val();
     const textColor = $('#custom-text-color').val();
     const objColor = $('#custom-obj-color').val();
-    const textSize = $('#preview-text-size').val();
+    const textSize = 'Auto';
     const textAlign = $('.align-btn.active').data('align') || 'center';
     
     const selectedObjectIdx = currentProduct.isCustomObject ? $('#custom-object-input').val() : null;
@@ -1141,33 +1229,29 @@ async function addToCart() {
         selectedObject: selectedObjectName
     };
     
-    if (logoFile) {
-        showToast("Logo yükleniyor, lütfen bekleyin...", "info");
-        const $btn = $('#add-to-cart'); // Varsa sepete ekle butonu
-        $btn.prop('disabled', true).css('opacity', '0.7');
-        
-        try {
-            const ext = logoFile.name.split('.').pop();
-            const fileName = `logos/cart_${item.id}_${Math.random().toString(36).substring(2)}.${ext}`;
-            const sRef = storageRef(storage, fileName);
-            
-            await uploadBytes(sRef, logoFile);
-            const downloadUrl = await getDownloadURL(sRef);
-            
-            item.logoUrl = downloadUrl;
-            item.logoStoragePath = fileName;
-        } catch (error) {
-            console.error("Logo yükleme hatası:", error);
-            showToast("Logo yüklenirken bir hata oluştu.", "error");
+    const activeLogoSrc = $('#preview-dynamic-logo').attr('data-active-logo');
+    if (isLogoVisible && activeLogoSrc) {
+        if ($('#custom-uploaded-bubble').hasClass('active') && logoFile) {
+            showToast("Logo yükleniyor...", "info");
+            const $btn = $('#add-to-cart');
+            $btn.prop('disabled', true).css('opacity', '0.7');
+            try {
+                const ext = logoFile.name.split('.').pop();
+                const fileName = `logos/cart_${item.id}_${Math.random().toString(36).substring(2)}.${ext}`;
+                const sRef = storageRef(storage, fileName);
+                await uploadBytes(sRef, logoFile);
+                item.logoUrl = await getDownloadURL(sRef);
+                item.logoStoragePath = fileName;
+            } catch (error) {
+                showToast("Logo yükleme hatası", "error");
+                $btn.prop('disabled', false).css('opacity', '1');
+                return;
+            }
             $btn.prop('disabled', false).css('opacity', '1');
-            return;
+        } else {
+            item.logoUrl = activeLogoSrc;
         }
-        $btn.prop('disabled', false).css('opacity', '1');
-    } else if (isLogoVisible) {
-        item.logoUrl = './content/engrare_logo_elegant.svg';
-    }
-
-    cart.push(item);
+    }    cart.push(item);
     saveCart();
     renderCart();
     showToast("Sepete Eklendi!", "success");
@@ -1176,6 +1260,7 @@ async function addToCart() {
 function saveCart() {
     localStorage.setItem('engrare_cart', JSON.stringify(cart));
     $('#cart-badge').text(cart.length);
+    $('#mobile-cart-badge').text(cart.length);
 }
 
 function loadCart() {
@@ -1440,7 +1525,7 @@ function loadUserOrders(userId) {
                 `);
             });
         } else {
-            $list.html('<div style="text-align:center; padding:40px; color:var(--text-muted); font-size:0.95rem;">Henüz bir siparişiniz bulunmuyor.</div>');
+            $list.html('<div style="text-align:center; padding:40px; color:var(--text-muted); font-size:0.98rem;">Henüz bir siparişiniz bulunmuyor.</div>');
         }
     });
 }
@@ -1525,7 +1610,7 @@ window.openOrderDetail = function(orderId) {
                     <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.2rem; margin-right: 10px; color: #DC2626;"></i>
                     <strong style="font-size: 1.1rem;">Ödeme Bekleniyor (Havale/EFT)</strong>
                 </div>
-                <p style="margin-bottom: 10px; font-size: 0.95rem;">
+                <p style="margin-bottom: 10px; font-size: 0.98rem;">
                     Siparişinizin onaylanması için ödemenizin banka hesaplarımıza ulaşması gerekmektedir. 
                     Lütfen ödemenizi yaparken açıklama kısmına <strong>${order.id.substring(0, 8).toUpperCase()}</strong> sipariş numaranızı yazmayı unutmayınız.
                 </p>
