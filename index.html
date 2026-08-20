@@ -35,7 +35,7 @@
         }
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="./myStyle.css?v=7">
+    <link rel="stylesheet" href="./myStyle.css?v=10">
 </head>
 <body>
 
@@ -102,7 +102,7 @@
                     <div id="detail-thumbnails" style="display: flex; gap: 10px; margin-top: 15px; overflow-x: auto; padding-bottom: 5px;"></div>
                     
                     <!-- 2D Önizleme Alanı -->
-                    <div class="advanced-2d-preview-container" id="advanced-2d-preview-container" style="margin-top: 20px; display: none;">
+                    <div class="advanced-2d-preview-container" id="advanced-2d-preview-container" style="display: none;">
                         <h3 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary);">2 Boyutlu Ürün Önizleme</h3>
                         
                         <!-- Preview Box -->
@@ -117,7 +117,7 @@
                             <!-- Printable Area for Text (Dashed Box) -->
                             <div id="preview-printable-area" style="position: absolute; top: 15%; left: 10%; width: 80%; height: 70%; border: 2px dashed rgba(0, 0, 0, 0.5); z-index: 3; display: flex; align-items: center; justify-content: center; overflow: hidden; transition: border 0.2s;">
                                 <!-- Dynamic Text -->
-                                <span id="preview-dynamic-text" style="color: #FBC02D; font-size: 24px; font-family: 'Plus Jakarta Sans', sans-serif; text-align: center; width: auto; word-break: break-word; display: inline-block; line-height: 1; transition: color 0.2s;">ENGRARE</span>
+                                <span id="preview-dynamic-text" style="color: #FBC02D; font-size: 24px; font-family: 'AGENCYB', sans-serif; text-align: center; width: auto; word-break: break-word; display: inline-block; line-height: 1; transition: color 0.2s;">ENGRARE</span>
                             </div>
                             
                             <!-- Printable Area for Logo (Dashed Box) -->
@@ -150,15 +150,6 @@
                             <select id="custom-object-input" class="input-box" style="font-weight: 600;"></select>
                         </div>
                         <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
-                            <div class="form-group" id="customization-font-group" style="flex: 1; margin-bottom: 0;">
-                                <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; font-weight: 600;">Yazı Tipi (Font)</label>
-                                <select id="custom-font-input" class="input-box" style="font-family: 'Plus Jakarta Sans', sans-serif;">
-                                    <option value="'Plus Jakarta Sans', sans-serif" style="font-family: 'Plus Jakarta Sans', sans-serif;">Modern (Varsayılan)</option>
-                                    <option value="'Times New Roman', serif" style="font-family: 'Times New Roman', serif;">Klasik (Serif)</option>
-                                    <option value="'Courier New', monospace" style="font-family: 'Courier New', monospace;">Daktilo (Monospace)</option>
-                                    <option value="'Brush Script MT', cursive" style="font-family: 'Brush Script MT', cursive;">El Yazısı (Kıvrımlı)</option>
-                                </select>
-                            </div>
                             <div class="form-group" id="customization-logo-group" style="flex: 1; margin-bottom: 0; display: none;">
     <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; font-weight: 600;">Logo Seç Veya Yükle</label>
     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;" id="logo-bubbles-container">
@@ -417,7 +408,7 @@
     </div>
 
     <div id="toast-container"></div>
-    <script type="module" src="myScript.js?v=16"></script>
+    <script type="module" src="myScript.js?v=24"></script>
 
     <!-- MOBILE BOTTOM NAV -->
     <div class="bottom-nav-bar" id="mobile-bottom-nav">

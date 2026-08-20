@@ -1,3 +1,11 @@
+/* AGENCYB Custom Font */
+@font-face {
+    font-family: 'AGENCYB';
+    src: url('./content/AGENCYB.TTF') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 /* ==========================================================================
    1. DEĞİŞKENLER & GENEL SIFIRLAMALAR (RESET)
    ========================================================================== */
@@ -92,8 +100,8 @@ body.no-scroll {
 /* ==========================================================================
    3. ORTAK SAYFA ELEMANLARI (COMMON)
    ========================================================================== */
-.page { display: none; opacity: 0; transition: 0.3s; }
-.page.active { display: block; opacity: 1; }
+.page { display: none; }
+.page.active { display: block; }
 .container { max-width: 1200px; margin: 0 auto; padding: 60px 20px; }
 .narrow { max-width: 700px; }
 h1 { font-size: 3rem; color: var(--primary); margin-bottom: 15px;}
@@ -542,3 +550,80 @@ input[type=number] {
 .elegant-tooltip::before { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%) translateY(1px); border-width: 6px; border-style: solid; border-color: var(--border) transparent transparent transparent; z-index: -1; }
 .tooltip-row { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: 600; color: var(--text-main); }
 .tooltip-swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.1); }
+
+/* ==========================================================================
+   13. MOBİL STICKY ÖNIZLEME (Design Mode)
+   ========================================================================== */
+
+/* Navbar: smooth slide-up when design mode activates */
+.navbar {
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.navbar--hidden {
+    transform: translateY(-100%);
+}
+
+/* 2D preview container in its normal (in-flow) state */
+#advanced-2d-preview-container {
+    transition: none; /* No transition in normal flow */
+}
+
+@media (max-width: 768px) {
+    /* ---- DESIGN MODE: body class set by JS ---- */
+
+    /* Compensate body top padding when navbar is hidden */
+    body.detail-design-mode {
+        padding-top: 0;
+    }
+
+    /* The preview container becomes a fixed compact strip at the top */
+    body.detail-design-mode #advanced-2d-preview-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 900;
+        margin-top: 0;
+        /* Compact height: show the 16/9 box at 35vw tall (≈ half the normal size) */
+        background: #ffffff;
+        border-bottom: 1px solid var(--border);
+        padding: 8px 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+        /* Slide in from top */
+        animation: previewSlideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+
+    @keyframes previewSlideDown {
+        from { transform: translateY(-100%); opacity: 0; }
+        to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    /* Hide the title and the "Kesikli Çizgiyi Göster" toggle in compact mode */
+    body.detail-design-mode #advanced-2d-preview-container > h3,
+    body.detail-design-mode #advanced-2d-preview-container > div:last-child {
+        display: none !important;
+    }
+
+    /* Compact preview box: fixed 32vw height instead of 16/9 aspect-ratio */
+    body.detail-design-mode #advanced-2d-preview-box {
+        width: auto !important;
+        aspect-ratio: 16 / 9 !important;
+        height: 32vw;
+        max-height: 180px;
+        border-radius: 8px;
+        margin: 0 auto;
+    }
+
+    /* Push the page content down so it doesn't hide under the sticky preview.
+       We calculate: compact preview ≈ 32vw + 16px padding = ~35vw.
+       Using a CSS custom property updated by JS for precision. */
+    body.detail-design-mode #product-detail-page {
+        padding-top: var(--sticky-preview-height, 38vw);
+    }
+
+    /* Bottom nav: stay visible but bump up slightly if needed */
+    body.detail-design-mode #mobile-bottom-nav {
+        /* already fixed at bottom, no change needed */
+    }
+}
+

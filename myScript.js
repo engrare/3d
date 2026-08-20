@@ -317,8 +317,15 @@ $(document).ready(function() {
         }
     });
 
-    // Navigasyon
+    // Navigasyon — üst menü ve nav-trigger'lar
     $('.nav-menu li, .nav-trigger, .dropdown-item').click(function(e) {
+        e.stopPropagation();
+        const target = $(this).data('target');
+        if (target) switchPage(target);
+    });
+
+    // Mobil alt navigasyon — delegated handler (DOM'da script'ten sonra geliyor)
+    $(document).on('click', '.bottom-nav-item', function(e) {
         e.stopPropagation();
         const target = $(this).data('target');
         if (target) switchPage(target);
@@ -570,12 +577,7 @@ $(document).ready(function() {
         $('#address-modal').addClass('open');
     });
 
-    // Font Değişimi
-    $('#custom-font-input').on('change', function() {
-        const font = $(this).val();
-        $('.mockup-svg-text').attr('font-family', font);
-        $(this).css('font-family', font);
-    });
+
 
     // Detay Sayfası Miktar Artırma/Azaltma ve Manuel Giriş
     $('#quantity-input').on('change', function() {
@@ -692,10 +694,8 @@ $('#custom-text-input').on('input.preview', function() {
     updateDynamicTextSpacing();
 });
 
-    $('#custom-font-input').on('change', function() {
-        $dynText.css('font-family', $(this).val());
-        updateDynamicTextSpacing();
-    });
+    // Font is fixed to AGENCYB
+    $dynText.css('font-family', "'AGENCYB', sans-serif");
 
     $('.align-btn').on('click', function() {
         $('.align-btn').removeClass('active').css({ 'background': 'white', 'color': 'inherit', 'border-color': 'var(--border)' });
@@ -776,9 +776,7 @@ $('#custom-text-input').on('input.preview', function() {
 function updateMobileHeader(targetId) {
     if (window.innerWidth <= 768) {
         const logoEl = document.querySelector('.brand-logo');
-        if (targetId === '#product-detail-page') {
-            logoEl.innerHTML = '<span style="font-size: 1.2rem; font-weight: 700;">2 Boyutlu Önizleme</span>';
-        } else if (targetId === '#checkout-page') {
+        if (targetId === '#checkout-page') {
             logoEl.innerHTML = '<span style="font-size: 1.2rem; font-weight: 700;">Sepetim</span>';
         } else if (targetId === '#dashboard-page') {
             logoEl.innerHTML = '<span style="font-size: 1.2rem; font-weight: 700;">Profilim</span>';
@@ -790,21 +788,178 @@ function updateMobileHeader(targetId) {
     }
 }
 
+/* ==========================================================================
+   MOBİL STICKY ÖNIZLEME CONTROLLER
+   ========================================================================== */
+
+let _scrollHandler        = null;   // Scroll listener for hysteresis
+let _designModeResizeObs  = null;   // ResizeObserver – keeps padding accurate
+let _isDesignMode         = false;
+
+/**
+ * Activates the sticky-preview "design mode" on mobile:
+ *  - Hides the navbar (slides it off the top)
+ *  - Fixes the 2D preview card at the top of the viewport (compact)
+ *  - Adjusts body padding so content doesn't hide under the sticky card
+ */
+function enterDesignMode() {
+    if (_isDesignMode || window.innerWidth > 768) return;
+    _isDesignMode = true;
+
+    document.body.classList.add('detail-design-mode');
+    document.querySelector('.navbar').classList.add('navbar--hidden');
+
+    // Update the CSS custom property for accurate push-down padding
+    _updateStickyHeight();
+
+    // Watch the preview container's height and keep padding in sync
+    if (!_designModeResizeObs) {
+        _designModeResizeObs = new ResizeObserver(_updateStickyHeight);
+    }
+    const previewEl = document.getElementById('advanced-2d-preview-container');
+    if (previewEl) _designModeResizeObs.observe(previewEl);
+}
+
+/**
+ * Deactivates design mode – restores the navbar and the normal in-flow preview.
+ */
+function exitDesignMode() {
+    if (!_isDesignMode) return;
+    _isDesignMode = false;
+
+    document.body.classList.remove('detail-design-mode');
+    document.querySelector('.navbar').classList.remove('navbar--hidden');
+    document.documentElement.style.removeProperty('--sticky-preview-height');
+
+    if (_designModeResizeObs) {
+        _designModeResizeObs.disconnect();
+    }
+    
+    // Recalculate text size after transition completes
+    setTimeout(() => { if (typeof window.fitTextToContainer === 'function') window.fitTextToContainer(); }, 50);
+}
+
+/** Reads the rendered height of the sticky preview and writes it as a CSS var. */
+function _updateStickyHeight() {
+    const previewEl = document.getElementById('advanced-2d-preview-container');
+    if (previewEl && _isDesignMode) {
+        const h = previewEl.offsetHeight;
+        document.documentElement.style.setProperty('--sticky-preview-height', h + 'px');
+        
+        // Recalculate text size for new dimensions
+        if (typeof window.fitTextToContainer === 'function') window.fitTextToContainer();
+    }
+}
+
+/**
+ * Sets up a scroll listener that watches the customization box.
+ * Called once per openProductDetail invocation on mobile.
+ */
+function setupDesignModeObserver() {
+    // Tear down any previous listener first
+    teardownDesignModeObserver();
+
+    if (window.innerWidth > 768) return;   // Desktop: nothing to do
+
+    const customizationBox = document.querySelector('.customization-box');
+    const previewContainer = document.getElementById('advanced-2d-preview-container');
+
+    if (!customizationBox || !previewContainer) return;
+
+    _scrollHandler = () => {
+        // Sayfanın yukarıdan ne kadar aşağı kaydırıldığını piksel cinsinden alır (Y ekseni)
+        const currentScroll = window.scrollY || window.pageYOffset;
+        //console.log("Mevcut Scroll:", currentScroll); // Değerleri bulmanız için konsola yazdırır
+        
+        // --- AYARLANABİLİR DEĞERLER (Piksel Cinsinden) ---
+        // 1. TUTMA NOKTASI: Ne kadar aşağı kaydırınca yapışsın?
+        // Örnek: Değeri KÜÇÜLTÜRSENİZ (örn: 200) daha az kaydırınca yapışır.
+        const ENTER_SCROLL = 440; 
+
+        // 2. BIRAKMA NOKTASI: Ne kadar yukarı çıkınca bıraksın?
+        // Örnek: Değeri KÜÇÜLTÜRSENİZ (örn: 150) bırakmak için daha çok yukarı çıkmanızı bekler.
+        const EXIT_SCROLL = 300; 
+        
+        // Tutma şartı (Aşağı kaydırma)
+        if (currentScroll > ENTER_SCROLL && !_isDesignMode) {
+            enterDesignMode();
+        } 
+        // Bırakma şartı (Yukarı kaydırma)
+        else if (currentScroll < EXIT_SCROLL && _isDesignMode) {
+            exitDesignMode();
+        }
+    };
+
+    window.addEventListener('scroll', _scrollHandler, { passive: true });
+}
+
+/** Removes the scroll listener and exits design mode. */
+function teardownDesignModeObserver() {
+    exitDesignMode();
+    
+    if (_scrollHandler) {
+        window.removeEventListener('scroll', _scrollHandler);
+        _scrollHandler = null;
+    }
+    
+    if (_designModeResizeObs) {
+        _designModeResizeObs.disconnect();
+        _designModeResizeObs = null;
+    }
+}
+
+
+
 function switchPage(targetId, pushState = true) {
+    // If we're leaving the product detail page, always clean up design mode
+    if (targetId !== '#product-detail-page') {
+        if (typeof teardownDesignModeObserver === 'function') teardownDesignModeObserver();
+    }
+
+    const $current = $('.page.active');
+    const $target = $(targetId);
+    
+    if ($current.length && $current[0] === $target[0]) return;
+
     $('.nav-menu li').removeClass('active');
     $(`.nav-menu li[data-target="${targetId}"]`).addClass('active');
     $('.bottom-nav-item').removeClass('active');
     $(`.bottom-nav-item[data-target="${targetId}"]`).addClass('active');
-    $('.page').removeClass('active');
-    $(targetId).addClass('active');
-    window.scrollTo(0, 0);
-    if(typeof updateMobileHeader === 'function') updateMobileHeader(targetId);
 
     if (pushState) {
         const map = { '#products-page': 'products', '#checkout-page': 'checkout', '#login-page': 'login', '#dashboard-page': 'dashboard', '#product-detail-page': 'detail' };
         window.history.pushState({ page: targetId }, "", window.location.pathname + '?' + (map[targetId] || 'products'));
     }
+
+    if ($current.length) {
+        $current.fadeOut(120, function() {
+            $current.removeClass('active');
+            $current.css('display', ''); // clean up
+            
+            window.scrollTo(0, 0);
+            if(typeof updateMobileHeader === 'function') updateMobileHeader(targetId);
+            
+            $target.fadeIn(120, function() {
+                $target.addClass('active');
+                $target.css('display', ''); // clean up inline block, CSS handles it
+                // Sayfa tam görünür olduktan sonra yazı boyutunu hesapla
+                if (targetId === '#product-detail-page' && typeof window.fitTextToContainer === 'function') {
+                    window.fitTextToContainer();
+                }
+            });
+        });
+    } else {
+        $('.page').removeClass('active');
+        $target.addClass('active');
+        window.scrollTo(0, 0);
+        if(typeof updateMobileHeader === 'function') updateMobileHeader(targetId);
+        // Sayfa tam görünür olduktan sonra yazı boyutunu hesapla
+        if (targetId === '#product-detail-page' && typeof window.fitTextToContainer === 'function') {
+            window.fitTextToContainer();
+        }
+    }
 }
+
 
 function renderProducts() {
     const $grid = $('#products-grid-container');
@@ -1069,7 +1224,8 @@ window.openProductDetail = function(id, pushHistory = true) {
     // Formu ve galeri pozisyonunu temizle
     $('#custom-text-input').val('');
     $('#quantity-input').val(1);
-    $('#custom-font-input').val("'Plus Jakarta Sans', sans-serif").trigger('change');
+    $('#preview-dynamic-text').css('font-family', "'AGENCYB', sans-serif");
+
     $('#custom-text-color').val('#FBC02D');
     $('#custom-text-color-btn').css('background-color', '#FBC02D');
     $('#custom-obj-color').val('#222222');
@@ -1178,6 +1334,11 @@ window.openProductDetail = function(id, pushHistory = true) {
         const slug = slugify(p.name);
         window.history.pushState({ page: '#product-detail-page', productId: p.id }, "", window.location.pathname + '?detail=' + slug);
     }
+
+    // Set up mobile sticky-preview observer after the page is rendered
+    // The small delay lets the browser complete layout so IntersectionObserver
+    // gets correct bounding rects on first run.
+    setTimeout(() => { if (typeof setupDesignModeObserver === 'function') setupDesignModeObserver(); }, 80);
 };
 
 window.changeMainImage = function(idx) {
@@ -1193,7 +1354,7 @@ async function addToCart() {
     
     const text = $('#custom-text-input').val().trim();
     const qty = parseInt($('#quantity-input').val()) || 1;
-    const font = $('#custom-font-input').val();
+    const font = "'AGENCYB', sans-serif";
     const textColor = $('#custom-text-color').val();
     const objColor = $('#custom-obj-color').val();
     const textSize = 'Auto';
