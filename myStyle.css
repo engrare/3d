@@ -402,6 +402,7 @@ h2 { font-size: 2rem; margin-bottom: 15px; }
 .iyzico-badge { background: #00AEEF; color: white; padding: 3px 10px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; height: fit-content;}
 
 #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;}
+@media (max-width: 768px) { #toast-container { bottom: 70px; } }
 .toast { background: white; padding: 15px 20px; border-radius: 8px; box-shadow: var(--shadow-md); border-left: 4px solid var(--accent); display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s forwards;}
 .toast.error { border-left-color: #EF4444; }
 .toast.success { border-left-color: #10B981; }
@@ -583,13 +584,11 @@ input[type=number] {
         left: 0;
         width: 100%;
         z-index: 900;
-        margin-top: 0;
-        /* Compact height: show the 16/9 box at 35vw tall (≈ half the normal size) */
+        margin: 0;
+        padding: 0;
         background: #ffffff;
         border-bottom: 1px solid var(--border);
-        padding: 8px 12px;
         box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-        /* Slide in from top */
         animation: previewSlideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
     }
 
@@ -604,13 +603,13 @@ input[type=number] {
         display: none !important;
     }
 
-    /* Compact preview box: fixed 32vw height instead of 16/9 aspect-ratio */
+    /* Compact preview box: fixed smaller height */
     body.detail-design-mode #advanced-2d-preview-box {
         width: auto !important;
         aspect-ratio: 16 / 9 !important;
-        height: 32vw;
-        max-height: 180px;
-        border-radius: 8px;
+        height: 22vw;
+        max-height: 120px;
+        border-radius: 6px;
         margin: 0 auto;
     }
 
@@ -627,3 +626,200 @@ input[type=number] {
     }
 }
 
+@media (max-width: 768px) {
+    .advanced-2d-preview-container {
+        position: sticky;
+        top: 65px;
+        z-index: 100;
+        background: #fff;
+        padding: 10px 0;
+        box-shadow: 0 5px 10px -5px rgba(0,0,0,0.1);
+        margin: 0 -15px;
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    .advanced-2d-preview-container h3 {
+        display: none;
+    }
+}
+
+
+/* ==========================================================================
+   14. MOBİL HERO OVERLAY (Fotoğraf üstü ürün bilgisi)
+   ========================================================================== */
+
+/* Desktop'ta gizle */
+.mobile-hero-overlay { display: none; }
+
+@media (max-width: 768px) {
+    /* Carousel'ı daha yüksek yap: 16/9'dan tam ekrana yakın oran */
+    #detail-main-carousel {
+        aspect-ratio: 4/3 !important;
+        border-radius: 0 !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-top: none !important;
+    }
+
+    .mobile-hero-overlay {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+        padding: 14px 16px 16px;
+        background: linear-gradient(
+            to bottom,
+            rgba(0,0,0,0.55) 0%,
+            transparent 40%,
+            transparent 45%,
+            rgba(0,0,0,0.65) 100%
+        );
+        pointer-events: none;
+        border-radius: inherit;
+    }
+
+    .mobile-hero-back {
+        pointer-events: all;
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+        padding: 0;
+        align-self: flex-start;
+    }
+
+    .mobile-hero-info {
+        pointer-events: none;
+    }
+
+    #mobile-hero-title {
+        color: #fff;
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin: 0 0 4px;
+        text-shadow: 0 1px 6px rgba(0,0,0,0.6);
+        line-height: 1.2;
+    }
+
+    #mobile-hero-desc {
+        color: rgba(255,255,255,0.85);
+        font-size: 0.8rem;
+        margin: 0 0 6px;
+        text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+        line-height: 1.3;
+    }
+
+    .mobile-hero-price {
+        color: #fff;
+        font-size: 1.2rem;
+        font-weight: 800;
+        text-shadow: 0 1px 6px rgba(0,0,0,0.6);
+    }
+
+    /* Desktop'taki "Geri Dön", ürün adı, açıklama ve fiyatı mobilde gizle */
+    #product-detail-page .product-info .btn-back,
+    #product-detail-page #detail-title,
+    #product-detail-page #detail-desc,
+    #product-detail-page #detail-price {
+        display: none !important;
+    }
+}
+
+/* ==========================================================================
+   15. MOBİL HIZLI SEPETE EKLE BARI
+   ========================================================================== */
+#mobile-cart-bar {
+    display: none; /* JS ile gösterilir */
+    position: fixed;
+    bottom: 60px; /* bottom-nav-bar yüksekliği kadar */
+    left: 0;
+    width: 100%;
+    z-index: 999;
+    background: #fff;
+    border-top: 1px solid var(--border);
+    padding: 8px 12px;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
+}
+@media (max-width: 768px) {
+    #mobile-cart-bar {
+        display: flex; /* her zaman flex; görünürlüğü display:none ile JS kontrol eder */
+    }
+    body { padding-bottom: 130px; } /* nav bar + cart bar */
+}
+#mobile-cart-bar-img {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.mobile-cart-bar-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+#mobile-cart-bar-name {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.mobile-cart-bar-qty {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.qty-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg-soft);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-main);
+    line-height: 1;
+}
+#mobile-qty-val {
+    font-size: 0.9rem;
+    font-weight: 700;
+    min-width: 20px;
+    text-align: center;
+}
+#mobile-cart-bar-btn {
+    flex-shrink: 0;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 9px 14px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+#mobile-cart-bar-btn:active {
+    opacity: 0.85;
+}

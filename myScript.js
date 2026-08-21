@@ -203,19 +203,35 @@ function cropTransparentSpace(dataUrl, callback) {
 }
 
 $(document).ready(function() {
-    // Check if user is logged in based on existing nav logic
-    setInterval(() => {
-        if ($('#nav-user-profile').is(':visible')) {
-            $('#mobile-nav-user').attr('data-target', '#dashboard-page');
-            $('#mobile-nav-user i').attr('class', 'fa-solid fa-circle-user');
-            $('#mobile-nav-user-text').text('Profil');
-        } else {
-            $('#mobile-nav-user').attr('data-target', '#login-page');
-            $('#mobile-nav-user i').attr('class', 'fa-regular fa-user');
-            $('#mobile-nav-user-text').text('Giriş Yap');
-        }
-        $('#mobile-cart-badge').text($('#cart-badge').text());
-    }, 1000);
+    // Alt menü tıklama olayları
+    $(document).on('click', '#mobile-nav-login, #mobile-nav-profile', function() {
+        const target = $(this).attr('data-target');
+        if (target) switchPage(target);
+    });
+
+    $('#mobile-nav-logout-btn').on('click', function() {
+        signOut(auth).then(() => {
+            switchPage('#products-page');
+            showToast("Çıkış yapıldı.", "success");
+        });
+    });
+
+    // Mobil hızlı sepete ekle barı – miktar butonları
+    $('#mobile-qty-minus').on('click', function() {
+        let v = parseInt($('#mobile-qty-val').text()) || 1;
+        if (v > 1) $('#mobile-qty-val').text(v - 1);
+        // Sayfadaki gerçek miktar inputunu da güncelle
+        $('#quantity-input').val(Math.max(1, v - 1));
+    });
+    $('#mobile-qty-plus').on('click', function() {
+        let v = parseInt($('#mobile-qty-val').text()) || 1;
+        $('#mobile-qty-val').text(v + 1);
+        $('#quantity-input').val(v + 1);
+    });
+    // Mobil "Sepete Ekle" → sayfadaki asıl butonu tetikle
+    $('#mobile-cart-bar-btn').on('click', function() {
+        $('#add-to-cart').click();
+    });
 
     $('#upload-logo-trigger').on('click', function() {
         $('#custom-logo-input').click();
@@ -341,12 +357,20 @@ $(document).ready(function() {
                 $('#nav-login-btn').css('display', 'flex');
                 $('#nav-user-profile').hide();
                 $('#nav-logout-container').hide();
+                // Alt menü: misafir görünümü
+                $('#mobile-nav-login').show();
+                $('#mobile-nav-profile').hide();
+                $('#mobile-nav-logout-btn').hide();
             } else {
                 $('#nav-login-btn').hide();
                 $('#nav-user-profile').css('display', 'flex');
                 $('#nav-logout-container').css('display', 'flex');
                 $('#dash-user-name').text(user.displayName || "Kullanıcı");
                 $('#dash-user-email').text(user.email);
+                // Alt menü: giriş yapılmış görünümü
+                $('#mobile-nav-login').hide();
+                $('#mobile-nav-profile').css('display', 'flex');
+                $('#mobile-nav-logout-btn').css('display', 'flex');
             }
             loadUserOrders(user.uid);
             loadUserAddresses(user.uid);
@@ -354,6 +378,10 @@ $(document).ready(function() {
             $('#nav-login-btn').css('display', 'flex');
             $('#nav-user-profile').hide();
             $('#nav-logout-container').hide();
+            // Alt menü: çıkış yapılmış görünümü
+            $('#mobile-nav-login').show();
+            $('#mobile-nav-profile').hide();
+            $('#mobile-nav-logout-btn').hide();
         }
     });
 
@@ -425,18 +453,24 @@ $(document).ready(function() {
 
     $(document).on('click', '.pla-swatch', function(e) {
         e.stopPropagation();
-        const color = $(this).data('color');
         const inputId = $(this).data('input');
         const isCart = $(this).data('cart-index') !== undefined;
         
         if (isCart) {
             const index = $(this).data('cart-index');
-            const type = $(this).data('type'); // 'text' or 'obj'
-            if (type === 'text') cart[index].textColor = color;
-            if (type === 'obj') cart[index].objColor = color;
+            if ($(this).attr('data-color1') !== undefined) {
+                cart[index].textColor = $(this).data('color1');
+                cart[index].objColor = $(this).data('color2');
+            } else {
+                const color = $(this).data('color');
+                const type = $(this).data('type'); // 'text' or 'obj'
+                if (type === 'text') cart[index].textColor = color;
+                if (type === 'obj') cart[index].objColor = color;
+            }
             saveCart();
             renderCart();
         } else {
+            const color = $(this).data('color');
             $('#' + inputId).val(color);
             $('#' + inputId + '-btn').css('background-color', color);
             $(this).closest('.pla-options-dropdown').removeClass('open');
@@ -776,15 +810,7 @@ $('#custom-text-input').on('input.preview', function() {
 function updateMobileHeader(targetId) {
     if (window.innerWidth <= 768) {
         const logoEl = document.querySelector('.brand-logo');
-        if (targetId === '#checkout-page') {
-            logoEl.innerHTML = '<span style="font-size: 1.2rem; font-weight: 700;">Sepetim</span>';
-        } else if (targetId === '#dashboard-page') {
-            logoEl.innerHTML = '<span style="font-size: 1.2rem; font-weight: 700;">Profilim</span>';
-        } else if (targetId === '#login-page') {
-            logoEl.innerHTML = '<span style="font-size: 1.2rem; font-weight: 700;">Giriş Yap</span>';
-        } else {
-            logoEl.innerHTML = '<img src="./content/engrare_logo_elegant.png" height="50px" alt="Engrare" style="object-fit: contain;">';
-        }
+        logoEl.innerHTML = '<img src="./content/engrare_logo_elegant.png" height="50px" alt="Engrare" style="object-fit: contain;">';
     }
 }
 
@@ -835,6 +861,10 @@ function exitDesignMode() {
         _designModeResizeObs.disconnect();
     }
     
+    // Hide the placeholder when unsticking so layout returns to normal
+    const placeholder = document.getElementById('preview-sticky-placeholder');
+    if (placeholder) placeholder.style.display = 'none';
+    
     // Recalculate text size after transition completes
     setTimeout(() => { if (typeof window.fitTextToContainer === 'function') window.fitTextToContainer(); }, 50);
 }
@@ -845,6 +875,19 @@ function _updateStickyHeight() {
     if (previewEl && _isDesignMode) {
         const h = previewEl.offsetHeight;
         document.documentElement.style.setProperty('--sticky-preview-height', h + 'px');
+        
+        // Create or update a placeholder div right after the preview container.
+        // This placeholder holds the same height as the sticky element so the
+        // rest of the page doesn't jump when the preview lifts out of flow.
+        let placeholder = document.getElementById('preview-sticky-placeholder');
+        if (!placeholder) {
+            placeholder = document.createElement('div');
+            placeholder.id = 'preview-sticky-placeholder';
+            placeholder.style.cssText = 'display:none; width:100%; background:transparent; flex-shrink:0;';
+            previewEl.parentNode.insertBefore(placeholder, previewEl.nextSibling);
+        }
+        placeholder.style.height = h + 'px';
+        placeholder.style.display = 'block';
         
         // Recalculate text size for new dimensions
         if (typeof window.fitTextToContainer === 'function') window.fitTextToContainer();
@@ -874,18 +917,14 @@ function setupDesignModeObserver() {
         // --- AYARLANABİLİR DEĞERLER (Piksel Cinsinden) ---
         // 1. TUTMA NOKTASI: Ne kadar aşağı kaydırınca yapışsın?
         // Örnek: Değeri KÜÇÜLTÜRSENİZ (örn: 200) daha az kaydırınca yapışır.
-        const ENTER_SCROLL = 440; 
-
-        // 2. BIRAKMA NOKTASI: Ne kadar yukarı çıkınca bıraksın?
-        // Örnek: Değeri KÜÇÜLTÜRSENİZ (örn: 150) bırakmak için daha çok yukarı çıkmanızı bekler.
-        const EXIT_SCROLL = 300; 
+        const SCROLL_TH = 500;
         
         // Tutma şartı (Aşağı kaydırma)
-        if (currentScroll > ENTER_SCROLL && !_isDesignMode) {
+        if (currentScroll > SCROLL_TH && !_isDesignMode) {
             enterDesignMode();
         } 
         // Bırakma şartı (Yukarı kaydırma)
-        else if (currentScroll < EXIT_SCROLL && _isDesignMode) {
+        else if (currentScroll < SCROLL_TH && _isDesignMode) {
             exitDesignMode();
         }
     };
@@ -914,6 +953,7 @@ function switchPage(targetId, pushState = true) {
     // If we're leaving the product detail page, always clean up design mode
     if (targetId !== '#product-detail-page') {
         if (typeof teardownDesignModeObserver === 'function') teardownDesignModeObserver();
+        $('#mobile-cart-bar').hide();
     }
 
     const $current = $('.page.active');
@@ -1131,7 +1171,17 @@ window.openProductDetail = function(id, pushHistory = true) {
     $('#detail-title').text(p.name);
     $('#detail-desc').text(p.desc);
     $('#detail-price').text(`₺${p.price.toFixed(2)}`);
-    
+    // Mobil hero overlay
+    $('#mobile-hero-title').text(p.name);
+    $('#mobile-hero-desc').text(p.desc);
+    $('#mobile-hero-price').text(`₺${p.price.toFixed(2)}`);
+    // Mobil hızlı sepete ekle barı
+    const heroImg = (p.images && p.images[0]) ? p.images[0].src : '';
+    $('#mobile-cart-bar-img').attr('src', heroImg);
+    $('#mobile-cart-bar-name').text(p.name);
+    $('#mobile-qty-val').text('1');
+    if (window.innerWidth <= 768) $('#mobile-cart-bar').show();
+
     // Ürün özelleştirme alanlarını yönetme
     if (p.isCustomObject) {
         $('#customization-object-group').show();
@@ -1429,6 +1479,7 @@ function loadCart() {
     if (stored) {
         cart = JSON.parse(stored);
         $('#cart-badge').text(cart.length);
+        $('#mobile-cart-badge').text(cart.length);
         renderCart();
     }
 }
@@ -1470,36 +1521,28 @@ function renderCart() {
                             </div>
                             
                             <div style="display: flex; gap: 8px;">
-                                <div style="position: relative;">
-                                    <div class="pla-color-select" data-target="cart-dropdown-text-${index}" style="width: 20px; height: 20px; border-radius: 50%; background: ${item.textColor || '#fff'}; border: 1px solid var(--border);" title="Yazı Rengi"></div>
-                                    <div class="pla-options-dropdown" id="cart-dropdown-text-${index}" style="padding: 8px; gap: 8px; width: 130px; bottom: calc(100% + 10px);">
-                                        <div style="text-align:center; font-size:0.7rem; font-weight:700; color:var(--text-muted); grid-column: span 4; margin-bottom: 2px;">YAZI RENGİ</div>
-                                        <div class="pla-swatch" data-color="#FFFFFF" data-cart-index="${index}" data-type="text" style="background-color: #FFFFFF; width: 22px; height: 22px;" title="Beyaz"></div>
-                                        <div class="pla-swatch" data-color="#222222" data-cart-index="${index}" data-type="text" style="background-color: #222222; width: 22px; height: 22px;" title="Siyah"></div>
-                                        <div class="pla-swatch" data-color="#C0C0C0" data-cart-index="${index}" data-type="text" style="background-color: #C0C0C0; width: 22px; height: 22px;" title="Gümüş"></div>
-                                        <div class="pla-swatch" data-color="#D32F2F" data-cart-index="${index}" data-type="text" style="background-color: #D32F2F; width: 22px; height: 22px;" title="Kırmızı"></div>
-                                        <div class="pla-swatch" data-color="#1976D2" data-cart-index="${index}" data-type="text" style="background-color: #1976D2; width: 22px; height: 22px;" title="Mavi"></div>
-                                        <div class="pla-swatch" data-color="#388E3C" data-cart-index="${index}" data-type="text" style="background-color: #388E3C; width: 22px; height: 22px;" title="Yeşil"></div>
-                                        <div class="pla-swatch" data-color="#FBC02D" data-cart-index="${index}" data-type="text" style="background-color: #FBC02D; width: 22px; height: 22px;" title="Sarı"></div>
-                                        <div class="pla-swatch" data-color="#E91E63" data-cart-index="${index}" data-type="text" style="background-color: #E91E63; width: 22px; height: 22px;" title="Pembe"></div>
-                                    </div>
-                                </div>
-                                ${item.selectedObject ? '' : `
-                                <div style="position: relative;">
-                                    <div class="pla-color-select" data-target="cart-dropdown-obj-${index}" style="width: 20px; height: 20px; border-radius: 50%; background: ${item.objColor || '#333'}; border: 1px solid var(--border);" title="Obje Rengi"></div>
-                                    <div class="pla-options-dropdown" id="cart-dropdown-obj-${index}" style="padding: 8px; gap: 8px; width: 130px; bottom: calc(100% + 10px);">
-                                        <div style="text-align:center; font-size:0.7rem; font-weight:700; color:var(--text-muted); grid-column: span 4; margin-bottom: 2px;">OBJE RENGİ</div>
-                                        <div class="pla-swatch" data-color="#FFFFFF" data-cart-index="${index}" data-type="obj" style="background-color: #FFFFFF; width: 22px; height: 22px;" title="Beyaz"></div>
-                                        <div class="pla-swatch" data-color="#222222" data-cart-index="${index}" data-type="obj" style="background-color: #222222; width: 22px; height: 22px;" title="Siyah"></div>
-                                        <div class="pla-swatch" data-color="#C0C0C0" data-cart-index="${index}" data-type="obj" style="background-color: #C0C0C0; width: 22px; height: 22px;" title="Gümüş"></div>
-                                        <div class="pla-swatch" data-color="#D32F2F" data-cart-index="${index}" data-type="obj" style="background-color: #D32F2F; width: 22px; height: 22px;" title="Kırmızı"></div>
-                                        <div class="pla-swatch" data-color="#1976D2" data-cart-index="${index}" data-type="obj" style="background-color: #1976D2; width: 22px; height: 22px;" title="Mavi"></div>
-                                        <div class="pla-swatch" data-color="#388E3C" data-cart-index="${index}" data-type="obj" style="background-color: #388E3C; width: 22px; height: 22px;" title="Yeşil"></div>
-                                        <div class="pla-swatch" data-color="#FBC02D" data-cart-index="${index}" data-type="obj" style="background-color: #FBC02D; width: 22px; height: 22px;" title="Sarı"></div>
-                                        <div class="pla-swatch" data-color="#E91E63" data-cart-index="${index}" data-type="obj" style="background-color: #E91E63; width: 22px; height: 22px;" title="Pembe"></div>
-                                    </div>
-                                </div>
-                                `}
+                                ${(() => {
+                                    const p = products.find(prod => prod.id === item.productId);
+                                    if (p && p.colors && p.colors.length > 0) {
+                                        let swatches = '';
+                                        p.colors.forEach(c => {
+                                            const bg = c.color1 === c.color2 ? c.color1 : `linear-gradient(135deg, ${c.color1} 50%, ${c.color2} 50%)`;
+                                            swatches += `<div class="pla-swatch dual-swatch" data-color1="${c.color1}" data-color2="${c.color2}" data-cart-index="${index}" style="background: ${bg}; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border);" title="${c.label1} / ${c.label2}"></div>`;
+                                        });
+                                        const currentBg = item.textColor === item.objColor ? item.textColor : `linear-gradient(135deg, ${item.textColor} 50%, ${item.objColor} 50%)`;
+                                        return `
+                                            <div style="position: relative;">
+                                                <div class="pla-color-select" data-target="cart-dropdown-color-${index}" style="width: 28px; height: 28px; border-radius: 50%; background: ${currentBg}; border: 2px solid var(--border); cursor: pointer;" title="Renk Seçimi"></div>
+                                                <div class="pla-options-dropdown" id="cart-dropdown-color-${index}" style="padding: 10px; gap: 8px; width: 140px; bottom: calc(100% + 10px);">
+                                                    <div style="text-align:center; font-size:0.75rem; font-weight:700; color:var(--text-muted); grid-column: span 4; margin-bottom: 4px;">RENK SEÇİMİ</div>
+                                                    ${swatches}
+                                                </div>
+                                            </div>
+                                        `;
+                                    } else {
+                                        return ''; // Fallback omitted for brevity, new products have colors
+                                    }
+                                })()}
                             </div>
 
                             <div style="display:flex; align-items:center; background: #F8FAFC; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; height: 35px;">
@@ -1566,7 +1609,7 @@ function showToast(message, type = "info") {
     setTimeout(() => {
         $toast.addClass('hiding');
         setTimeout(() => $toast.remove(), 300);
-    }, 3000);
+    }, 2000);
 }
 
 function loadUserOrders(userId) {

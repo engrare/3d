@@ -98,6 +98,17 @@
                         <button id="carousel-next" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); width: 45px; height: 45px; border-radius: 50%; background: rgba(255,255,255,0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 4px 12px rgba(0,0,0,0.1); color: var(--primary); font-size: 1.2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; z-index: 10;" onmouseover="this.style.background='rgba(255,255,255,0.95)'; this.style.transform='translateY(-50%) scale(1.05)';" onmouseout="this.style.background='rgba(255,255,255,0.7)'; this.style.transform='translateY(-50%) scale(1)';">
                             <i class="fa-solid fa-chevron-right"></i>
                         </button>
+                        <!-- MOBİL: Fotoğraf üstü info overlay -->
+                        <div id="mobile-hero-overlay" class="mobile-hero-overlay">
+                            <button class="mobile-hero-back nav-trigger" data-target="#products-page">
+                                <i class="fa-solid fa-arrow-left"></i> Geri Dön
+                            </button>
+                            <div class="mobile-hero-info">
+                                <h2 id="mobile-hero-title"></h2>
+                                <p id="mobile-hero-desc"></p>
+                                <div class="mobile-hero-price" id="mobile-hero-price"></div>
+                            </div>
+                        </div>
                     </div>
                     <div id="detail-thumbnails" style="display: flex; gap: 10px; margin-top: 15px; overflow-x: auto; padding-bottom: 5px;"></div>
                     
@@ -410,6 +421,20 @@
     <div id="toast-container"></div>
     <script type="module" src="myScript.js?v=24"></script>
 
+    <!-- MOBİL HIZLI SEPETE EKLE BARI (ürün detay sayfasında görünür) -->
+    <div id="mobile-cart-bar" style="display:none;">
+        <img id="mobile-cart-bar-img" src="" alt="">
+        <div class="mobile-cart-bar-info">
+            <div id="mobile-cart-bar-name"></div>
+            <div class="mobile-cart-bar-qty">
+                <button class="qty-btn" id="mobile-qty-minus">−</button>
+                <span id="mobile-qty-val">1</span>
+                <button class="qty-btn" id="mobile-qty-plus">+</button>
+            </div>
+        </div>
+        <button id="mobile-cart-bar-btn"><i class="fa-solid fa-cart-plus"></i> Sepete Ekle</button>
+    </div>
+
     <!-- MOBILE BOTTOM NAV -->
     <div class="bottom-nav-bar" id="mobile-bottom-nav">
         <div class="bottom-nav-item active" data-target="#products-page">
@@ -423,9 +448,20 @@
             </div>
             <span>Sepet</span>
         </div>
-        <div class="bottom-nav-item" id="mobile-nav-user" data-target="#login-page">
+        <!-- Giriş yapılmamış: Giriş Yap -->
+        <div class="bottom-nav-item" id="mobile-nav-login" data-target="#login-page">
             <i class="fa-regular fa-user"></i>
-            <span id="mobile-nav-user-text">Giriş Yap</span>
+            <span>Giriş Yap</span>
+        </div>
+        <!-- Giriş yapılmış: Profil -->
+        <div class="bottom-nav-item" id="mobile-nav-profile" data-target="#dashboard-page" style="display:none;">
+            <i class="fa-solid fa-circle-user"></i>
+            <span>Profil</span>
+        </div>
+        <!-- Giriş yapılmış: Çıkış Yap -->
+        <div class="bottom-nav-item" id="mobile-nav-logout-btn" style="display:none;">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            <span>Çıkış</span>
         </div>
     </div>
     
