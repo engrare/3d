@@ -853,3 +853,42 @@ input[type=number] {
     flex: 1;
     padding: 10px 0;
 }
+
+/* Cart Page Trust Badges */
+.cart-trust-badges {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
+    color: #64748B;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.trust-badge-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    color: #64748B;
+}
+
+.trust-badge-item i {
+    color: #10B981;
+    font-size: 0.85rem;
+}
+
+.trust-badge-dot {
+    opacity: 0.4;
+    color: #94A3B8;
+    user-select: none;
+}
+
+@media (max-width: 480px) {
+    .cart-trust-badges {
+        font-size: 0.72rem;
+        gap: 6px;
+    }
+}
+

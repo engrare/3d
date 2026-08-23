@@ -233,8 +233,8 @@
             <p class="status-desc" id="error-message-text">Banka kartı bakiyesi yetersiz veya işlem 3D Secure onayından geçemedi.</p>
         </div>
 
-        <!-- Alttaki Sabit Gezinme Butonları -->
-        <div class="btn-group">
+        <!-- Alttaki Sabit Gezinme Butonları (Doğrulama tamamlanana kadar gizli) -->
+        <div class="btn-group" id="action-buttons" style="display: none;">
             <a href="/" class="btn btn-primary">Anasayfaya Dön</a>
             <a href="/?dashboard" class="btn btn-secondary" id="btn-orders-redirect" style="display: none;">Siparişlerime Göz At</a>
         </div>
@@ -261,6 +261,18 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const functions = getFunctions(app, 'europe-west1');
+
+        let isPaymentComplete = false;
+
+        // Ödeme tamamlanana kadar sayfadan çıkışta uyarı ver
+        const handleBeforeUnload = (e) => {
+            if (!isPaymentComplete) {
+                e.preventDefault();
+                e.returnValue = 'Kaydedilmemiş veriler var. Ödeme doğrulama işlemi devam ediyor, ayrılmak istediğinizden emin misiniz?';
+                return e.returnValue;
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
 
         $(document).ready(() => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -300,16 +312,22 @@
         });
 
         function showSuccessState(orderId) {
+            isPaymentComplete = true;
+            window.removeEventListener('beforeunload', handleBeforeUnload);
             localStorage.removeItem('engrare_cart');
             $('#status-loading').hide();
             $('#success-order-id').text('#' + orderId);
             $('#status-success').fadeIn();
+            $('#action-buttons').fadeIn();
         }
 
         function showErrorState(message) {
+            isPaymentComplete = true;
+            window.removeEventListener('beforeunload', handleBeforeUnload);
             $('#status-loading').hide();
             $('#error-message-text').text(message);
             $('#status-error').fadeIn();
+            $('#action-buttons').fadeIn();
         }
     </script>
 </body>
