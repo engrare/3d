@@ -25,6 +25,81 @@ let selectedAddress = null;
 let shippingCost = 50.00;
 let appliedDiscount = null;
 
+const products = [
+    {
+        id: 1,
+        name: "Araba İçi Numaratör",
+        desc: "Basarak aç kapa yapılabilen elegant numaratör.",
+        customTextLabel: "araç içinde görünecek telefon numaranızı giriniz.",
+        customTextPlaceholder: "Örn: 0541 555 55 55",
+        customTextPlaceholderPreview: "0541 555 55 55",
+        fixedTextSize: 48,
+        fixedLogoSize: 48,
+        price: 179.90,
+        isDashedLine: false,
+        images: [
+            { src: "./content/products/1/3.jpg" },
+            { src: "./content/products/1/2.jpg" },
+            { src: "./content/products/1/1.jpg" },
+            { src: "./content/products/1/4.jpg" }
+        ],
+        previewTextArea: { top: '13.6%', left: '10.4%', width: '78.2%', height: '34.6%' },
+        previewLogoArea: { top: '0.0%', left: '7.2%', width: '85.7%', height: '100.0%' },
+        colors: [
+            { color1: "#FBC02D", color2: "#222222", label1: "Yazı", label2: "Zemin" },
+            { color1: "#FFFFFF", color2: "#1976D2", label1: "Yazı", label2: "Zemin" },
+            { color1: "#222222", color2: "#FFFFFF", label1: "Yazı", label2: "Zemin" },
+            { color1: "#E91E63", color2: "#388E3C", label1: "Yazı", label2: "Zemin" }
+        ]
+    },
+    {
+        id: 2,
+        name: "Duvara Yapışmalı Özel Ad Plakası",
+        desc: "Kapı veya duvarlar için tasarlanmış isimlik.",
+        price: 180,
+        allowLogo: true,
+        isDashedLine: false,
+        images: [
+            { src: "./content/products/2/1.jpg" },
+            { src: "./content/products/2/2.jpg" },
+            { src: "./content/products/2/3.jpg" },
+            { src: "./content/products/2/4.jpg" }
+        ],
+        previewTextArea: { top: '49.2%', left: '6.5%', width: '86.6%', height: '44.8%' },
+        previewLogoArea: { top: '8.6%', left: '2.8%', width: '93.9%', height: '42.0%' },
+        colors: [
+            { color1: "#FBC02D", color2: "#222222", label1: "Yazı", label2: "Zemin" },
+            { color1: "#FFFFFF", color2: "#1976D2", label1: "Yazı", label2: "Zemin" },
+            { color1: "#222222", color2: "#FFFFFF", label1: "Yazı", label2: "Zemin" },
+            { color1: "#E91E63", color2: "#388E3C", label1: "Yazı", label2: "Zemin" }
+        ]
+    },
+    {
+        id: 3,
+        name: "Takıma Özel Kalemlik",
+        desc: "Üzerine isim yazdırılabilen takımlı kalemlik",
+        price: 180,
+        isCustomObject: [
+            { objectName: "Fenerbahçe - 2 Adet Satıldı.", src: "./content/products/5/previewfb.png" },
+            { objectName: "Galatasaray - 1 Adet Satıldı.", src: "./content/products/5/previewgs.png" },
+            { objectName: "Trabzon - 0 Adet Satıldı.", src: "./content/products/5/previewtrabzon.png" },
+            { objectName: "Beşiktaş - 5 Adet Satıldı.", src: "./content/products/5/previewbjk.png" }
+        ],
+        colors: [
+            { color1: "#FBC02D", label1: "Arka" },
+            { color1: "#FFFFFF", label1: "Arka" },
+            { color1: "#222222", label1: "Arka" },
+            { color1: "#E91E63", label1: "Arka" }
+        ],
+        images: [
+            { src: "./content/products/5/1.jpg" },
+            { src: "./content/products/5/2.jpg" },
+            { src: "./content/products/5/3.jpg" },
+            { src: "./content/products/5/4.jpg" }
+        ]
+    }
+];
+
 $(document).ready(function() {
     loadCart();
         
@@ -242,38 +317,217 @@ function loadCart() {
     }
 }
 
+function hexToRgb(hex) {
+    if (!hex) return { r: 251, g: 192, b: 45 };
+    hex = hex.replace('#', '');
+    if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+    const num = parseInt(hex, 16);
+    return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+}
+
+function resolveAssetPath(src) {
+    if (!src) return '';
+    if (src.startsWith('./')) return '../' + src.slice(2);
+    if (src.startsWith('content/')) return '../' + src;
+    return src;
+}
+
 function renderCartSummary() {
     const $list = $('#order-items-list');
     $list.empty();
     let subtotal = 0;
 
-    cart.forEach(item => {
+    cart.forEach((item, index) => {
         const qty = parseInt(item.quantity || item.configuration?.quantity || 1);
         subtotal += item.price * qty;
 
-        let img = item.image;
-        if (typeof img === 'object' && img !== null) img = img.src;
-        img = img || "../content/product2.jpeg";
-        if (typeof img === 'string' && img.startsWith("./content/")) {
-            img = "." + img;
+        const p = products.find(prod => prod.id === item.productId);
+
+        let aspect = 1.71;
+        if (p) {
+            if (p.id === 1) aspect = 3.594;
+            else if (p.id === 2) aspect = 1.710;
+            else if (p.isCustomObject) {
+                const sel = (item.selectedObject || "").toLowerCase();
+                if (sel.includes("fenerbahçe") || sel.includes("fb")) aspect = 0.894;
+                else if (sel.includes("galatasaray") || sel.includes("gs")) aspect = 0.653;
+                else if (sel.includes("trabzon")) aspect = 0.678;
+                else if (sel.includes("beşiktaş") || sel.includes("bjk")) aspect = 0.699;
+                else aspect = 0.75;
+            }
         }
-        const textDisplay = item.customText ? `Yazı: "${item.customText}"` : "Standart Baskı";
+
+        const maxBox = 82;
+        let innerW, innerH;
+        if (aspect >= 1) {
+            innerW = maxBox;
+            innerH = Math.max(22, Math.round(maxBox / aspect));
+        } else {
+            innerH = maxBox;
+            innerW = Math.max(22, Math.round(maxBox * aspect));
+        }
+
+        const textArea = (p && p.previewTextArea) ? p.previewTextArea : { top: '15%', left: '10%', width: '80%', height: '70%' };
+        const logoArea = (p && p.previewLogoArea) ? p.previewLogoArea : { top: '15%', left: '10%', width: '80%', height: '70%' };
+        const isCustomObj = p && p.isCustomObject;
 
         $list.append(`
             <div class="summary-item">
-                <img src="${img}" class="item-img">
-                <div class="item-info" style="flex:1">
-                    <div class="item-name">${item.name}</div>
-                    <div class="item-meta">${textDisplay}</div>
-                    <div class="item-meta">Adet: ${qty}</div>
+                <!-- 2D Canlı Önizleme Kutusu (Salt Okunur) -->
+                <div class="payment-2d-box">
+                    <div class="payment-preview-inner" id="payment-preview-inner-${index}" style="position: relative; overflow: hidden; border-radius: 4px; width: ${innerW}px; height: ${innerH}px; background: #ffffff;">
+                        <!-- Zemin Renk Katmanı -->
+                        <div class="payment-obj-layer" id="payment-obj-layer-${index}" style="position: absolute; inset: 0; background-color: ${item.objColor || item.textColor || '#222222'}; z-index: 1;"></div>
+                        
+                        <!-- Kırpılmış PNG Görseli -->
+                        <img class="payment-overlay-img" id="payment-overlay-img-${index}" src="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 2; display: none;">
+                        
+                        <!-- Canlı Metin Alanı -->
+                        ${isCustomObj ? '' : `
+                        <div class="payment-printable-area" id="payment-print-area-${index}" style="position: absolute; top: ${textArea.top}; left: ${textArea.left}; width: ${textArea.width}; height: ${textArea.height}; z-index: 3; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                            <span class="payment-dynamic-text" id="payment-dynamic-text-${index}" style="color: ${item.textColor || '#FBC02D'}; font-family: ${item.font || "'AGENCYB', sans-serif"}; font-size: 13px; font-weight: 700; text-align: center; width: auto; word-break: break-word; display: inline-block; line-height: 1;">${item.customText || ''}</span>
+                        </div>
+                        `}
+                        
+                        <!-- Canlı Logo Alanı -->
+                        ${(item.logoUrl && !isCustomObj) ? `
+                        <div class="payment-logo-area" id="payment-logo-area-${index}" style="position: absolute; top: ${logoArea.top}; left: ${logoArea.left}; width: ${logoArea.width}; height: ${logoArea.height}; z-index: 3; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                            <div class="payment-dynamic-logo" id="payment-dynamic-logo-${index}" style="width: 100%; height: 100%; mask-image: url(${item.logoUrl}); -webkit-mask-image: url(${item.logoUrl}); mask-size: contain; -webkit-mask-size: contain; mask-repeat: no-repeat; -webkit-mask-repeat: no-repeat; mask-position: center; -webkit-mask-position: center; background-color: ${item.textColor || '#FBC02D'};"></div>
+                        </div>
+                        ` : ''}
+                    </div>
                 </div>
-                <div class="item-price">₺${(item.price * qty).toLocaleString('tr-TR')}</div>
+
+                <!-- Bilgi Alanı (Düzenleme Yok) -->
+                <div class="item-info">
+                    <div class="item-name">${item.name}</div>
+                    ${item.selectedObject ? `<div class="item-meta">Takım/Obje: <span style="font-weight:600; color:var(--text-main);">${item.selectedObject}</span></div>` : ''}
+                    ${item.customText ? `<div class="item-meta">Yazı: <span style="font-weight:600; color:var(--text-main);">"${item.customText}"</span></div>` : ''}
+                    <div class="item-meta">Adet: <span style="font-weight:600; color:var(--text-main);">${qty}</span></div>
+                </div>
+                <div class="item-price">₺${(item.price * qty).toFixed(2)}</div>
             </div>
         `);
+
+        renderPaymentItemPreview(index);
     });
 
     $('#summ-subtotal').text(formatTL(subtotal));
     updateTotals();
+}
+
+function fitPaymentItemText(index) {
+    const $container = $(`#payment-print-area-${index}`);
+    const $text = $(`#payment-dynamic-text-${index}`);
+    if (!$container.length || !$text.length) return;
+
+    const textVal = $text.text().trim();
+    if (!textVal) return;
+
+    const containerW = $container.width();
+    const containerH = $container.height();
+    if (containerW <= 0 || containerH <= 0) return;
+
+    let fontSize = containerH * 0.92;
+    $text.css({
+        'font-size': fontSize + 'px',
+        'white-space': 'nowrap',
+        'display': 'inline-block'
+    });
+
+    const textW = $text.outerWidth(true);
+    if (textW > containerW && textW > 0) {
+        const scale = containerW / textW;
+        fontSize = fontSize * scale;
+        $text.css('font-size', fontSize + 'px');
+    }
+}
+
+function renderPaymentItemPreview(index) {
+    const item = cart[index];
+    if (!item) return;
+    const p = products.find(prod => prod.id === item.productId);
+    
+    let src = `../content/products/${item.productId}/preview.png`;
+    let isCustom = false;
+    if (p && p.isCustomObject) {
+        const sel = (item.selectedObject || "").toLowerCase();
+        const obj = p.isCustomObject.find(o => {
+            const oName = (o.objectName || "").toLowerCase();
+            return oName === sel || oName.includes(sel) || sel.includes(oName);
+        }) || p.isCustomObject[0];
+        if (obj) {
+            src = resolveAssetPath(obj.src);
+        }
+        isCustom = true;
+    }
+    
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.onload = function() {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        
+        try {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            const width = canvas.width;
+            const height = canvas.height;
+            const targetRgb = hexToRgb(item.textColor || '#FBC02D');
+            
+            let minX = width, minY = height, maxX = 0, maxY = 0;
+            let found = false;
+            
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const idx = (y * width + x) * 4;
+                    const r = data[idx], g = data[idx + 1], b = data[idx + 2], a = data[idx + 3];
+                    const isWhite = (r > 240 && g > 240 && b > 240 && a > 200);
+                    if (!isWhite) {
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                        found = true;
+                    }
+                    if (!isCustom && r < 60 && g < 60 && b < 60 && a > 0) {
+                        data[idx] = targetRgb.r;
+                        data[idx + 1] = targetRgb.g;
+                        data[idx + 2] = targetRgb.b;
+                    }
+                }
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            
+            if (found && maxX > minX && maxY > minY) {
+                const cropW = maxX - minX + 1;
+                const cropH = maxY - minY + 1;
+                const croppedCanvas = document.createElement('canvas');
+                croppedCanvas.width = cropW;
+                croppedCanvas.height = cropH;
+                const croppedCtx = croppedCanvas.getContext('2d');
+                croppedCtx.drawImage(canvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+                $(`#payment-overlay-img-${index}`).attr('src', croppedCanvas.toDataURL()).show();
+            } else {
+                $(`#payment-overlay-img-${index}`).attr('src', canvas.toDataURL()).show();
+            }
+            
+            setTimeout(() => {
+                fitPaymentItemText(index);
+            }, 40);
+        } catch (e) {
+            console.error("Payment canvas filtering error:", e);
+            $(`#payment-overlay-img-${index}`).attr('src', src).show();
+        }
+    };
+    img.onerror = function() {
+        $(`#payment-overlay-img-${index}`).hide();
+    };
+    img.src = src;
 }
 
 function updateTotals() {
@@ -345,16 +599,20 @@ function loadUserAddresses(uid) {
                 $container.append(`
                     <label class="delivery-option address-option ${isChecked ? 'active' : ''}">
                         <input type="radio" name="shipping-address" data-id="${id}" value="${val}" ${isChecked ? 'checked' : ''} style="display:none;">
-                        <i class="fa-solid fa-circle-check check-icon"></i>
-                        <div style="flex:1;">
-                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 10px;">
-                                <div class="del-icon-wrapper" style="margin-bottom:0; width: 40px; height: 40px; font-size: 1.1rem;"><i class="fa-solid fa-location-dot"></i></div>
-                                <button type="button" onclick="editAddress('${id}', '${val}'); return false;" class="btn-sm" style="background: none; border: 1px solid var(--border); color: var(--text-muted); font-size: 0.75rem; border-radius: 6px; padding: 4px 8px; transition: 0.2s;" onmouseover="this.style.color='var(--primary)'; this.style.borderColor='var(--primary)';" onmouseout="this.style.color='var(--text-muted)'; this.style.borderColor='var(--border)';"><i class="fa-solid fa-pen"></i> Düzenle</button>
+                        <div class="del-top-row">
+                            <div class="del-icon-wrapper"><i class="fa-solid fa-location-dot"></i></div>
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <button type="button" onclick="editAddress('${id}', '${val}'); return false;" class="btn-addr-edit" title="Düzenle"><i class="fa-solid fa-pen"></i></button>
+                                <i class="fa-solid fa-circle-check check-icon" style="position:static; font-size:1.05rem;"></i>
                             </div>
-                            <span class="del-title" style="font-weight:700; font-size:1.05rem; display:block; margin-bottom: 6px; color: var(--primary);">${titleText}</span>
-                            <span class="del-desc" style="font-size:0.85rem; color:var(--text-muted); display:block; line-height: 1.4;">${addr.name} ${addr.surname}</span>
-                            <span class="del-desc" style="font-size:0.85rem; color:var(--text-muted); display:block; line-height: 1.4; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${addressText}</span>
-                            <span class="del-desc" style="font-size:0.85rem; color:var(--text-muted); display:block; line-height: 1.4; margin-top: 4px;">${addr.city}</span>
+                        </div>
+                        <div class="del-body" style="margin-top:6px;">
+                            <span class="del-title">${titleText}</span>
+                            <span class="del-desc" style="font-weight:600; color:var(--primary); margin-bottom:2px;">${addr.name} ${addr.surname}</span>
+                            <span class="del-desc" style="overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${addressText}</span>
+                        </div>
+                        <div class="del-footer" style="margin-top:4px;">
+                            <span class="del-desc" style="font-weight:600; color:var(--text-muted); font-size:0.75rem;">${addr.city || ''}</span>
                         </div>
                     </label>
                 `);

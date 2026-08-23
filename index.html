@@ -35,7 +35,7 @@
         }
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="./myStyle.css?v=10">
+    <link rel="stylesheet" href="./myStyle.css?v=48">
 </head>
 <body>
 
@@ -44,6 +44,7 @@
         <div class="nav-container">
             <div class="brand-logo nav-trigger" data-target="#products-page" style="cursor: pointer;"><img src="./content/engrare_logo_elegant.png" height="65px" alt="Engrare" onerror="this.style.display='none'; this.parentElement.innerText='ENGRARE.'"></div>
             
+
             <!-- Mobile Menu Toggle Button -->
             <div class="mobile-menu-toggle" id="mobile-menu-toggle" style="display: none; cursor: pointer; font-size: 1.5rem; color: var(--primary);">
                 <i class="fa-solid fa-bars"></i>
@@ -63,10 +64,6 @@
                 
                 <li id="nav-user-profile" class="nav-trigger" data-target="#dashboard-page" style="display: none; cursor: pointer; align-items: center; gap: 8px; font-weight: 600; padding: 10px 0;">
                     <i class="fa-solid fa-circle-user" style="font-size: 1.3rem;"></i> Profil
-                </li>
-                
-                <li id="nav-logout-container" style="display: none; align-items: center;">
-                    <button id="action-logout" class="btn-sm secondary" style="cursor: pointer;">Çıkış Yap</button>
                 </li>
             </ul>
         </div>
@@ -88,6 +85,12 @@
         <div class="container">
             <div class="product-detail-layout">
                 <div class="product-images">
+                    <!-- MOBİL: Ürün Başlık & Açıklama (Görselin Üstünde) -->
+                    <div class="mobile-product-header" id="mobile-product-header">
+                        <h1 id="mobile-detail-title" class="mobile-detail-title"></h1>
+                        <p id="mobile-detail-desc" class="mobile-detail-desc"></p>
+                    </div>
+
                     <div style="position: relative;">
                         <div id="detail-main-carousel" style="position: relative; width: 100%; aspect-ratio: 16/9; overflow-x: auto; overflow-y: hidden; border-radius: 16px; border: 1px solid var(--border); display: flex; scroll-snap-type: x mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; transition: transform 0.2s ease-out;">
                             <!-- Images injected here -->
@@ -98,17 +101,6 @@
                         <button id="carousel-next" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); width: 45px; height: 45px; border-radius: 50%; background: rgba(255,255,255,0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 4px 12px rgba(0,0,0,0.1); color: var(--primary); font-size: 1.2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; z-index: 10;" onmouseover="this.style.background='rgba(255,255,255,0.95)'; this.style.transform='translateY(-50%) scale(1.05)';" onmouseout="this.style.background='rgba(255,255,255,0.7)'; this.style.transform='translateY(-50%) scale(1)';">
                             <i class="fa-solid fa-chevron-right"></i>
                         </button>
-                        <!-- MOBİL: Fotoğraf üstü info overlay -->
-                        <div id="mobile-hero-overlay" class="mobile-hero-overlay">
-                            <button class="mobile-hero-back nav-trigger" data-target="#products-page">
-                                <i class="fa-solid fa-arrow-left"></i> Geri Dön
-                            </button>
-                            <div class="mobile-hero-info">
-                                <h2 id="mobile-hero-title"></h2>
-                                <p id="mobile-hero-desc"></p>
-                                <div class="mobile-hero-price" id="mobile-hero-price"></div>
-                            </div>
-                        </div>
                     </div>
                     <div id="detail-thumbnails" style="display: flex; gap: 10px; margin-top: 15px; overflow-x: auto; padding-bottom: 5px;"></div>
                     
@@ -117,39 +109,34 @@
                         <h3 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary);">2 Boyutlu Ürün Önizleme</h3>
                         
                         <!-- Preview Box -->
-                        <div id="advanced-2d-preview-box" style="position: relative; width: 100%; aspect-ratio: 16/9; background: #e2e8f0 url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAGElEQVQYV2NkYGAwYkAD////ZwjjgxgwMgB+MwM90aW2RAAAAABJRU5ErkJggg==') repeat; overflow: hidden; border-radius: 12px; border: 1px solid var(--border);">
-                            
+                        <div id="advanced-2d-preview-box" class="advanced-2d-preview-box" style="position: relative; width: 100%; max-width: 480px; max-height: 220px; aspect-ratio: 16/9; margin: 0 auto; overflow: hidden; border-radius: 12px; border: 1px solid var(--border); background: #ffffff;">
                             <!-- Object Color Layer -->
-                            <div id="preview-object-color-layer" style="position: absolute; top:0; left:0; width: 100%; height: 100%; background-color: #222222; z-index: 1;"></div>
+                            <div id="preview-object-color-layer" class="preview-object-color-layer" style="position: absolute; top:0; left:0; width: 100%; height: 100%; background-color: #222222; z-index: 1;"></div>
                             
-                            <!-- User's PNG Image (Eğer şeffaf delikli kullanacaksa bu img etiketine src verebilir, şimdilik display none) -->
-                            <img id="preview-overlay-img" src="" style="position: absolute; top:0; left:0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 2; display: none;" onerror="this.style.display='none'" onload="this.style.display='block'">
+                            <!-- User's PNG Image -->
+                            <img id="preview-overlay-img" class="preview-overlay-img" src="" style="position: absolute; top:0; left:0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 2; display: none;" onerror="this.style.display='none'" onload="this.style.display='block'">
                             
                             <!-- Printable Area for Text (Dashed Box) -->
-                            <div id="preview-printable-area" style="position: absolute; top: 15%; left: 10%; width: 80%; height: 70%; border: 2px dashed rgba(0, 0, 0, 0.5); z-index: 3; display: flex; align-items: center; justify-content: center; overflow: hidden; transition: border 0.2s;">
+                            <div id="preview-printable-area" class="preview-printable-area" style="position: absolute; top: 15%; left: 10%; width: 80%; height: 70%; border: 2px dashed rgba(0, 0, 0, 0.5); z-index: 3; display: flex; align-items: center; justify-content: center; overflow: hidden; transition: border 0.2s;">
                                 <!-- Dynamic Text -->
-                                <span id="preview-dynamic-text" style="color: #FBC02D; font-size: 24px; font-family: 'AGENCYB', sans-serif; text-align: center; width: auto; word-break: break-word; display: inline-block; line-height: 1; transition: color 0.2s;">ENGRARE</span>
+                                <span id="preview-dynamic-text" class="preview-dynamic-text" style="color: #FBC02D; font-size: 24px; font-family: 'AGENCYB', sans-serif; text-align: center; width: auto; word-break: break-word; display: inline-block; line-height: 1; transition: color 0.2s;">ENGRARE</span>
                             </div>
                             
                             <!-- Printable Area for Logo (Dashed Box) -->
-                            <div id="preview-logo-area" style="position: absolute; top: 15%; left: 10%; width: 80%; height: 70%; border: 2px dashed rgba(0, 0, 0, 0.5); z-index: 3; display: none; align-items: center; justify-content: center; overflow: hidden; transition: border 0.2s;">
+                            <div id="preview-logo-area" class="preview-logo-area" style="position: absolute; top: 15%; left: 10%; width: 80%; height: 70%; border: 2px dashed rgba(0, 0, 0, 0.5); z-index: 3; display: none; align-items: center; justify-content: center; overflow: hidden; transition: border 0.2s;">
                                 <!-- Dynamic Logo (CSS Mask ile renklendiriliyor) -->
-                                <div id="preview-dynamic-logo" style="display: none; width: 100%; height: 100%;"></div>
+                                <div id="preview-dynamic-logo" class="preview-dynamic-logo" style="display: none; width: 100%; height: 100%;"></div>
                             </div>
-                        </div>
-                        
-                        <!-- Toggle Printable Area -->
-                        <div style="margin-top: 10px; text-align: center;">
-                            <input type="checkbox" id="toggle-printable-area" checked style="accent-color: var(--primary); vertical-align: middle; cursor: pointer;">
-                            <label for="toggle-printable-area" style="font-size: 0.8rem; cursor: pointer; user-select: none; color: var(--text-muted); margin-left: 5px;">Kesikli Çizgiyi Göster</label>
                         </div>
                     </div>
                 </div>
                 <div class="product-info">
                     <button class="btn-back nav-trigger" data-target="#products-page"><i class="fa-solid fa-arrow-left"></i> Geri Dön</button>
-                    <h2 id="detail-title">Ürün Adı</h2>
-                    <p id="detail-desc">Açıklama</p>
-                    <div class="detail-price" id="detail-price">₺0.00</div>
+                    <!-- MASAÜSTÜ: Ürün Başlık & Açıklama -->
+                    <div class="desktop-product-header">
+                        <h2 id="detail-title">Ürün Adı</h2>
+                        <p id="detail-desc">Açıklama</p>
+                    </div>
 
                     <div class="customization-box">
                         <div class="form-group" id="customization-text-group">
@@ -162,30 +149,26 @@
                         </div>
                         <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
                             <div class="form-group" id="customization-logo-group" style="flex: 1; margin-bottom: 0; display: none;">
-    <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; font-weight: 600;">Logo Seç Veya Yükle</label>
-    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;" id="logo-bubbles-container">
-        <div class="logo-bubble default-logo-bubble" data-src="./content/engrare_logo_elegant.svg" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; background: #fff; flex-shrink: 0; transition: border-color 0.2s;">
-            <img src="./content/engrare_logo_elegant.svg" style="width: 25px; height: 25px; object-fit: contain; pointer-events: none;">
-        </div>
-        <div class="logo-bubble default-logo-bubble" data-src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBkPSJNNDcuNiAzMDAuNEwyMjguMyA0NjkuMWM3LjUgNyAxNy40IDEwLjkgMjcuNyAxMC45czIwLjItMy45IDI3LjctMTAuOUw0NjQuNCAzMDAuNGMzMC40LTI4LjMgNDcuNi02OCA0Ny42LTEwOS41di01LjhjMC02OS45LTUwLjUtMTI5LjUtMTE5LjQtMTQxQzM0NyAzNi41IDMwMC42IDUxLjQgMjY4IDg0TDI1NiA5NiAyNDQgODRjLTMyLjYtMzIuNi03OS00Ny41LTEyNC42LTM5LjlDNTAuNSA1NS42IDAgMTE1LjIgMCAxODUuMXY1LjhjMCA0MS41IDE3LjIgODEuMiA0Ny42IDEwOS41eiIgZmlsbD0iIzAwMCIvPjwvc3ZnPg==" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; background: #fff; flex-shrink: 0; transition: border-color 0.2s;">
-            <i class="fa-solid fa-heart" style="font-size: 1.2rem; color: #555; pointer-events: none;"></i>
-        </div>
-        <div class="logo-bubble default-logo-bubble" data-src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1NzYgNTEyIj48cGF0aCBkPSJNMzE2LjkgMThDMzExLjYgNyAzMDAuNCAwIDI4OC4xIDBzLTIzLjQgNy0yOC44IDE4TDE5NSAxNTAuMyA1MS40IDE3MS41Yy0xMiAxLjgtMjIgMTAuMi0yNS43IDIxLjdzLS43IDI0LjIgNy45IDMyLjdMMTM3LjggMzI5IDExMy4yIDQ3NC43Yy0yIDEyIDMgMjQuMiAxMi45IDMxLjNzMjMgOCAzMy44IDIuM2wxMjguMy02OC41IDEyOC4zIDY4LjVjMTAuOCA1LjcgMjMuOSA0LjkgMzMuOC0yLjNzMTQuOS0xOS4zIDEyLjktMzEuM0w0MzguNSAzMjkgNTQyLjcgMjI1LjljOC42LTguNSAxMS43LTIxLjIgNy45LTMyLjdzLTEzLjctMTkuOS0yNS43LTIxLjdMMzgxLjIgMTUwLjMgMzE2LjkgMTh6IiBmaWxsPSIjMDAwIi8+PC9zdmc+" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; background: #fff; flex-shrink: 0; transition: border-color 0.2s;">
-            <i class="fa-solid fa-star" style="font-size: 1.2rem; color: #555; pointer-events: none;"></i>
-        </div>
-        
-        <!-- Placeholder for custom uploaded logo -->
-        <div id="custom-uploaded-bubble" class="logo-bubble" style="display:none; width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; align-items: center; justify-content: center; background: #fff; overflow: hidden; flex-shrink: 0; transition: border-color 0.2s;">
-            <img id="custom-uploaded-img" src="" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;">
-        </div>
-
-        <!-- Upload trigger -->
-        <div id="upload-logo-trigger" style="width: 45px; height: 45px; border-radius: 50%; border: 2px dashed var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; background: #F8FAFC; color: var(--text-muted); transition: 0.2s; flex-shrink: 0;" onmouseover="this.style.borderColor='var(--primary)'; this.style.color='var(--primary)';" onmouseout="this.style.borderColor='var(--border)'; this.style.color='var(--text-muted)';">
-            <i class="fa-solid fa-plus" style="pointer-events: none;"></i>
-        </div>
-    </div>
-    <input type="file" id="custom-logo-input" accept=".png, .jpg, .jpeg, .svg" style="display: none;">
-</div>
+                                <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; font-weight: 600;">Logo Seç Veya Yükle</label>
+                                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;" id="logo-bubbles-container">
+                                    <div class="logo-bubble default-logo-bubble" data-src="./content/engrare_logo_elegant.svg" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; background: #fff; flex-shrink: 0; transition: border-color 0.2s;">
+                                        <img src="./content/engrare_logo_elegant.svg" style="width: 25px; height: 25px; object-fit: contain; pointer-events: none;">
+                                    </div>
+                                    <div class="logo-bubble default-logo-bubble" data-src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBkPSJNNDcuNiAzMDAuNEwyMjguMyA0NjkuMWM3LjUgNyAxNy40IDEwLjkgMjcuNyAxMC45czIwLjItMy45IDI3LjctMTAuOUw0NjQuNCAzMDAuNGMzMC40LTI4LjMgNDcuNi02OCA0Ny42LTEwOS41di01LjhjMC02OS45LTUwLjUtMTI5LjUtMTE5LjQtMTQxQzM0NyAzNi41IDMwMC42IDUxLjQgMjY4IDg0TDI1NiA5NiAyNDQgODRjLTMyLjYtMzIuNi03OS00Ny41LTEyNC42LTM5LjlDNTAuNSA1NS42IDAgMTE1LjIgMCAxODUuMXY1LjhjMCA0MS41IDE3LjIgODEuMiA0Ny42IDEwOS41eiIgZmlsbD0iIzAwMCIvPjwvc3ZnPg==" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; background: #fff; flex-shrink: 0; transition: border-color 0.2s;">
+                                        <i class="fa-solid fa-heart" style="font-size: 1.2rem; color: #555; pointer-events: none;"></i>
+                                    </div>
+                                    <div class="logo-bubble default-logo-bubble" data-src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1NzYgNTEyIj48cGF0aCBkPSJNMzE2LjkgMThDMzExLjYgNyAzMDAuNCAwIDI4OC4xIDBzLTIzLjQgNy0yOC44IDE4TDE5NSAxNTAuMyA1MS40IDE3MS41Yy0xMiAxLjgtMjIgMTAuMi0yNS43IDIxLjdzLS43IDI0LjIgNy45IDMyLjdMMTM3LjggMzI5IDExMy4yIDQ3NC43Yy0yIDEyIDMgMjQuMiAxMi45IDMxLjNzMjMgOCAzMy44IDIuM2wxMjguMy02OC41IDEyOC4zIDY4LjVjMTAuOCA1LjcgMjMuOSA0LjkgMzMuOC0yLjNzMTQuOS0xOS4zIDEyLjktMzEuM0w0MzguNSAzMjkgNTQyLjcgMjI1LjljOC42LTguNSAxMS43LTIxLjIgNy45LTMyLjdzLTEzLjctMTkuOS0yNS43LTIxLjdMMzgxLjIgMTUwLjMgMzE2LjkgMTh6IiBmaWxsPSIjMDAwIi8+PC9zdmc+" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; background: #fff; flex-shrink: 0; transition: border-color 0.2s;">
+                                        <i class="fa-solid fa-star" style="font-size: 1.2rem; color: #555; pointer-events: none;"></i>
+                                    </div>
+                                    <div id="custom-uploaded-bubble" class="logo-bubble" style="display:none; width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; align-items: center; justify-content: center; background: #fff; overflow: hidden; flex-shrink: 0; transition: border-color 0.2s;">
+                                        <img id="custom-uploaded-img" src="" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;">
+                                    </div>
+                                    <div id="upload-logo-trigger" style="width: 45px; height: 45px; border-radius: 50%; border: 2px dashed var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; background: #F8FAFC; color: var(--text-muted); transition: 0.2s; flex-shrink: 0;" onmouseover="this.style.borderColor='var(--primary)'; this.style.color='var(--primary)';" onmouseout="this.style.borderColor='var(--border)'; this.style.color='var(--text-muted)';">
+                                        <i class="fa-solid fa-plus" style="pointer-events: none;"></i>
+                                    </div>
+                                </div>
+                                <input type="file" id="custom-logo-input" accept=".png, .jpg, .jpeg, .svg" style="display: none;">
+                            </div>
                         </div>
                         <div style="display: flex; gap: 15px; margin-bottom: 25px; align-items: flex-end; flex-wrap: wrap;">
                             <div class="form-group" style="margin-bottom: 0; flex-shrink: 0;">
@@ -200,39 +183,52 @@
                             <div class="form-group" style="margin-bottom: 0; flex-shrink: 0;">
                                 <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; font-weight: 600;">Renk Seçimi</label>
                                 <div style="display: flex; gap: 10px; height: 45px; align-items: center; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 0 10px;">
-                                    
                                     <div id="color-combinations-container">
                                         <!-- Dinamik olarak js tarafından doldurulacak -->
                                     </div>
                                     <input type="hidden" id="custom-text-color" value="#FBC02D">
                                     <input type="hidden" id="custom-obj-color" value="#222222">
-                                    
                                 </div>
                             </div>
-                            
                         </div>
-                        <button id="add-to-cart" class="btn primary" style="width: 100%;">Sepete Ekle</button>
+                        <!-- Fiyat ve Sepete Ekle Butonu Yan Yana -->
+                        <div class="detail-action-row">
+                            <div class="detail-price-box">
+                                <span class="detail-price-label">Fiyat</span>
+                                <div class="detail-price" id="detail-price">₺0.00</div>
+                            </div>
+                            <button id="add-to-cart" class="btn primary detail-add-cart-btn">
+                                <i class="fa-solid fa-cart-shopping"></i> Sepete Ekle
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
-    
+
     <!-- CHECKOUT PAGE -->
     <section id="checkout-page" class="page">
         <div class="container narrow">
-            <h2 style="text-align: left;">Sepetim</h2>
+            <h2 class="cart-page-title" style="text-align: left; margin-top: 10px; margin-bottom: 25px; font-size: 1.8rem; font-weight: 800; color: var(--primary);">Sepetim</h2>
             <div class="cart-list" id="cart-items-area"></div>
             <div class="summary-panel">
                 <div id="free-shipping-progress-container"></div>
                 <div class="price-row"><span>Ara Toplam</span><span id="val-subtotal">₺0.00</span></div>
-                <div class="price-row"><span>Kargo ve İşleme</span><span id="shipping-display">₺50.00</span></div>
-                <div style="height:1px; background:var(--border); margin: 20px 0;"></div>
+                <div class="price-row"><span>Kargo Ücreti</span><span id="shipping-display">₺50.00</span></div>
+                <div style="height:1px; background:var(--border); margin: 18px 0;"></div>
                 <div class="price-row">
-                    <span style="font-weight:700; font-size:1.2rem;">Toplam</span>
+                    <span style="font-weight:700; font-size:1.15rem;">Toplam</span>
                     <span id="val-total" style="font-weight:800; font-size:1.5rem; color:var(--primary);">₺50.00</span>
                 </div>
-                <button id="btn-checkout-start" class="btn primary" style="width: 100%; margin-top: 20px;">Ödemeye Geç</button>
+                <button id="btn-checkout-start" class="btn primary" style="width: 100%; margin-top: 18px; height: 50px; font-size: 1.05rem; font-weight: 700; border-radius: 10px;">Ödemeye Geç</button>
+                
+                <!-- Güven Rozetleri -->
+                <div class="cart-trust-badges" style="display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 15px; color: #94a3b8; font-size: 0.78rem; font-weight: 600;">
+                    <span style="display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-lock" style="color: #64748b;"></i> 256-Bit SSL Güvenli Ödeme</span>
+                    <span style="opacity: 0.5;">•</span>
+                    <span style="display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-shield-halved" style="color: #64748b;"></i> 3D Secure</span>
+                </div>
             </div>
         </div>
     </section>
@@ -313,6 +309,10 @@
                         <li class="active" data-tab="orders">Siparişlerim</li>
                         <li data-tab="addresses">Adreslerim</li>
                     </ul>
+                    <button id="action-logout" class="dash-logout-btn">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        <span>Çıkış Yap</span>
+                    </button>
                 </div>
                 <div class="dash-content">
                     <div id="tab-orders" class="dash-tab active">
@@ -419,21 +419,7 @@
     </div>
 
     <div id="toast-container"></div>
-    <script type="module" src="myScript.js?v=24"></script>
-
-    <!-- MOBİL HIZLI SEPETE EKLE BARI (ürün detay sayfasında görünür) -->
-    <div id="mobile-cart-bar" style="display:none;">
-        <img id="mobile-cart-bar-img" src="" alt="">
-        <div class="mobile-cart-bar-info">
-            <div id="mobile-cart-bar-name"></div>
-            <div class="mobile-cart-bar-qty">
-                <button class="qty-btn" id="mobile-qty-minus">−</button>
-                <span id="mobile-qty-val">1</span>
-                <button class="qty-btn" id="mobile-qty-plus">+</button>
-            </div>
-        </div>
-        <button id="mobile-cart-bar-btn"><i class="fa-solid fa-cart-plus"></i> Sepete Ekle</button>
-    </div>
+    <script type="module" src="myScript.js?v=53"></script>
 
     <!-- MOBILE BOTTOM NAV -->
     <div class="bottom-nav-bar" id="mobile-bottom-nav">
@@ -458,11 +444,6 @@
             <i class="fa-solid fa-circle-user"></i>
             <span>Profil</span>
         </div>
-        <!-- Giriş yapılmış: Çıkış Yap -->
-        <div class="bottom-nav-item" id="mobile-nav-logout-btn" style="display:none;">
-            <i class="fa-solid fa-arrow-right-from-bracket"></i>
-            <span>Çıkış</span>
-        </div>
     </div>
     
     <style>
@@ -482,3 +463,6 @@
 
 </body>
 </html>
+
+
+

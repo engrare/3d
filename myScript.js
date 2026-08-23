@@ -35,14 +35,15 @@ const products = [
 		fixedTextSize: 48,
 		fixedLogoSize: 48,
         price: 179.90,
+        isDashedLine: false,
         images: [
             { src: "./content/products/1/3.jpg" },
             { src: "./content/products/1/2.jpg" },
             { src: "./content/products/1/1.jpg" },
             { src: "./content/products/1/4.jpg" }
         ],
-        previewTextArea: { top: '33%', left: '13%', width: '73%', height: '16%' },
-        previewLogoArea: { top: '15%', left: '10%', width: '80%', height: '70%' },
+        previewTextArea: { top: '13.6%', left: '10.4%', width: '78.2%', height: '34.6%' },
+        previewLogoArea: { top: '0.0%', left: '7.2%', width: '85.7%', height: '100.0%' },
 		 colors: [
             { color1: "#FBC02D", color2: "#222222", label1: "Yazı", label2: "Zemin" },
             { color1: "#FFFFFF", color2: "#1976D2", label1: "Yazı", label2: "Zemin" },
@@ -56,14 +57,15 @@ const products = [
         desc: "Kapı veya duvarlar için tasarlanmış isimlik.",
         price: 180,
         allowLogo: true,
+        isDashedLine: false,
         images: [
             { src: "./content/products/2/1.jpg" },
             { src: "./content/products/2/2.jpg" },
             { src: "./content/products/2/3.jpg" },
             { src: "./content/products/2/4.jpg" }
         ],
-        previewTextArea: { top: '52%', left: '20%', width: '59.5%', height: '32%' },
-        previewLogoArea: { top: '23%', left: '17.5%', width: '64.5%', height: '30%' },
+        previewTextArea: { top: '49.2%', left: '6.5%', width: '86.6%', height: '44.8%' },
+        previewLogoArea: { top: '8.6%', left: '2.8%', width: '93.9%', height: '42.0%' },
 		 colors: [
             { color1: "#FBC02D", color2: "#222222", label1: "Yazı", label2: "Zemin" },
             { color1: "#FFFFFF", color2: "#1976D2", label1: "Yazı", label2: "Zemin" },
@@ -209,30 +211,6 @@ $(document).ready(function() {
         if (target) switchPage(target);
     });
 
-    $('#mobile-nav-logout-btn').on('click', function() {
-        signOut(auth).then(() => {
-            switchPage('#products-page');
-            showToast("Çıkış yapıldı.", "success");
-        });
-    });
-
-    // Mobil hızlı sepete ekle barı – miktar butonları
-    $('#mobile-qty-minus').on('click', function() {
-        let v = parseInt($('#mobile-qty-val').text()) || 1;
-        if (v > 1) $('#mobile-qty-val').text(v - 1);
-        // Sayfadaki gerçek miktar inputunu da güncelle
-        $('#quantity-input').val(Math.max(1, v - 1));
-    });
-    $('#mobile-qty-plus').on('click', function() {
-        let v = parseInt($('#mobile-qty-val').text()) || 1;
-        $('#mobile-qty-val').text(v + 1);
-        $('#quantity-input').val(v + 1);
-    });
-    // Mobil "Sepete Ekle" → sayfadaki asıl butonu tetikle
-    $('#mobile-cart-bar-btn').on('click', function() {
-        $('#add-to-cart').click();
-    });
-
     $('#upload-logo-trigger').on('click', function() {
         $('#custom-logo-input').click();
     });
@@ -244,7 +222,7 @@ $(document).ready(function() {
         const src = $(this).attr('data-src');
         if (src) {
             // Apply mask
-            $('#preview-dynamic-logo').css({
+            $('.preview-dynamic-logo').css({
                 'mask-image':            `url(${src})`,
                 '-webkit-mask-image':    `url(${src})`,
                 'mask-repeat':           'no-repeat',
@@ -253,7 +231,7 @@ $(document).ready(function() {
                 '-webkit-mask-position': 'center',
                 'background-color':      $('#custom-text-color').val()
             }).show();
-            $('#preview-dynamic-logo').attr('data-active-logo', src); // Custom attribute for cart
+            $('.preview-dynamic-logo').attr('data-active-logo', src); // Custom attribute for cart
         }
     });
 
@@ -360,7 +338,6 @@ $(document).ready(function() {
                 // Alt menü: misafir görünümü
                 $('#mobile-nav-login').show();
                 $('#mobile-nav-profile').hide();
-                $('#mobile-nav-logout-btn').hide();
             } else {
                 $('#nav-login-btn').hide();
                 $('#nav-user-profile').css('display', 'flex');
@@ -370,7 +347,6 @@ $(document).ready(function() {
                 // Alt menü: giriş yapılmış görünümü
                 $('#mobile-nav-login').hide();
                 $('#mobile-nav-profile').css('display', 'flex');
-                $('#mobile-nav-logout-btn').css('display', 'flex');
             }
             loadUserOrders(user.uid);
             loadUserAddresses(user.uid);
@@ -381,7 +357,6 @@ $(document).ready(function() {
             // Alt menü: çıkış yapılmış görünümü
             $('#mobile-nav-login').show();
             $('#mobile-nav-profile').hide();
-            $('#mobile-nav-logout-btn').hide();
         }
     });
 
@@ -458,15 +433,10 @@ $(document).ready(function() {
         
         if (isCart) {
             const index = $(this).data('cart-index');
-            if ($(this).attr('data-color1') !== undefined) {
-                cart[index].textColor = $(this).data('color1');
-                cart[index].objColor = $(this).data('color2');
-            } else {
-                const color = $(this).data('color');
-                const type = $(this).data('type'); // 'text' or 'obj'
-                if (type === 'text') cart[index].textColor = color;
-                if (type === 'obj') cart[index].objColor = color;
-            }
+            const c1 = $(this).data('color1') || $(this).data('color');
+            const c2 = $(this).data('color2') || c1;
+            cart[index].textColor = c1;
+            cart[index].objColor = c2;
             saveCart();
             renderCart();
         } else {
@@ -476,13 +446,13 @@ $(document).ready(function() {
             $(this).closest('.pla-options-dropdown').removeClass('open');
             
             if (inputId === 'custom-obj-color') {
-                $('#preview-object-color-layer').css('background-color', color);
+                $('.preview-object-color-layer').css('background-color', color);
             } else if (inputId === 'custom-text-color') {
-                $('#preview-dynamic-text').css('color', color);
-                $('#preview-dynamic-logo').css('background-color', color); // Logoyu metin rengine boya
+                $('.preview-dynamic-text').css('color', color);
+                $('.preview-dynamic-logo').css('background-color', color); // Logoyu metin rengine boya
                 
                 if (typeof currentProduct !== 'undefined' && currentProduct && currentProduct.isCustomObject) {
-                    $('#preview-object-color-layer').css('background-color', color);
+                    $('.preview-object-color-layer').css('background-color', color);
                 } else if (window.applyFilterToPreview && typeof currentProduct !== 'undefined' && currentProduct) {
                     // Renk değiştiğinde filtreyi tekrar uygula
                     window.applyFilterToPreview(currentProduct.id, color);
@@ -496,7 +466,11 @@ $(document).ready(function() {
             const idx = $(this).val();
             const obj = currentProduct.isCustomObject[idx];
             if (obj) {
-                $('#preview-overlay-img').attr('src', obj.src);
+                if (window.applyFilterToPreview) {
+                    window.applyFilterToPreview(currentProduct.id, null, obj.src);
+                } else {
+                    $('.preview-overlay-img').attr('src', obj.src);
+                }
             }
         }
     });
@@ -529,7 +503,7 @@ $(document).ready(function() {
         renderCart();
     });
 
-    // Sepet İçi Düzenleme (Adet / Yazı)
+    // Sepet İçi Düzenleme (Adet / Yazı - Canlı 2D Güncelleme)
     $(document).on('change', '.cart-qty-input', function() {
         const index = $(this).data('index');
         let newQty = parseInt($(this).val());
@@ -539,11 +513,35 @@ $(document).ready(function() {
         renderCart();
     });
 
+    $(document).on('input', '.cart-text-input', function() {
+        const index = $(this).data('index');
+        const val = $(this).val();
+        if (cart[index]) {
+            cart[index].customText = val;
+            $(`#cart-dynamic-text-${index}`).text(val);
+            if (typeof window.fitCartItemText === 'function') {
+                window.fitCartItemText(index);
+            }
+            saveCart();
+        }
+    });
+
     $(document).on('change', '.cart-text-input', function() {
         const index = $(this).data('index');
-        cart[index].customText = $(this).val();
-        saveCart();
-        renderCart();
+        if (cart[index]) {
+            cart[index].customText = $(this).val();
+            saveCart();
+        }
+    });
+
+    $(document).on('change', '.cart-object-select', function() {
+        const index = $(this).data('index');
+        const selectedObj = $(this).val();
+        if (cart[index]) {
+            cart[index].selectedObject = selectedObj;
+            saveCart();
+            renderCart();
+        }
     });
 
     // Adres İşlemleri
@@ -713,11 +711,11 @@ $(document).ready(function() {
     });
 
     // --- 2D PREVIEW LISTENER'LARI ---
-    const $dynText   = $('#preview-dynamic-text');
-    const $printArea = $('#preview-printable-area');
+    const $dynText   = $('.preview-dynamic-text');
+    const $printArea = $('.preview-printable-area');
 
     function updateDynamicTextSpacing() { 
-    $('#preview-dynamic-text').css('letter-spacing', 'normal'); 
+    $('.preview-dynamic-text').css('letter-spacing', 'normal'); 
 }
 $('#custom-text-input').on('input.preview', function() {
         const val = $(this).val();
@@ -741,39 +739,58 @@ $('#custom-text-input').on('input.preview', function() {
         else                        $printArea.css('justify-content', 'center');
     });
 
-    window.fitTextToContainer = function() { 
-    const $container = $('#preview-printable-area'); 
-    const $text = $('#preview-dynamic-text'); 
-    if (!$container.length || !$text.length) return; 
-    
-    const textVal = $text.text().trim(); 
-    if (!textVal) return; 
-    
-    // Yüksek performansta natural size ölçmek için minik boyuta ayarla
-    $text.css({ 'font-size': '10px', 'white-space': 'nowrap', 'transform': 'none', 'width': 'auto', 'display': 'inline-block', 'line-height': '1' }); 
-    
-    const containerW = $container.width(); 
-    const containerH = $container.height(); 
-    const textW = $text.width(); 
-    const textH = $text.height(); 
-    
-    if (textW === 0 || textH === 0) return; 
-    
-    const scale = Math.min(containerW / textW, containerH / textH); 
-    $text.css('font-size', (10 * scale * 0.98) + 'px'); 
-    
-    if(typeof updateDynamicTextSpacing === 'function') updateDynamicTextSpacing(); 
-};
+    window.fitTextToContainer = function() {
+        $('.preview-printable-area').each(function() {
+            const $container = $(this);
+            const $text = $container.find('.preview-dynamic-text');
+            if (!$container.length || !$text.length) return;
+
+            const textVal = $text.text().trim();
+            if (!textVal) return;
+
+            // Referans ölçüm için geçici sıfırlama
+            $text.css({
+                'font-family': "'AGENCYB', sans-serif",
+                'font-size': '10px',
+                'white-space': 'nowrap',
+                'transform': 'none',
+                'width': 'auto',
+                'display': 'inline-block',
+                'line-height': '1'
+            });
+
+            const containerW = $container.width();
+            const containerH = $container.height();
+            const textW = $text.width();
+            const textH = $text.height();
+
+            if (textW === 0 || textH === 0 || containerW === 0 || containerH === 0) return;
+
+            // 1. ADIM: Kutunun yüksekliğini tam dolduracak boyutu bul
+            let targetFontSize = (containerH / textH) * 10;
+
+            // 2. ADIM: Bu boyutta genişlik taşıyorsa, genişliğe göre sınırla
+            const projectedWidth = (targetFontSize / 10) * textW;
+            if (projectedWidth > containerW) {
+                targetFontSize = (containerW / textW) * 10;
+            }
+
+            // Kenar taşmalarını önlemek için %96 emniyet katsayısı
+            $text.css('font-size', (targetFontSize * 0.96) + 'px');
+        });
+
+        if (typeof updateDynamicTextSpacing === 'function') {
+            updateDynamicTextSpacing();
+        }
+    };
 
     $(window).on('resize', function() { 
-    if(typeof updateDynamicTextSpacing === 'function') updateDynamicTextSpacing(); 
-    if(typeof window.fitTextToContainer === 'function') window.fitTextToContainer(); 
-});
-
-    $('#toggle-printable-area').on('change', function() {
-        const border = $(this).is(':checked') ? '2px dashed rgba(0, 0, 0, 0.5)' : 'none';
-        $printArea.css('border', border);
-        $('#preview-logo-area').css('border', border);
+        if(typeof updateDynamicTextSpacing === 'function') updateDynamicTextSpacing(); 
+        if(typeof window.fitTextToContainer === 'function') window.fitTextToContainer(); 
+        if(typeof updateMobileHeader === 'function') {
+            const activePageId = $('.page.active').attr('id') ? '#' + $('.page.active').attr('id') : '#products-page';
+            updateMobileHeader(activePageId);
+        }
     });
 
     // --- LOGO YÜKLEME ---
@@ -808,143 +825,38 @@ $('#custom-text-input').on('input.preview', function() {
 
 
 function updateMobileHeader(targetId) {
-    if (window.innerWidth <= 768) {
-        const logoEl = document.querySelector('.brand-logo');
-        logoEl.innerHTML = '<img src="./content/engrare_logo_elegant.png" height="50px" alt="Engrare" style="object-fit: contain;">';
+    const $brandLogo = $('.navbar .brand-logo');
+    if (!$brandLogo.length) return;
+
+    if (targetId === '#product-detail-page') {
+        $brandLogo.html(`
+            <div class="nav-back-link nav-trigger" data-target="#products-page" title="Ürünlere Dön">
+                <div class="nav-back-icon-box">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </div>
+                <span class="nav-back-text">Ürünlere Dön</span>
+            </div>
+        `);
+    } else {
+        const isMobile = window.innerWidth <= 768;
+        const logoHeight = isMobile ? '50px' : '65px';
+        $brandLogo.html(`
+            <img src="./content/engrare_logo_elegant.png" height="${logoHeight}" alt="Engrare" style="object-fit: contain;" onerror="this.style.display='none'; this.parentElement.innerText='ENGRARE.'">
+        `);
     }
 }
 
-/* ==========================================================================
-   MOBİL STICKY ÖNIZLEME CONTROLLER
-   ========================================================================== */
+// Geri butonuna veya linkine tıklanınca ürünler sayfasına dön
+$(document).on('click', '.nav-back-link, .nav-back-icon-box, #mobile-detail-back-btn', function(e) {
+    e.stopPropagation();
+    switchPage('#products-page');
+});
 
-let _scrollHandler        = null;   // Scroll listener for hysteresis
-let _designModeResizeObs  = null;   // ResizeObserver – keeps padding accurate
-let _isDesignMode         = false;
-
-/**
- * Activates the sticky-preview "design mode" on mobile:
- *  - Hides the navbar (slides it off the top)
- *  - Fixes the 2D preview card at the top of the viewport (compact)
- *  - Adjusts body padding so content doesn't hide under the sticky card
- */
 function enterDesignMode() {
-    if (_isDesignMode || window.innerWidth > 768) return;
-    _isDesignMode = true;
-
-    document.body.classList.add('detail-design-mode');
-    document.querySelector('.navbar').classList.add('navbar--hidden');
-
-    // Update the CSS custom property for accurate push-down padding
-    _updateStickyHeight();
-
-    // Watch the preview container's height and keep padding in sync
-    if (!_designModeResizeObs) {
-        _designModeResizeObs = new ResizeObserver(_updateStickyHeight);
-    }
-    const previewEl = document.getElementById('advanced-2d-preview-container');
-    if (previewEl) _designModeResizeObs.observe(previewEl);
+    // No-op
 }
-
-/**
- * Deactivates design mode – restores the navbar and the normal in-flow preview.
- */
 function exitDesignMode() {
-    if (!_isDesignMode) return;
-    _isDesignMode = false;
-
-    document.body.classList.remove('detail-design-mode');
-    document.querySelector('.navbar').classList.remove('navbar--hidden');
-    document.documentElement.style.removeProperty('--sticky-preview-height');
-
-    if (_designModeResizeObs) {
-        _designModeResizeObs.disconnect();
-    }
-    
-    // Hide the placeholder when unsticking so layout returns to normal
-    const placeholder = document.getElementById('preview-sticky-placeholder');
-    if (placeholder) placeholder.style.display = 'none';
-    
-    // Recalculate text size after transition completes
-    setTimeout(() => { if (typeof window.fitTextToContainer === 'function') window.fitTextToContainer(); }, 50);
-}
-
-/** Reads the rendered height of the sticky preview and writes it as a CSS var. */
-function _updateStickyHeight() {
-    const previewEl = document.getElementById('advanced-2d-preview-container');
-    if (previewEl && _isDesignMode) {
-        const h = previewEl.offsetHeight;
-        document.documentElement.style.setProperty('--sticky-preview-height', h + 'px');
-        
-        // Create or update a placeholder div right after the preview container.
-        // This placeholder holds the same height as the sticky element so the
-        // rest of the page doesn't jump when the preview lifts out of flow.
-        let placeholder = document.getElementById('preview-sticky-placeholder');
-        if (!placeholder) {
-            placeholder = document.createElement('div');
-            placeholder.id = 'preview-sticky-placeholder';
-            placeholder.style.cssText = 'display:none; width:100%; background:transparent; flex-shrink:0;';
-            previewEl.parentNode.insertBefore(placeholder, previewEl.nextSibling);
-        }
-        placeholder.style.height = h + 'px';
-        placeholder.style.display = 'block';
-        
-        // Recalculate text size for new dimensions
-        if (typeof window.fitTextToContainer === 'function') window.fitTextToContainer();
-    }
-}
-
-/**
- * Sets up a scroll listener that watches the customization box.
- * Called once per openProductDetail invocation on mobile.
- */
-function setupDesignModeObserver() {
-    // Tear down any previous listener first
-    teardownDesignModeObserver();
-
-    if (window.innerWidth > 768) return;   // Desktop: nothing to do
-
-    const customizationBox = document.querySelector('.customization-box');
-    const previewContainer = document.getElementById('advanced-2d-preview-container');
-
-    if (!customizationBox || !previewContainer) return;
-
-    _scrollHandler = () => {
-        // Sayfanın yukarıdan ne kadar aşağı kaydırıldığını piksel cinsinden alır (Y ekseni)
-        const currentScroll = window.scrollY || window.pageYOffset;
-        //console.log("Mevcut Scroll:", currentScroll); // Değerleri bulmanız için konsola yazdırır
-        
-        // --- AYARLANABİLİR DEĞERLER (Piksel Cinsinden) ---
-        // 1. TUTMA NOKTASI: Ne kadar aşağı kaydırınca yapışsın?
-        // Örnek: Değeri KÜÇÜLTÜRSENİZ (örn: 200) daha az kaydırınca yapışır.
-        const SCROLL_TH = 500;
-        
-        // Tutma şartı (Aşağı kaydırma)
-        if (currentScroll > SCROLL_TH && !_isDesignMode) {
-            enterDesignMode();
-        } 
-        // Bırakma şartı (Yukarı kaydırma)
-        else if (currentScroll < SCROLL_TH && _isDesignMode) {
-            exitDesignMode();
-        }
-    };
-
-    window.addEventListener('scroll', _scrollHandler, { passive: true });
-}
-
-/** Removes the scroll listener and exits design mode. */
-function teardownDesignModeObserver() {
-    exitDesignMode();
-    
-    if (_scrollHandler) {
-        window.removeEventListener('scroll', _scrollHandler);
-        _scrollHandler = null;
-    }
-    
-    if (_designModeResizeObs) {
-        _designModeResizeObs.disconnect();
-        _designModeResizeObs = null;
-    }
+    // No-op
 }
 
 
@@ -952,8 +864,9 @@ function teardownDesignModeObserver() {
 function switchPage(targetId, pushState = true) {
     // If we're leaving the product detail page, always clean up design mode
     if (targetId !== '#product-detail-page') {
-        if (typeof teardownDesignModeObserver === 'function') teardownDesignModeObserver();
-        $('#mobile-cart-bar').hide();
+        if (typeof exitDesignMode === 'function') exitDesignMode();
+    } else {
+        if (typeof enterDesignMode === 'function') enterDesignMode();
     }
 
     const $current = $('.page.active');
@@ -1168,19 +1081,9 @@ window.openProductDetail = function(id, pushHistory = true) {
         startX = x;
     });
 
-    $('#detail-title').text(p.name);
-    $('#detail-desc').text(p.desc);
+    $('#detail-title, #mobile-detail-title').text(p.name);
+    $('#detail-desc, #mobile-detail-desc').text(p.desc);
     $('#detail-price').text(`₺${p.price.toFixed(2)}`);
-    // Mobil hero overlay
-    $('#mobile-hero-title').text(p.name);
-    $('#mobile-hero-desc').text(p.desc);
-    $('#mobile-hero-price').text(`₺${p.price.toFixed(2)}`);
-    // Mobil hızlı sepete ekle barı
-    const heroImg = (p.images && p.images[0]) ? p.images[0].src : '';
-    $('#mobile-cart-bar-img').attr('src', heroImg);
-    $('#mobile-cart-bar-name').text(p.name);
-    $('#mobile-qty-val').text('1');
-    if (window.innerWidth <= 768) $('#mobile-cart-bar').show();
 
     // Ürün özelleştirme alanlarını yönetme
     if (p.isCustomObject) {
@@ -1222,7 +1125,7 @@ window.openProductDetail = function(id, pushHistory = true) {
         $('#color-separator').show();
         $('#color-label-obj').text(p.CustomColorText2 || 'Renk 2:');
         // 2D önizlemede yazıyı gizle
-        $('#preview-dynamic-text').text('');
+        $('.preview-dynamic-text').text('');
     } else {
         $('#customization-object-group').hide();
         $('#customization-text-group').show();
@@ -1274,7 +1177,7 @@ window.openProductDetail = function(id, pushHistory = true) {
     // Formu ve galeri pozisyonunu temizle
     $('#custom-text-input').val('');
     $('#quantity-input').val(1);
-    $('#preview-dynamic-text').css('font-family', "'AGENCYB', sans-serif");
+    $('.preview-dynamic-text').css('font-family', "'AGENCYB', sans-serif");
 
     $('#custom-text-color').val('#FBC02D');
     $('#custom-text-color-btn').css('background-color', '#FBC02D');
@@ -1287,12 +1190,12 @@ window.openProductDetail = function(id, pushHistory = true) {
     
     // 2D Preview Box Reset
     if (p.disableTextInput || p.isCustomText === false) {
-        $('#advanced-2d-preview-container').hide();
+        $('.advanced-2d-preview-container').hide();
     } else {
-        $('#advanced-2d-preview-container').show();
+        $('.advanced-2d-preview-container').show();
         const defaultText = p.isCustomObject ? '' : (p.customTextPlaceholderPreview || 'ENGRARE');
         const defaultSize = p.fixedTextSize || 51;
-        $('#preview-dynamic-text').text(defaultText).css({
+        $('.preview-dynamic-text').text(defaultText).css({
             'color': '#FBC02D',
             'font-size': defaultSize + 'px',
             'text-align': 'center'
@@ -1303,30 +1206,30 @@ window.openProductDetail = function(id, pushHistory = true) {
         $('.align-btn[data-align="center"]').addClass('active').css({'background': 'var(--primary)', 'color': 'white', 'border-color': 'var(--primary)'});
         
         const textArea = p.previewTextArea || { top: '15%', left: '10%', width: '80%', height: '70%' };
-        $('#preview-printable-area').css({
+        $('.preview-printable-area').css({
             'top': textArea.top,
             'left': textArea.left,
             'width': textArea.width,
             'height': textArea.height,
             'justify-content': 'center',
-            'border': p.isCustomObject ? 'none' : '2px dashed rgba(0, 0, 0, 0.5)'
+            'border': (p.isDashedLine === true) ? '2px dashed rgba(0, 0, 0, 0.5)' : 'none'
         });
         
         if (p.allowLogo) {
             const logoArea = p.previewLogoArea || { top: '15%', left: '10%', width: '80%', height: '70%' };
-            $('#preview-logo-area').css({
+            $('.preview-logo-area').css({
                 'display': 'flex',
                 'top': logoArea.top,
                 'left': logoArea.left,
                 'width': logoArea.width,
                 'height': logoArea.height,
-                'border': '2px dashed rgba(0, 0, 0, 0.5)'
+                'border': (p.isDashedLine === true) ? '2px dashed rgba(0, 0, 0, 0.5)' : 'none'
             });
             
             // Varsayılan logoyu yükle
             const defaultLogo = './content/engrare_logo_elegant.svg';
             const maskSize = 51 * 2.1; // size 51 * logoMultiplier 2.1
-            $('#preview-dynamic-logo').css({
+            $('.preview-dynamic-logo').css({
                 'mask-image': `url(${defaultLogo})`,
                 '-webkit-mask-image': `url(${defaultLogo})`,
                 'mask-size': 'contain',
@@ -1339,23 +1242,25 @@ window.openProductDetail = function(id, pushHistory = true) {
             }).show();
             
         } else {
-            $('#preview-logo-area').hide();
-            $('#preview-dynamic-logo').hide().css('mask-image', 'none').css('-webkit-mask-image', 'none');
+            $('.preview-logo-area').hide();
+            $('.preview-dynamic-logo').hide().css('mask-image', 'none').css('-webkit-mask-image', 'none');
         }
         
         // Boyutlandırma tetiklemesini containerlar görünür olduktan SONRA yap ki tarayıcı mask-size'ı doğru hesaplasın.
         setTimeout(() => { if(typeof window.fitTextToContainer === 'function') window.fitTextToContainer(); }, 10);
         
-        $('#toggle-printable-area').prop('checked', true);
-        
-        $('#preview-object-color-layer').css('background-color', '#222222');
+        $('.preview-object-color-layer').css('background-color', '#222222');
         if (p.isCustomObject) {
-            $('#preview-overlay-img').attr('src', p.isCustomObject[0].src).show();
-            $('#preview-object-color-layer').css('background-color', $('#custom-text-color').val());
+            if (window.applyFilterToPreview) {
+                window.applyFilterToPreview(p.id, null, p.isCustomObject[0].src);
+            } else {
+                $('.preview-overlay-img').attr('src', p.isCustomObject[0].src).show();
+            }
+            $('.preview-object-color-layer').css('background-color', $('#custom-text-color').val());
         } else if (window.applyFilterToPreview) {
             window.applyFilterToPreview(p.id, '#FBC02D'); // Varsayılan metin rengiyle filtrele
         } else {
-            $('#preview-overlay-img').attr('src', `./content/products/${p.id}/preview.png`).show();
+            $('.preview-overlay-img').attr('src', `./content/products/${p.id}/preview.png`).show();
         }
     }
     
@@ -1388,7 +1293,7 @@ window.openProductDetail = function(id, pushHistory = true) {
     // Set up mobile sticky-preview observer after the page is rendered
     // The small delay lets the browser complete layout so IntersectionObserver
     // gets correct bounding rects on first run.
-    setTimeout(() => { if (typeof setupDesignModeObserver === 'function') setupDesignModeObserver(); }, 80);
+    setTimeout(() => { if (typeof setupDesignModeObserver === 'function') enterDesignMode(); }, 80);
 };
 
 window.changeMainImage = function(idx) {
@@ -1489,7 +1394,7 @@ function renderCart() {
     $area.empty();
     
     if(cart.length === 0) {
-        $area.html('<div style="text-align:center; padding:20px; color:#999">Sepet boş.</div>');
+        $area.html('<div style="text-align:center; padding:35px 20px; color:var(--text-muted); background: white; border-radius: 14px; border: 1px solid var(--border); font-size: 1rem;"><i class="fa-solid fa-cart-shopping" style="font-size: 2rem; color: #cbd5e1; margin-bottom: 12px; display: block;"></i>Sepetinizde ürün bulunmuyor.</div>');
         $('#val-subtotal').text("₺0.00");
         $('#shipping-display').text("₺50.00");
         $('#val-total').text("₺50.00"); 
@@ -1500,80 +1405,160 @@ function renderCart() {
     let sub = 0;
     cart.forEach((item, index) => {
         sub += item.price * item.quantity;
-        
-        let img = item.image;
-        if (typeof img === 'object' && img !== null) img = img.src;
-        img = img || "./content/product2.jpeg";
-        
+        const p = products.find(prod => prod.id === item.productId);
+
+        // Aspect ratio hesaplama
+        let aspect = 1.71;
+        if (p) {
+            if (p.id === 1) aspect = 3.594;
+            else if (p.id === 2) aspect = 1.710;
+            else if (p.isCustomObject) {
+                const sel = (item.selectedObject || "").toLowerCase();
+                if (sel.includes("fenerbahçe") || sel.includes("fb")) aspect = 0.894;
+                else if (sel.includes("galatasaray") || sel.includes("gs")) aspect = 0.653;
+                else if (sel.includes("trabzon")) aspect = 0.678;
+                else if (sel.includes("beşiktaş") || sel.includes("bjk")) aspect = 0.699;
+                else aspect = 0.75;
+            }
+        }
+
+        const maxBox = 112;
+        let innerW, innerH;
+        if (aspect >= 1) {
+            innerW = maxBox;
+            innerH = Math.max(26, Math.round(maxBox / aspect));
+        } else {
+            innerH = maxBox;
+            innerW = Math.max(26, Math.round(maxBox * aspect));
+        }
+
+        const textArea = (p && p.previewTextArea) ? p.previewTextArea : { top: '15%', left: '10%', width: '80%', height: '70%' };
+        const logoArea = (p && p.previewLogoArea) ? p.previewLogoArea : { top: '15%', left: '10%', width: '80%', height: '70%' };
+        const isCustomObj = p && p.isCustomObject;
+
+        let colorDropdownHtml = '';
+        if (p && p.colors && p.colors.length > 0) {
+            let swatches = '';
+            p.colors.forEach(c => {
+                const color1 = c.color1;
+                const color2 = c.color2 || c.color1;
+                const isSingle = !c.color2 || c.color1 === c.color2 || p.isCustomObject;
+                const bg = isSingle ? color1 : `linear-gradient(135deg, ${color1} 50%, ${color2} 50%)`;
+                const titleText = isSingle ? (c.label1 || 'Renk') : `${c.label1 || 'Yazı'} / ${c.label2 || 'Zemin'}`;
+                swatches += `<div class="pla-swatch dual-swatch" data-color1="${color1}" data-color2="${color2}" data-cart-index="${index}" style="background: ${bg}; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border);" title="${titleText}"></div>`;
+            });
+            const isCurrentSingle = !item.objColor || item.textColor === item.objColor || p.isCustomObject;
+            const currentBg = isCurrentSingle ? (item.objColor || item.textColor || '#222222') : `linear-gradient(135deg, ${item.textColor} 50%, ${item.objColor} 50%)`;
+            colorDropdownHtml = `
+                <div style="position: relative;">
+                    <div class="pla-color-select" data-target="cart-dropdown-color-${index}" style="width: 28px; height: 28px; border-radius: 50%; background: ${currentBg}; border: 2px solid var(--border); cursor: pointer;" title="Renk Değiştir"></div>
+                    <div class="pla-options-dropdown" id="cart-dropdown-color-${index}" style="padding: 10px; gap: 8px; width: 140px; bottom: calc(100% + 10px);">
+                        <div style="text-align:center; font-size:0.72rem; font-weight:700; color:var(--text-muted); grid-column: span 4; margin-bottom: 4px;">RENK SEÇİMİ</div>
+                        ${swatches}
+                    </div>
+                </div>
+            `;
+        }
+
         $area.append(`
             <div class="cart-item">
-                <div style="display:flex; align-items:flex-start; gap: 20px; width: 100%;">
-                    <img src="${img}" style="width: 90px; height: 90px; object-fit: cover; border-radius: 12px; flex-shrink: 0; border: 1px solid var(--border);">
-                    
-                    <div class="info" style="flex:1; display:flex; flex-direction:column; justify-content: space-between; min-height: 90px;">
-                        <div style="font-weight:700; font-size: 1rem; color: var(--primary); margin-bottom: 8px;">${item.name}</div>
-                        ${item.selectedObject ? `<div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px;">Takım/Obje: <span style="font-weight:600; color:var(--text-main);">${item.selectedObject}</span></div>` : ''}
-                        
-                        <div style="display:flex; align-items:center; gap: 15px; margin-top: auto; flex-wrap: wrap;">
-                            <div style="position: relative; width: 100%; max-width: 220px;">
-                                <i class="fa-solid fa-pen-clip" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem;"></i>
-                                <input type="text" class="cart-text-input" data-index="${index}" value="${item.customText}" placeholder="Yazı girin..." style="font-family: ${item.font || 'inherit'}; width: 100%; padding: 8px 12px 8px 32px; font-size: 0.85rem; border: 1px solid var(--border); border-radius: 8px; background: #F8FAFC; color: var(--text-main); outline: none; transition: 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='var(--accent)'; this.style.background='#fff';" onblur="this.style.borderColor='var(--border)'; this.style.background='#F8FAFC';">
-                            </div>
+                <div style="display:flex; align-items:center; gap: 16px; width: 100%;">
+                    <!-- Büyütülmüş 2D Canlı Önizleme Kutusu -->
+                    <div class="cart-2d-box">
+                        <div class="cart-preview-inner" id="cart-preview-inner-${index}" style="position: relative; overflow: hidden; border-radius: 4px; width: ${innerW}px; height: ${innerH}px; background: #ffffff;">
+                            <!-- Zemin Renk Katmanı -->
+                            <div class="cart-obj-layer" id="cart-obj-layer-${index}" style="position: absolute; inset: 0; background-color: ${item.objColor || item.textColor || '#222222'}; z-index: 1;"></div>
                             
-                            <div style="display: flex; gap: 8px;">
-                                ${(() => {
-                                    const p = products.find(prod => prod.id === item.productId);
-                                    if (p && p.colors && p.colors.length > 0) {
-                                        let swatches = '';
-                                        p.colors.forEach(c => {
-                                            const bg = c.color1 === c.color2 ? c.color1 : `linear-gradient(135deg, ${c.color1} 50%, ${c.color2} 50%)`;
-                                            swatches += `<div class="pla-swatch dual-swatch" data-color1="${c.color1}" data-color2="${c.color2}" data-cart-index="${index}" style="background: ${bg}; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border);" title="${c.label1} / ${c.label2}"></div>`;
-                                        });
-                                        const currentBg = item.textColor === item.objColor ? item.textColor : `linear-gradient(135deg, ${item.textColor} 50%, ${item.objColor} 50%)`;
-                                        return `
-                                            <div style="position: relative;">
-                                                <div class="pla-color-select" data-target="cart-dropdown-color-${index}" style="width: 28px; height: 28px; border-radius: 50%; background: ${currentBg}; border: 2px solid var(--border); cursor: pointer;" title="Renk Seçimi"></div>
-                                                <div class="pla-options-dropdown" id="cart-dropdown-color-${index}" style="padding: 10px; gap: 8px; width: 140px; bottom: calc(100% + 10px);">
-                                                    <div style="text-align:center; font-size:0.75rem; font-weight:700; color:var(--text-muted); grid-column: span 4; margin-bottom: 4px;">RENK SEÇİMİ</div>
-                                                    ${swatches}
-                                                </div>
-                                            </div>
-                                        `;
-                                    } else {
-                                        return ''; // Fallback omitted for brevity, new products have colors
-                                    }
-                                })()}
+                            <!-- Kırpılmış PNG Görseli -->
+                            <img class="cart-overlay-img" id="cart-overlay-img-${index}" src="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 2; display: none;">
+                            
+                            <!-- Canlı Metin Alanı -->
+                            ${isCustomObj ? '' : `
+                            <div class="cart-printable-area" id="cart-print-area-${index}" style="position: absolute; top: ${textArea.top}; left: ${textArea.left}; width: ${textArea.width}; height: ${textArea.height}; z-index: 3; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                <span class="cart-dynamic-text" id="cart-dynamic-text-${index}" style="color: ${item.textColor || '#FBC02D'}; font-family: ${item.font || "'AGENCYB', sans-serif"}; font-size: 14px; text-align: center; width: auto; word-break: break-word; display: inline-block; line-height: 1;">${item.customText || ''}</span>
                             </div>
-
-                            <div style="display:flex; align-items:center; background: #F8FAFC; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; height: 35px;">
-                                <button type="button" class="qty-btn minus" onclick="updateCartQty(${index}, -1)" style="width: 30px; height: 100%; background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='#E2E8F0';" onmouseout="this.style.background='none';"><i class="fa-solid fa-minus" style="font-size: 0.75rem;"></i></button>
-                                <input type="text" class="cart-qty-input" data-index="${index}" value="${item.quantity}" style="width: 40px; height: 100%; padding: 0; margin: 0; text-align: center; border: none; background: transparent; font-size: 0.9rem; font-weight: 600; color: var(--primary); outline: none; pointer-events: auto;">
-                                <button type="button" class="qty-btn plus" onclick="updateCartQty(${index}, 1)" style="width: 30px; height: 100%; background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='#E2E8F0';" onmouseout="this.style.background='none';"><i class="fa-solid fa-plus" style="font-size: 0.75rem;"></i></button>
+                            `}
+                            
+                            <!-- Canlı Logo Alanı -->
+                            ${(item.logoUrl && !isCustomObj) ? `
+                            <div class="cart-logo-area" id="cart-logo-area-${index}" style="position: absolute; top: ${logoArea.top}; left: ${logoArea.left}; width: ${logoArea.width}; height: ${logoArea.height}; z-index: 3; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                <div class="cart-dynamic-logo" id="cart-dynamic-logo-${index}" style="width: 100%; height: 100%; mask-image: url(${item.logoUrl}); -webkit-mask-image: url(${item.logoUrl}); mask-size: contain; -webkit-mask-size: contain; mask-repeat: no-repeat; -webkit-mask-repeat: no-repeat; mask-position: center; -webkit-mask-position: center; background-color: ${item.textColor || '#FBC02D'};"></div>
                             </div>
+                            ` : ''}
                         </div>
                     </div>
-                    
-                    <div class="price-action" style="display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; min-height: 90px; min-width: 90px;">
-                        <span style="font-weight:800; font-size: 1.1rem; color:var(--primary);">₺${(item.price * item.quantity).toFixed(2)}</span>
-                        <button class="remove-btn" data-index="${index}" style="color: #EF4444; background: rgba(239, 68, 68, 0.1); border:none; cursor:pointer; font-size:0.8rem; font-weight: 600; padding: 6px 10px; border-radius: 6px; transition: 0.2s; display: flex; align-items: center; gap: 5px;" onmouseover="this.style.background='rgba(239, 68, 68, 0.2)';" onmouseout="this.style.background='rgba(239, 68, 68, 0.1)';"><i class="fa-solid fa-trash-can"></i> Kaldır</button>
+
+                    <!-- Ürün Bilgileri ve 3 Satırlı Kontrol Düzeni -->
+                    <div class="info" style="flex:1; display:flex; flex-direction:column; justify-content: space-between; min-width: 0; min-height: 110px; gap: 8px;">
+                        <!-- Üst Satır: Başlık & Fiyat -->
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+                            <div>
+                                <div style="font-weight:700; font-size: 1.02rem; color: var(--primary); line-height: 1.3;">${item.name}</div>
+                            </div>
+                            <span style="font-weight:800; font-size: 1.15rem; color:var(--primary); white-space: nowrap;">₺${(item.price * item.quantity).toFixed(2)}</span>
+                        </div>
+                        
+                        <!-- Orta Satır: Obje Seçimi VEYA Metin Girişi -->
+                        ${isCustomObj ? `
+                        <div style="width: 100%;">
+                            <div style="position: relative; width: 100%;">
+                                <i class="fa-solid fa-shapes" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.82rem; pointer-events: none;"></i>
+                                <select class="cart-object-select" data-index="${index}" style="width: 100%; padding: 7px 28px 7px 30px; font-size: 0.88rem; font-weight: 600; border: 1px solid var(--border); border-radius: 8px; background: #F8FAFC; color: var(--text-main); outline: none; transition: 0.2s; box-sizing: border-box; cursor: pointer; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748B%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 10px top 50%; background-size: 10px auto;" onfocus="this.style.borderColor='var(--accent)'; this.style.background='#fff';" onblur="this.style.borderColor='var(--border)'; this.style.background='#F8FAFC';">
+                                    ${p.isCustomObject.map(obj => `
+                                        <option value="${obj.objectName}" ${obj.objectName === (item.selectedObject || p.isCustomObject[0].objectName) ? 'selected' : ''}>${obj.objectName}</option>
+                                    `).join('')}
+                                </select>
+                            </div>
+                        </div>
+                        ` : `
+                        <div style="width: 100%;">
+                            <div style="position: relative; width: 100%;">
+                                <i class="fa-solid fa-pen-clip" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.8rem;"></i>
+                                <input type="text" class="cart-text-input" data-index="${index}" value="${item.customText}" placeholder="Ürün üzerine yazılacak metin..." style="font-family: ${item.font || 'inherit'}; width: 100%; padding: 7px 10px 7px 30px; font-size: 0.88rem; border: 1px solid var(--border); border-radius: 8px; background: #F8FAFC; color: var(--text-main); outline: none; transition: 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='var(--accent)'; this.style.background='#fff';" onblur="this.style.borderColor='var(--border)'; this.style.background='#F8FAFC';">
+                            </div>
+                        </div>
+                        `}
+
+                        <!-- Alt Kontrol Satırı: Renk Seçici & Miktar Kontrolü (Sağa Hizalı) -->
+                        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 2px;">
+                            ${colorDropdownHtml}
+
+                            <!-- Miktar / Kaldır Seçici -->
+                            <div style="display:flex; align-items:center; background: #F8FAFC; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; height: 34px;">
+                                <button type="button" class="qty-btn minus" onclick="updateCartQty(${index}, -1)" style="width: 32px; height: 100%; background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 0.9rem; display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='${item.quantity === 1 ? 'rgba(239, 68, 68, 0.15)' : '#E2E8F0'}';" onmouseout="this.style.background='none';" title="${item.quantity === 1 ? 'Sepetten Kaldır' : 'Adet Azalt'}">
+                                    ${item.quantity === 1 
+                                        ? '<i class="fa-solid fa-trash-can" style="color: #ef4444; font-size: 0.85rem;"></i>' 
+                                        : '<i class="fa-solid fa-minus" style="font-size: 0.75rem;"></i>'}
+                                </button>
+                                <input type="text" class="cart-qty-input" data-index="${index}" value="${item.quantity}" style="width: 36px; height: 100%; padding: 0; margin: 0; text-align: center; border: none; background: transparent; font-size: 0.92rem; font-weight: 700; color: var(--primary); outline: none;">
+                                <button type="button" class="qty-btn plus" onclick="updateCartQty(${index}, 1)" style="width: 32px; height: 100%; background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 0.9rem; display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='#E2E8F0';" onmouseout="this.style.background='none';" title="Adet Artır">
+                                    <i class="fa-solid fa-plus" style="font-size: 0.75rem;"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         `);
+
+        // Her ürün için 2D canvas önizlemesini yükle
+        window.renderCartItemPreview(index);
     });
 
     const remaining = 500 - sub;
     const progressPercent = Math.min((sub / 500) * 100, 100);
     
     let progressHtml = `
-        <div style="margin-bottom: 25px; background: #FFFFFF; border: 1px solid var(--border); border-radius: 12px; padding: 18px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-            <div style="display:flex; justify-content:space-between; margin-bottom: 12px; font-size: 0.9rem; font-weight: 700;">
-                <span style="color: ${remaining > 0 ? 'var(--primary)' : '#10B981'};">
-                    ${remaining > 0 ? `<i class="fa-solid fa-truck" style="margin-right: 5px; color: var(--text-muted);"></i> Kargo bedavaya <span style="color:var(--accent);">₺${remaining.toFixed(2)}</span> kaldı!` : '<i class="fa-solid fa-check-circle" style="margin-right: 5px;"></i> Harika! Kargonuz ücretsiz.'}
+        <div style="margin-bottom: 22px; background: #FFFFFF; border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+            <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom: 10px; font-size: 0.9rem; font-weight: 700;">
+                <span>
+                    ${remaining > 0 
+                        ? `<i class="fa-solid fa-truck-fast" style="margin-right: 6px; color: #16a34a;"></i> Ücretsiz kargoya <span style="color: #16a34a; font-weight: 800; background: #dcfce7; padding: 2px 8px; border-radius: 6px; font-size: 0.95rem;">₺${remaining.toFixed(2)}</span> kaldı!` 
+                        : '<i class="fa-solid fa-circle-check" style="margin-right: 6px; color: #16a34a;"></i> <span style="color: #16a34a; font-weight: 800;">Tebrikler! Kargo Ücretsiz.</span>'}
                 </span>
             </div>
             <div style="width: 100%; height: 8px; background: #F1F5F9; border-radius: 10px; overflow: hidden; position: relative;">
-                <div style="height: 100%; background: ${remaining > 0 ? 'var(--accent)' : '#10B981'}; width: ${progressPercent}%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 10px;"></div>
+                <div style="height: 100%; background: #16a34a; width: ${progressPercent}%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 10px;"></div>
             </div>
         </div>
     `;
@@ -1592,9 +1577,130 @@ function renderCart() {
     $('#val-total').text(`₺${(sub + shipping).toFixed(2)}`);
 }
 
+window.fitCartItemText = function(index) {
+    const $container = $(`#cart-print-area-${index}`);
+    const $text = $(`#cart-dynamic-text-${index}`);
+    if (!$container.length || !$text.length) return;
+
+    const textVal = $text.text().trim();
+    if (!textVal) return;
+
+    const containerW = $container.width();
+    const containerH = $container.height();
+    if (containerW <= 0 || containerH <= 0) return;
+
+    let fontSize = containerH * 0.95;
+    $text.css({
+        'font-size': fontSize + 'px',
+        'white-space': 'nowrap',
+        'display': 'inline-block'
+    });
+
+    const textW = $text.outerWidth(true);
+    if (textW > containerW && textW > 0) {
+        const scale = containerW / textW;
+        fontSize = fontSize * scale;
+        $text.css('font-size', fontSize + 'px');
+    }
+};
+
+window.renderCartItemPreview = function(index) {
+    const item = cart[index];
+    if (!item) return;
+    const p = products.find(prod => prod.id === item.productId);
+    if (!p) return;
+    
+    let src = `./content/products/${item.productId}/preview.png`;
+    let isCustom = false;
+    if (p.isCustomObject) {
+        const obj = p.isCustomObject.find(o => o.objectName === item.selectedObject) || p.isCustomObject[0];
+        if (obj) src = obj.src;
+        isCustom = true;
+    }
+    
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.onload = function() {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        
+        try {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            const width = canvas.width;
+            const height = canvas.height;
+            const targetRgb = window.hexToRgb ? window.hexToRgb(item.textColor || '#FBC02D') : { r: 251, g: 192, b: 45 };
+            
+            let minX = width, minY = height, maxX = 0, maxY = 0;
+            let found = false;
+            
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const idx = (y * width + x) * 4;
+                    const r = data[idx], g = data[idx + 1], b = data[idx + 2], a = data[idx + 3];
+                    const isWhite = (r > 240 && g > 240 && b > 240 && a > 200);
+                    if (!isWhite) {
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                        found = true;
+                    }
+                    if (!isCustom && r < 60 && g < 60 && b < 60 && a > 0) {
+                        data[idx] = targetRgb.r;
+                        data[idx + 1] = targetRgb.g;
+                        data[idx + 2] = targetRgb.b;
+                    }
+                }
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            
+            if (found && maxX > minX && maxY > minY) {
+                const cropW = maxX - minX + 1;
+                const cropH = maxY - minY + 1;
+                const cropCanvas = document.createElement('canvas');
+                cropCanvas.width = cropW;
+                cropCanvas.height = cropH;
+                cropCanvas.getContext('2d').drawImage(canvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+                $(`#cart-overlay-img-${index}`).attr('src', cropCanvas.toDataURL()).show();
+            } else {
+                $(`#cart-overlay-img-${index}`).attr('src', canvas.toDataURL()).show();
+            }
+        } catch (e) {
+            $(`#cart-overlay-img-${index}`).attr('src', src).show();
+        }
+        
+        setTimeout(() => {
+            if (typeof window.fitCartItemText === 'function') {
+                window.fitCartItemText(index);
+            }
+        }, 30);
+    };
+    img.onerror = function() {
+        $(`#cart-overlay-img-${index}`).attr('src', src).show();
+    };
+    img.src = src;
+};
+
 window.updateCartQty = function(index, change) {
+    if (!cart[index]) return;
     let newQty = cart[index].quantity + change;
-    if (newQty < 1) newQty = 1;
+    if (newQty <= 0) {
+        const itemToRemove = cart[index];
+        if (itemToRemove && itemToRemove.logoStoragePath) {
+            const sRef = storageRef(storage, itemToRemove.logoStoragePath);
+            deleteObject(sRef).catch(err => console.error("Logo silinemedi:", err));
+        }
+        cart.splice(index, 1);
+        saveCart();
+        renderCart();
+        showToast("Ürün sepetten kaldırıldı.", "info");
+        return;
+    }
     cart[index].quantity = newQty;
     saveCart();
     renderCart();
@@ -1903,11 +2009,11 @@ window.hexToRgb = function(hex) {
     } : { r: 0, g: 0, b: 0 };
 };
 
-window.applyFilterToPreview = function(productId, textColorHex) {
-    if (!productId) return;
+window.applyFilterToPreview = function(productId, textColorHex, customSrc) {
+    if (!productId && !customSrc) return;
     
-    const imgUrl = `./content/products/${productId}/preview.png`;
-    const targetRgb = window.hexToRgb(textColorHex);
+    const imgUrl = customSrc || `./content/products/${productId}/preview.png`;
+    const targetRgb = window.hexToRgb(textColorHex || '#FBC02D');
     
     const img = new Image();
     img.crossOrigin = "Anonymous";
@@ -1921,29 +2027,115 @@ window.applyFilterToPreview = function(productId, textColorHex) {
         try {
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
+            const width = canvas.width;
+            const height = canvas.height;
             
-            for (let i = 0; i < data.length; i += 4) {
-                // Siyah veya çok koyu gri olan (RGB < 60) ve tam şeffaf olmayan pikselleri bul
-                if (data[i] < 60 && data[i+1] < 60 && data[i+2] < 60 && data[i+3] > 0) {
-                    data[i] = targetRgb.r;     // red
-                    data[i+1] = targetRgb.g; // green
-                    data[i+2] = targetRgb.b; // blue
+            let minX = width, minY = height, maxX = 0, maxY = 0;
+            let found = false;
+            
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const idx = (y * width + x) * 4;
+                    const r = data[idx];
+                    const g = data[idx + 1];
+                    const b = data[idx + 2];
+                    const a = data[idx + 3];
+                    
+                    // Beyaz/kenar boşluğu pikselini tespit et (RGB > 240 ve tam opak)
+                    const isWhiteBg = (r > 240 && g > 240 && b > 240 && a > 200);
+                    if (!isWhiteBg) {
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                        found = true;
+                    }
+                    
+                    // Siyah veya çok koyu gri olan (RGB < 60) ve şeffaf olmayan pikselleri metin rengine boya
+                    if (!customSrc && r < 60 && g < 60 && b < 60 && a > 0) {
+                        data[idx] = targetRgb.r;     // red
+                        data[idx + 1] = targetRgb.g; // green
+                        data[idx + 2] = targetRgb.b; // blue
+                    }
                 }
             }
             
             ctx.putImageData(imageData, 0, 0);
-            $('#preview-overlay-img').attr('src', canvas.toDataURL()).show();
+            
+            if (found && maxX > minX && maxY > minY) {
+                const cropW = maxX - minX + 1;
+                const cropH = maxY - minY + 1;
+                const aspect = cropW / cropH;
+                
+                const cropCanvas = document.createElement('canvas');
+                cropCanvas.width = cropW;
+                cropCanvas.height = cropH;
+                const cropCtx = cropCanvas.getContext('2d');
+                cropCtx.drawImage(canvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+                
+                $('.preview-overlay-img').attr('src', cropCanvas.toDataURL()).show();
+                
+                if (typeof window.updatePreviewBoxDimensions === 'function') {
+                    window.updatePreviewBoxDimensions(aspect);
+                }
+            } else {
+                $('.preview-overlay-img').attr('src', canvas.toDataURL()).show();
+            }
+            
+            setTimeout(() => {
+                if (typeof window.fitTextToContainer === 'function') {
+                    window.fitTextToContainer();
+                }
+            }, 30);
         } catch (e) {
             console.error("Canvas filtering error:", e);
-            // Hata durumunda (örn. CORS) orijinal resmi göster
-            $('#preview-overlay-img').attr('src', imgUrl).show();
+            $('.preview-overlay-img').attr('src', imgUrl).show();
         }
     };
     img.onerror = function() {
-        $('#preview-overlay-img').hide();
+        $('.preview-overlay-img').hide();
     };
     img.src = imgUrl;
 };
+
+window.updatePreviewBoxDimensions = function(aspect) {
+    if (!aspect && window.currentPreviewAspect) {
+        aspect = window.currentPreviewAspect;
+    }
+    if (!aspect) return;
+    window.currentPreviewAspect = aspect;
+    
+    const $container = $('#advanced-2d-preview-container');
+    const containerWidth = $container.width() || $('#product-detail-page .product-images').width() || 340;
+    const isMobile = window.innerWidth <= 768;
+    const maxHeight = isMobile ? 195 : 220;
+    
+    let boxWidth, boxHeight;
+    if (containerWidth / aspect <= maxHeight) {
+        boxWidth = Math.floor(containerWidth);
+        boxHeight = Math.floor(containerWidth / aspect);
+    } else {
+        boxHeight = maxHeight;
+        boxWidth = Math.floor(maxHeight * aspect);
+    }
+    
+    $('#advanced-2d-preview-box').css({
+        'width': boxWidth + 'px',
+        'height': boxHeight + 'px',
+        'aspect-ratio': `${aspect}`,
+        'margin': '0 auto'
+    });
+    
+    if (typeof window.fitTextToContainer === 'function') {
+        window.fitTextToContainer();
+    }
+};
+
+$(window).on('resize', function() {
+    if (window.currentPreviewAspect && typeof window.updatePreviewBoxDimensions === 'function') {
+        window.updatePreviewBoxDimensions();
+    }
+});
 
 // --- DIAGONAL COLOR COMBINATIONS ---
 function renderColorCombinations(p) {
@@ -1987,15 +2179,15 @@ $(document).on('click', '.diagonal-color-btn', function() {
     $('#custom-obj-color').val(c2);
 
     // Update previews
-    $('#preview-dynamic-text').css('color', c1);
-    $('#preview-dynamic-logo').css('background-color', c1);
+    $('.preview-dynamic-text').css('color', c1);
+    $('.preview-dynamic-logo').css('background-color', c1);
     
     if (typeof currentProduct !== 'undefined' && currentProduct) {
         if (currentProduct.isCustomObject) {
-            $('#preview-object-color-layer').css('background-color', c1);
+            $('.preview-object-color-layer').css('background-color', c1);
         } else if (window.applyFilterToPreview) {
             window.applyFilterToPreview(currentProduct.id, c1);
-            $('#preview-object-color-layer').css('background-color', c2);
+            $('.preview-object-color-layer').css('background-color', c2);
         } else {
             const rgb = typeof hexToRgb !== 'undefined' ? hexToRgb(c2) : window.hexToRgb(c2);
             if (rgb) {
@@ -2012,3 +2204,6 @@ $(document).on('click', '.diagonal-color-btn', function() {
         }
     }
 });
+
+
+

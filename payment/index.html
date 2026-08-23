@@ -10,8 +10,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Using shared style plus specific overrides -->
-    <link rel="stylesheet" href="../myStyle.css">
-    <link rel="stylesheet" href="myStyle.css">
+    <link rel="stylesheet" href="../myStyle.css?v=48">
+    <link rel="stylesheet" href="myStyle.css?v=5">
 
     <script type="importmap">
         {
@@ -60,8 +60,7 @@
     <div class="checkout-wrapper">
         <!-- LEFT: FORM -->
         <div class="checkout-form-section">
-            <div class="checkout-header">
-                <img src="../content/engrare_logo_elegant.png" alt="ENGRARE" height="50" style="margin-bottom: 20px;">
+            <div class="checkout-header" style="margin-bottom: 20px;">
                 <div class="breadcrumb">
                     <a href="../?checkout">Sepet</a> <i class="fa-solid fa-chevron-right"></i> <span>Ödeme</span>
                 </div>
@@ -146,106 +145,93 @@
             </div>
 
             <h3>Hazırlama Seçenekleri</h3>
-            <style>
-                .shipping-options { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-                .delivery-option {
-                    position: relative;
-                    display: flex; flex-direction: column; justify-content: space-between;
-                    padding: 24px;
-                    border: 2px solid #E2E8F0;
-                    border-radius: 16px;
-                    cursor: pointer;
-                    background: #F8FAFC;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                    overflow: hidden;
-                }
-                .delivery-option:hover {
-                    border-color: #CBD5E1;
-                    transform: translateY(-3px);
-                    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-                }
-                .delivery-option.active {
-                    border-color: var(--accent);
-                    background: #FFFFFF;
-                    box-shadow: 0 12px 32px rgba(0,0,0,0.08);
-                }
-                .delivery-option .check-icon {
-                    position: absolute; top: 20px; right: 20px;
-                    color: var(--accent);
-                    font-size: 1.4rem;
-                    opacity: 0; transform: scale(0.5);
-                    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-                }
-                .delivery-option.active .check-icon {
-                    opacity: 1; transform: scale(1);
-                }
-                .del-icon-wrapper {
-                    width: 50px; height: 50px;
-                    background: #E2E8F0;
-                    border-radius: 14px;
-                    display: flex; align-items: center; justify-content: center;
-                    font-size: 1.3rem; color: var(--text-main);
-                    margin-bottom: 18px;
-                    transition: 0.3s;
-                }
-                .delivery-option.active .del-icon-wrapper {
-                    background: var(--accent);
-                    color: white;
-                }
-                @media (max-width: 600px) {
-                    .shipping-options { grid-template-columns: 1fr; gap: 15px; }
-                }
-            </style>
             <div class="shipping-options">
                 <label class="delivery-option active">
                     <input type="radio" name="shipping-method" value="standard" checked style="display:none;">
-                    <i class="fa-solid fa-circle-check check-icon"></i>
-                    <div>
+                    <div class="del-top-row">
                         <div class="del-icon-wrapper"><i class="fa-solid fa-box"></i></div>
-                        <span class="del-title" style="font-weight:700; font-size:1.1rem; display:block; margin-bottom: 6px; color: var(--primary);">Standart Üretim</span>
-                        <span class="del-desc" style="font-size:0.85rem; color:var(--text-muted); display:block; line-height: 1.5;">Siparişiniz sıraya alınır ve en geç 3-5 iş günü içinde kargoya teslim edilir.</span>
+                        <i class="fa-solid fa-circle-check check-icon"></i>
                     </div>
-                    <span style="font-weight:800; font-size:1.25rem; color:var(--primary); margin-top: 20px; display:block;" id="standard-shipping-price">₺50.00</span>
+                    <div class="del-body">
+                        <span class="del-title">Standart Üretim</span>
+                        <span class="del-desc">3-5 iş günü içinde kargoda</span>
+                    </div>
+                    <div class="del-footer">
+                        <span class="del-price" id="standard-shipping-price">₺50.00</span>
+                    </div>
                 </label>
                 <label class="delivery-option">
                     <input type="radio" name="shipping-method" value="express" style="display:none;">
-                    <i class="fa-solid fa-circle-check check-icon"></i>
-                    <div>
+                    <div class="del-top-row">
                         <div class="del-icon-wrapper"><i class="fa-solid fa-bolt"></i></div>
-                        <span class="del-title" style="font-weight:700; font-size:1.1rem; display:block; margin-bottom: 6px; color: var(--primary);">Öncelikli Üretim</span>
-                        <span class="del-desc" style="font-size:0.85rem; color:var(--text-muted); display:block; line-height: 1.5;">Siparişiniz üretim sırasında en öne alınır ve 1-2 iş günü içinde kargolanır.</span>
+                        <i class="fa-solid fa-circle-check check-icon"></i>
                     </div>
-                    <span style="font-weight:800; font-size:1.25rem; color:var(--primary); margin-top: 20px; display:block;" id="express-shipping-price">₺120.00</span>
+                    <div class="del-body">
+                        <span class="del-title">Öncelikli Üretim</span>
+                        <span class="del-desc">1-2 iş günü içinde kargoda</span>
+                    </div>
+                    <div class="del-footer">
+                        <span class="del-price" id="express-shipping-price">₺120.00</span>
+                    </div>
                 </label>
             </div>
 
             <h3>Ödeme Yöntemi</h3>
             <div class="payment-tabs">
-                <button class="pay-tab active" data-method="iyzico">
-                    <i class="fa-solid fa-credit-card"></i> Banka ve Kredi Kartı (Iyzico)
-                </button>
-                <button class="pay-tab" data-method="iban">
-                    <i class="fa-solid fa-money-bill-transfer"></i> Havale / FAST
-                </button>
-            </div>
-
-            <div id="pay-iyzico" class="payment-content">
-                <p style="margin-bottom: 15px; font-size: 0.9rem;">Güvenli ödeme sayfasına yönlendirileceksiniz.</p>
-                <div class="secure-badge"><i class="fa-solid fa-lock"></i> 256-bit SSL Güvenli Ödeme</div>
-            </div>
-
-            <div id="pay-iban" class="payment-content" style="display:none;">
-                <div class="iban-box" style="text-align: center; color: var(--text-muted);">
-                    <i class="fa-solid fa-circle-info" style="font-size: 1.5rem; margin-bottom: 10px; color: var(--accent);"></i>
-                    <p>Lütfen ödeme işlemini tamamlamak için "Öde" butonuna basınız. <br>IBAN bilgileri ve Sipariş Numaranız bir sonraki adımda gösterilecektir.</p>
+                <div class="pay-tab active" data-method="iyzico">
+                    <div class="pay-tab-header">
+                        <div class="pay-tab-icon"><i class="fa-solid fa-credit-card"></i></div>
+                        <i class="fa-solid fa-circle-check pay-check-icon"></i>
+                    </div>
+                    <div class="pay-tab-body">
+                        <span class="pay-tab-title">Banka / Kredi Kartı</span>
+                        <div class="card-brands-row">
+                            <i class="fa-brands fa-cc-visa"></i>
+                            <i class="fa-brands fa-cc-mastercard"></i>
+                            <span class="troy-pill">TROY</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="pay-tab" data-method="iban">
+                    <div class="pay-tab-header">
+                        <div class="pay-tab-icon"><i class="fa-solid fa-money-bill-transfer"></i></div>
+                        <i class="fa-solid fa-circle-check pay-check-icon"></i>
+                    </div>
+                    <div class="pay-tab-body">
+                        <span class="pay-tab-title">Havale / FAST</span>
+                        <span class="pay-tab-sub">Anında Onay</span>
+                    </div>
                 </div>
             </div>
 
-            <button id="btn-complete-order" class="btn primary full-width" style="margin-top: 30px; padding: 18px; font-size: 1.1rem;">
-                <span id="final-price-btn">₺0.00</span> Öde
+            <!-- Iyzico Card Panel -->
+            <div id="pay-iyzico" class="payment-content">
+                <div class="payment-card-info-box">
+                    <div class="pci-header">
+                        <i class="fa-solid fa-shield-halved pci-shield"></i>
+                        <span>3D Secure & 256-Bit SSL Koruması</span>
+                    </div>
+                    <p class="pci-text">Siparişinizi tamamladığınızda güvenli kart ödeme sayfasına (Iyzico) yönlendirileceksiniz.</p>
+                </div>
+            </div>
+
+            <!-- IBAN Panel -->
+            <div id="pay-iban" class="payment-content" style="display:none;">
+                <div class="payment-card-info-box">
+                    <div class="pci-header">
+                        <i class="fa-solid fa-building-columns pci-shield"></i>
+                        <span>Havale / EFT / FAST Bilgisi</span>
+                    </div>
+                    <p class="pci-text">Siparişi tamamla butonuna tıkladıktan sonra IBAN bilgileri ve sipariş referans kodunuz ekranda görüntülenecektir.</p>
+                </div>
+            </div>
+
+            <button id="btn-complete-order" class="btn-checkout">
+                <span class="btn-checkout-left"><i class="fa-solid fa-lock"></i> Güvenle Öde</span>
+                <span class="btn-checkout-price" id="final-price-btn">₺0.00</span>
             </button>
             
-            <div style="margin-top: 20px; font-size: 0.8rem; color: #94A3B8; text-align: center;">
+            <div class="checkout-legal-notice">
                 Devam ederek <a href="../mevzuat/sozlesme" target="_blank">Mesafeli Satış Sözleşmesi</a> ve <a href="../mevzuat/kvkk" target="_blank">KVKK Metni</a>'ni kabul etmiş olursunuz.
             </div>
 
@@ -304,6 +290,7 @@
                     </a>
                 </div>
             </div>
+        </div>
 
         <!-- RIGHT: SUMMARY -->
         <div class="checkout-summary">
@@ -336,6 +323,6 @@
     </div>
 
     <div id="toast-container"></div>
-    <script type="module" src="myScript.js?v=4"></script>
+    <script type="module" src="myScript.js?v=8"></script>
 </body>
 </html>

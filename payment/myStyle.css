@@ -23,18 +23,18 @@ body {
     display: grid;
     grid-template-columns: 1fr 450px;
     min-height: 100vh;
-    padding-top: var(--nav-height, 80px); /* Account for navbar */
+    padding-top: var(--nav-height, 80px);
 }
 
 .checkout-form-section {
-    padding: 60px 10%;
+    padding: 50px 8%;
     background: white;
     border-right: 1px solid var(--border);
 }
 
 .checkout-summary {
     background: #F8FAFC;
-    padding: 60px 40px;
+    padding: 50px 35px;
     position: sticky;
     top: 0;
     height: 100vh;
@@ -47,13 +47,12 @@ body {
 .summary-list {
     flex: 1;
     overflow-y: auto;
-    padding-right: 10px;
-    margin-top: 20px;
-    margin-bottom: 20px;
+    padding-right: 6px;
+    margin-top: 15px;
+    margin-bottom: 15px;
 }
-/* Scrollbar styling for summary list */
 .summary-list::-webkit-scrollbar {
-    width: 6px;
+    width: 5px;
 }
 .summary-list::-webkit-scrollbar-track {
     background: transparent;
@@ -75,54 +74,408 @@ body {
 .breadcrumb a:hover { color: var(--accent); }
 .breadcrumb span { font-weight: 700; color: var(--primary); }
 
-/* Forms */
-h3 { margin: 30px 0 20px; font-size: 1.2rem; font-weight: 700; }
-.form-group { margin-bottom: 15px; }
-.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+/* Section Headings */
+h3 { margin: 24px 0 14px; font-size: 1.15rem; font-weight: 700; color: var(--primary); }
+.form-group { margin-bottom: 14px; }
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
 
 .input-box, .select-box {
-    width: 100%; padding: 14px; border: 1px solid var(--border);
-    border-radius: var(--radius-sm); font-family: inherit; transition: 0.2s;
-    font-size: 0.95rem;
+    width: 100%; padding: 11px 14px; border: 1.5px solid var(--border);
+    border-radius: 10px; font-family: inherit; transition: 0.2s;
+    font-size: 0.9rem; box-sizing: border-box; background: #FFFFFF;
 }
 .input-box:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
 
-/* Payment Tabs */
-.payment-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-.pay-tab {
-    flex: 1; padding: 15px; background: white; border: 1px solid var(--border);
-    border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    transition: 0.2s; color: var(--text-muted);
-}
-.pay-tab.active {
-    border-color: var(--accent); color: var(--accent); background: #EFF6FF;
+/* ==========================================================================
+   ELEGANT 2-COLUMN DELIVERY & ADDRESS OPTIONS
+   ========================================================================== */
+.shipping-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 22px;
 }
 
-/* Summary Items */
+.delivery-option {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 14px 13px;
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    cursor: pointer;
+    background: #FFFFFF;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    box-sizing: border-box;
+    min-height: 125px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.delivery-option:hover {
+    border-color: #CBD5E1;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+}
+
+.delivery-option.active {
+    border-color: var(--accent);
+    background: #F8FAFC;
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.1);
+}
+
+.del-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.del-icon-wrapper {
+    width: 32px;
+    height: 32px;
+    background: #F1F5F9;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    color: #475569;
+    transition: 0.2s;
+    flex-shrink: 0;
+}
+
+.delivery-option.active .del-icon-wrapper {
+    background: var(--accent);
+    color: #FFFFFF;
+}
+
+.delivery-option .check-icon {
+    color: var(--accent);
+    font-size: 1.1rem;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.delivery-option.active .check-icon {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.del-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.del-title {
+    font-weight: 700;
+    font-size: 0.88rem;
+    display: block;
+    margin-bottom: 3px;
+    color: var(--primary);
+    line-height: 1.25;
+}
+
+.del-desc {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    display: block;
+    line-height: 1.35;
+}
+
+.del-footer {
+    margin-top: auto;
+    padding-top: 6px;
+}
+
+.del-price {
+    font-weight: 800;
+    font-size: 0.98rem;
+    color: var(--primary);
+    display: block;
+}
+
+.btn-addr-edit {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    border-radius: 6px;
+    padding: 3px 6px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.btn-addr-edit:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: #F1F5F9;
+}
+
+/* ==========================================================================
+   ELEGANT PAYMENT METHOD SELECTORS & PANELS
+   ========================================================================== */
+.payment-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.pay-tab {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 13px 12px;
+    background: #FFFFFF;
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
+    min-height: 95px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.pay-tab:hover {
+    border-color: #CBD5E1;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+}
+
+.pay-tab.active {
+    border-color: var(--accent);
+    background: #F8FAFC;
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.1);
+}
+
+.pay-tab-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.pay-tab-icon {
+    width: 32px;
+    height: 32px;
+    background: #F1F5F9;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    color: #475569;
+    transition: 0.2s;
+    flex-shrink: 0;
+}
+
+.pay-tab.active .pay-tab-icon {
+    background: var(--accent);
+    color: #FFFFFF;
+}
+
+.pay-check-icon {
+    color: var(--accent);
+    font-size: 1.1rem;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pay-tab.active .pay-check-icon {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.pay-tab-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.pay-tab-title {
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--primary);
+    margin-bottom: 3px;
+    line-height: 1.25;
+}
+
+.pay-tab-sub {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.card-brands-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #64748B;
+    font-size: 1.1rem;
+    margin-top: 2px;
+}
+
+.troy-pill {
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    background: #E2E8F0;
+    color: #334155;
+    padding: 1px 5px;
+    border-radius: 4px;
+    line-height: 1.2;
+}
+
+/* Payment Panel Content */
+.payment-content {
+    margin-bottom: 20px;
+}
+
+.payment-card-info-box {
+    background: #F8FAFC;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    transition: all 0.2s;
+}
+
+.pci-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 5px;
+}
+
+.pci-shield {
+    color: #10B981;
+    font-size: 1.05rem;
+}
+
+.pci-text {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+    margin: 0;
+}
+
+/* ==========================================================================
+   ELEGANT COMPLETE CHECKOUT BUTTON
+   ========================================================================== */
+.btn-checkout {
+    width: 100%;
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 14px;
+    padding: 16px 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
+    margin-top: 20px;
+}
+
+.btn-checkout:hover {
+    background: linear-gradient(135deg, #1E293B 0%, #334155 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.22);
+}
+
+.btn-checkout:active {
+    transform: scale(0.98);
+}
+
+.btn-checkout-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 1.02rem;
+    letter-spacing: 0.2px;
+}
+
+.btn-checkout-price {
+    font-weight: 800;
+    font-size: 1.15rem;
+    letter-spacing: 0.3px;
+}
+
+.checkout-legal-notice {
+    margin-top: 14px;
+    font-size: 0.76rem;
+    color: #94A3B8;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.checkout-legal-notice a {
+    color: var(--text-muted);
+    text-decoration: underline;
+    transition: color 0.2s;
+}
+
+.checkout-legal-notice a:hover {
+    color: var(--primary);
+}
+
+/* ==========================================================================
+   SUMMARY ITEMS & TOTALS
+   ========================================================================== */
 .summary-item {
-    display: flex; gap: 15px; margin-bottom: 20px; align-items: center;
+    display: flex;
+    gap: 14px;
+    margin-bottom: 14px;
+    align-items: center;
+    background: #ffffff;
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+    transition: all 0.2s ease;
 }
-.item-img {
-    width: 70px; height: 70px; border-radius: 10px; background: #fff;
-    object-fit: cover; border: 1px solid var(--border);
+.summary-item:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
 }
-.item-info div { margin-bottom: 4px; }
-.item-name { font-weight: 700; font-size: 0.95rem; }
-.item-meta { font-size: 0.8rem; color: var(--text-muted); }
-.item-price { font-weight: 600; margin-left: auto; }
+.payment-2d-box {
+    width: 90px;
+    height: 90px;
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+.item-info { flex: 1; min-width: 0; }
+.item-name { font-weight: 700; font-size: 0.96rem; color: var(--primary); margin-bottom: 3px; }
+.item-meta { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 2px; }
+.item-price { font-weight: 800; font-size: 1.05rem; color: var(--primary); margin-left: auto; white-space: nowrap; }
 
 /* Totals */
-.summary-totals { padding-top: 20px; border-top: 1px solid var(--border); }
-.price-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.95rem; color: var(--text-muted); }
+.summary-totals { padding-top: 18px; border-top: 1px solid var(--border); }
+.price-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.92rem; color: var(--text-muted); }
 .price-row.total { 
-    margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--border);
-    font-size: 1.4rem; font-weight: 800; color: var(--primary); 
+    margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border);
+    font-size: 1.35rem; font-weight: 800; color: var(--primary); 
 }
 
 /* IBAN Box */
 .iban-box {
-    background: #F1F5F9; padding: 20px; border-radius: 12px; border: 1px solid var(--border);
+    background: #F1F5F9; padding: 18px; border-radius: 12px; border: 1px solid var(--border);
 }
 .iban-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; margin-top: 10px; }
 .iban-label:first-child { margin-top: 0; }
@@ -130,9 +483,9 @@ h3 { margin: 30px 0 20px; font-size: 1.2rem; font-weight: 700; }
 
 /* Discount Section */
 .discount-section {
-    padding-top: 20px; 
+    padding-top: 16px; 
     border-top: 1px solid var(--border);
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .discount-input-group {
@@ -156,7 +509,7 @@ h3 { margin: 30px 0 20px; font-size: 1.2rem; font-weight: 700; }
 #discount-message.success { color: #10B981; }
 #discount-message.error { color: #EF4444; }
 
-/* New Elegant Discount Styles */
+/* Elegant Discount Styles */
 .discount-applied-card {
     display: flex;
     justify-content: space-between;
@@ -192,16 +545,16 @@ h3 { margin: 30px 0 20px; font-size: 1.2rem; font-weight: 700; }
 /* Payment Success Section */
 .payment-success-container {
     text-align: center;
-    padding: 40px;
+    padding: 30px 20px;
 }
 .success-icon {
-    font-size: 4rem;
+    font-size: 3.5rem;
     color: #10B981;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 .order-id-highlight {
     font-family: monospace;
-    font-size: 1.5rem;
+    font-size: 1.35rem;
     font-weight: 700;
     color: var(--primary);
     background: #F1F5F9;
@@ -211,42 +564,260 @@ h3 { margin: 30px 0 20px; font-size: 1.2rem; font-weight: 700; }
     margin: 10px 0;
 }
 
-/* Responsive */
-@media (max-width: 900px) {
-    .checkout-wrapper { grid-template-columns: 1fr; }
-    .checkout-summary { height: auto; padding: 20px 15px; border: 1px solid var(--border); border-radius: 16px; margin-bottom: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-    .checkout-summary h3 { font-size: 1.1rem; padding-bottom: 10px !important; }
-    .summary-item { margin-bottom: 10px; gap: 10px; }
-    .item-img { width: 50px; height: 50px; border-radius: 6px; }
-    .item-name { font-size: 0.85rem; }
-    .item-meta { font-size: 0.75rem; margin-bottom: 2px !important; }
-    .item-price { font-size: 0.85rem; }
-    .summary-list { margin-top: 10px; margin-bottom: 10px; }
-    .discount-section { padding-top: 10px; padding-bottom: 10px; }
-    .price-row { font-size: 0.85rem; margin-bottom: 8px; }
-    .price-row.total { font-size: 1.1rem; margin-top: 10px; padding-top: 10px; }
-    .checkout-form-section { padding: 30px 15px; border-right: none; }
-}
-
 .full-width { width: 100%; }
 .mb-2 { margin-bottom: 10px; }
 .mt-2 { margin-top: 10px; }
 
 /* Elegant Success Page */
-.success-icon-wrapper { width: 80px; height: 80px; background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; font-size: 2.5rem; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: 0 auto 20px auto; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3); }
-.elegant-iban-card { background: #FFFFFF; border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 12px 32px rgba(0,0,0,0.04); text-align: left; overflow: hidden; margin-bottom: 20px; }
-.eic-header { background: #F8FAFC; padding: 18px 24px; font-weight: 700; font-size: 1.1rem; color: var(--primary); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
-.eic-body { padding: 10px 24px; }
-.eic-row { display: flex; flex-direction: column; padding: 16px 0; border-bottom: 1px solid #F1F5F9; }
+.success-icon-wrapper { width: 70px; height: 70px; background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; font-size: 2.2rem; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: 0 auto 16px auto; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3); }
+.elegant-iban-card { background: #FFFFFF; border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,0.04); text-align: left; overflow: hidden; margin-bottom: 20px; }
+.eic-header { background: #F8FAFC; padding: 14px 18px; font-weight: 700; font-size: 1rem; color: var(--primary); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.eic-body { padding: 10px 18px; }
+.eic-row { display: flex; flex-direction: column; padding: 12px 0; border-bottom: 1px solid #F1F5F9; }
 .eic-row:last-child { border-bottom: none; }
-.eic-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; margin-bottom: 6px; }
-.eic-value-group { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
-.eic-value { font-size: 1.05rem; color: var(--primary); font-weight: 500; word-break: break-all; }
-.eic-value.highlight { font-weight: 800; font-size: 1.25rem; color: var(--accent); }
+.eic-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px; }
+.eic-value-group { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.eic-value { font-size: 0.95rem; color: var(--primary); font-weight: 500; word-break: break-all; }
+.eic-value.highlight { font-weight: 800; font-size: 1.15rem; color: var(--accent); }
 .eic-value.monospace { font-family: 'JetBrains Mono', 'Courier New', Courier, monospace; letter-spacing: 1px; }
-.btn-copy { background: #F1F5F9; border: none; color: var(--text-main); width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.2s; flex-shrink: 0; }
+.btn-copy { background: #F1F5F9; border: none; color: var(--text-main); width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s; flex-shrink: 0; }
 .btn-copy:hover { background: var(--accent); color: white; }
 .btn-copy:active { transform: scale(0.95); }
-.elegant-warning-box { background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; padding: 16px 20px; border-radius: 12px; display: flex; align-items: flex-start; gap: 12px; text-align: left; font-size: 0.9rem; line-height: 1.5; }
-.elegant-warning-box i { font-size: 1.25rem; color: #EF4444; margin-top: 2px; }
+.elegant-warning-box { background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; padding: 14px 16px; border-radius: 12px; display: flex; align-items: flex-start; gap: 10px; text-align: left; font-size: 0.85rem; line-height: 1.45; }
+.elegant-warning-box i { font-size: 1.1rem; color: #EF4444; margin-top: 2px; }
 @media (min-width: 600px) { .eic-row { flex-direction: row; align-items: center; justify-content: space-between; } .eic-label { margin-bottom: 0; width: 35%; } .eic-value-group, .eic-value { width: 65%; justify-content: flex-end; text-align: right; } .eic-value-group { justify-content: flex-end; } }
+
+/* ==========================================================================
+   MOBILE RESPONSIVE (TELEFON BOYUTLARI - YAN YANA ELEGANT 2-COLUMN)
+   ========================================================================== */
+@media (max-width: 900px) {
+    .checkout-wrapper {
+        grid-template-columns: 1fr;
+        padding-top: var(--nav-height, 70px);
+    }
+    
+    .checkout-form-section {
+        padding: 16px 14px;
+        border-right: none;
+    }
+    
+    .checkout-header {
+        margin-bottom: 12px !important;
+    }
+    
+    h3 {
+        margin: 16px 0 10px;
+        font-size: 1rem;
+    }
+    
+    /* Giriş Alanları */
+    .form-group {
+        margin-bottom: 8px;
+    }
+    
+    .form-grid-2 {
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+    
+    .input-box, .select-box {
+        padding: 9px 12px;
+        font-size: 0.86rem;
+        border-radius: 8px;
+    }
+    
+    /* YAN YANA 2'Lİ ELEGANT HAZIRLAMA SEÇENEKLERİ */
+    .shipping-options {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+    
+    .delivery-option {
+        padding: 10px 9px;
+        border-radius: 12px;
+        min-height: 110px;
+    }
+    
+    .del-top-row {
+        margin-bottom: 4px;
+    }
+    
+    .del-icon-wrapper {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        font-size: 0.85rem;
+    }
+    
+    .delivery-option .check-icon {
+        font-size: 0.95rem;
+    }
+    
+    .del-title {
+        font-size: 0.82rem;
+        margin-bottom: 2px;
+    }
+    
+    .del-desc {
+        font-size: 0.68rem;
+        line-height: 1.3;
+    }
+    
+    .del-price {
+        font-size: 0.88rem;
+    }
+    
+    /* YAN YANA 2'Lİ ADRES KARTLARI */
+    .address-option {
+        padding: 10px 9px !important;
+        border-radius: 12px !important;
+        min-height: 110px;
+    }
+    
+    .address-option .del-icon-wrapper {
+        width: 26px !important;
+        height: 26px !important;
+        font-size: 0.8rem !important;
+        border-radius: 6px !important;
+    }
+    
+    .address-option .del-title {
+        font-size: 0.82rem !important;
+        margin-bottom: 2px !important;
+    }
+    
+    .address-option .del-desc {
+        font-size: 0.68rem !important;
+        line-height: 1.25 !important;
+    }
+    
+    #new-address-form {
+        padding: 12px !important;
+        border-radius: 12px !important;
+        margin-top: 8px !important;
+    }
+    
+    /* YAN YANA 2'Lİ ÖDEME SEKMELERİ */
+    .payment-tabs {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+    
+    .pay-tab {
+        padding: 10px 9px;
+        border-radius: 12px;
+        min-height: 85px;
+    }
+    
+    .pay-tab-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        font-size: 0.85rem;
+    }
+    
+    .pay-check-icon {
+        font-size: 0.95rem;
+    }
+    
+    .pay-tab-title {
+        font-size: 0.82rem;
+        margin-bottom: 2px;
+    }
+    
+    .card-brands-row {
+        font-size: 0.95rem;
+        gap: 4px;
+    }
+    
+    .troy-pill {
+        font-size: 0.55rem;
+        padding: 1px 4px;
+    }
+    
+    .payment-card-info-box {
+        padding: 10px 12px;
+        border-radius: 10px;
+    }
+    
+    .pci-header {
+        font-size: 0.78rem;
+        margin-bottom: 3px;
+    }
+    
+    .pci-text {
+        font-size: 0.72rem;
+        line-height: 1.35;
+    }
+    
+    .btn-checkout {
+        padding: 14px 16px;
+        border-radius: 12px;
+        margin-top: 16px;
+    }
+    
+    .btn-checkout-left {
+        font-size: 0.94rem;
+        gap: 6px;
+    }
+    
+    .btn-checkout-price {
+        font-size: 1.05rem;
+    }
+    
+    /* Özet Alanı */
+    .checkout-summary {
+        height: auto;
+        padding: 14px 12px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+    }
+    
+    .checkout-summary h3 {
+        font-size: 0.98rem;
+        padding-bottom: 8px !important;
+        margin-top: 0;
+    }
+    
+    .payment-2d-box {
+        width: 76px;
+        height: 76px;
+        border-radius: 10px;
+    }
+    
+    .summary-item {
+        padding: 8px 10px;
+        margin-bottom: 10px;
+        gap: 10px;
+        border-radius: 10px;
+    }
+    
+    .item-name {
+        font-size: 0.88rem;
+    }
+    
+    .item-meta {
+        font-size: 0.74rem;
+        margin-bottom: 1px !important;
+    }
+    
+    .item-price {
+        font-size: 0.92rem;
+    }
+    
+    .price-row {
+        font-size: 0.84rem;
+        margin-bottom: 6px;
+    }
+    
+    .price-row.total {
+        font-size: 1.15rem;
+        margin-top: 10px;
+        padding-top: 10px;
+    }
+}
