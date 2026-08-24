@@ -742,21 +742,75 @@ $(document).ready(function() {
         }
     });
 
+    // --- TELEFON NUMARASI FORMATLAMA (05XX XXX XX XX) ---
+    window.formatTurkishPhoneNumber = function(value) {
+        let clean = (value || '').replace(/\D/g, '');
+        if (clean.startsWith('90') && clean.length > 10) {
+            clean = clean.slice(2);
+        }
+        if (clean.length > 0 && !clean.startsWith('0')) {
+            clean = '0' + clean;
+        }
+        clean = clean.slice(0, 11);
+        
+        let formatted = '';
+        if (clean.length > 0) formatted += clean.substring(0, 4);
+        if (clean.length > 4) formatted += ' ' + clean.substring(4, 7);
+        if (clean.length > 7) formatted += ' ' + clean.substring(7, 9);
+        if (clean.length > 9) formatted += ' ' + clean.substring(9, 11);
+        return formatted;
+    };
+
+    $('#addr-phone').on('input', function() {
+        const formatted = window.formatTurkishPhoneNumber(this.value);
+        if (this.value !== formatted) {
+            this.value = formatted;
+        }
+    });
+
+    // --- KLAVYE & MOBİL SABİT BAR ÇAKIŞMASI VE 2D ÖNİZLEME SCROLL ---
+    $(document).on('focus', '.customization-box input, .customization-box select', function() {
+        if (window.innerWidth <= 768) {
+            $('body').addClass('input-focused keyboard-open');
+            const previewEl = document.getElementById('advanced-2d-preview-container');
+            if (previewEl && $('#product-detail-page').hasClass('active')) {
+                setTimeout(() => {
+                    const navHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--nav-height')) || 70;
+                    const rect = previewEl.getBoundingClientRect();
+                    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                    const targetY = scrollTop + rect.top - (navHeight + 10);
+                    window.scrollTo({
+                        top: Math.max(0, targetY),
+                        behavior: 'smooth'
+                    });
+                }, 80);
+            }
+        }
+    });
+
+    $(document).on('blur', '.customization-box input, .customization-box select', function() {
+        setTimeout(() => {
+            if (!$('.customization-box input:focus, .customization-box select:focus').length) {
+                $('body').removeClass('input-focused keyboard-open');
+            }
+        }, 150);
+    });
+
     // --- 2D PREVIEW LISTENER'LARI ---
     const $dynText   = $('.preview-dynamic-text');
     const $printArea = $('.preview-printable-area');
 
     function updateDynamicTextSpacing() { 
-    $('.preview-dynamic-text').css('letter-spacing', 'normal'); 
-}
-$('#custom-text-input').on('input.preview', function() {
+        $('.preview-dynamic-text').css('letter-spacing', 'normal'); 
+    }
+    $('#custom-text-input').on('input.preview', function() {
         const val = $(this).val();
         const defaultText = (typeof currentProduct !== 'undefined' && currentProduct && currentProduct.customTextPlaceholderPreview)
             ? currentProduct.customTextPlaceholderPreview : 'ENGRARE';
         $dynText.text(val || defaultText);
         if(typeof window.fitTextToContainer === 'function') window.fitTextToContainer();
-    updateDynamicTextSpacing();
-});
+        updateDynamicTextSpacing();
+    });
 
     // Font is fixed to AGENCYB
     $dynText.css('font-family', "'AGENCYB', sans-serif");
@@ -1216,19 +1270,7 @@ window.openProductDetail = function(id, pushHistory = true) {
             $textInput.attr('type', 'tel');
             $textInput.attr('maxlength', '14'); // 11 digits + 3 spaces
             $textInput.on('input.format', function() {
-                let clean = this.value.replace(/\D/g, '');
-                // Ne yazılırsa yazılsın en başa 0 eklenir
-                if (clean.length > 0 && !clean.startsWith('0')) {
-                    clean = '0' + clean;
-                }
-                clean = clean.slice(0, 11);
-                
-                let formatted = '';
-                if (clean.length > 0) formatted += clean.substring(0, 4);
-                if (clean.length > 4) formatted += ' ' + clean.substring(4, 7);
-                if (clean.length > 7) formatted += ' ' + clean.substring(7, 9);
-                if (clean.length > 9) formatted += ' ' + clean.substring(9, 11);
-                
+                const formatted = window.formatTurkishPhoneNumber ? window.formatTurkishPhoneNumber(this.value) : this.value;
                 if (this.value !== formatted) {
                     this.value = formatted;
                     $(this).trigger('input.preview');

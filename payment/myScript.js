@@ -144,9 +144,35 @@ $(document).ready(function() {
         }
     });
 
-    // Mobil/Desktop Özeti Taşıma Mantığı
+    // Telefon Formatlama / Maskeleme Fonksiyonu (05XX XXX XX XX)
+    function formatPhoneNumber(value) {
+        let clean = (value || '').replace(/\D/g, '');
+        if (clean.startsWith('90') && clean.length > 10) {
+            clean = clean.slice(2);
+        }
+        if (clean.length > 0 && !clean.startsWith('0')) {
+            clean = '0' + clean;
+        }
+        clean = clean.slice(0, 11);
+        
+        let formatted = '';
+        if (clean.length > 0) formatted += clean.substring(0, 4);
+        if (clean.length > 4) formatted += ' ' + clean.substring(4, 7);
+        if (clean.length > 7) formatted += ' ' + clean.substring(7, 9);
+        if (clean.length > 9) formatted += ' ' + clean.substring(9, 11);
+        return formatted;
+    }
+
+    $('#contact-phone, #new-addr-phone').on('input', function() {
+        const formatted = formatPhoneNumber(this.value);
+        if (this.value !== formatted) {
+            this.value = formatted;
+        }
+    });
+
+    // Mobil/Desktop Özeti Taşıma Mantığı (Yalnızca mobil breakpoint max-width: 768px)
     function handleSummaryPosition() {
-        if ($(window).width() <= 900) {
+        if (window.innerWidth <= 768) {
             $('.checkout-summary').appendTo('#mobile-summary-placeholder');
         } else {
             $('.checkout-wrapper').append($('.checkout-summary'));
@@ -221,7 +247,7 @@ $(document).ready(function() {
         }
         
         $('#new-address-form').slideUp();
-        $('#new-address-form input').val(''); // Temizle
+        $('#new-address-form input, #new-address-form select').val(''); // Temizle
         $('#edit-addr-id').val('');
     });
 
@@ -303,7 +329,7 @@ $(document).ready(function() {
     // Geri tuşu ile gelindiğinde (bfcache) butonun takılı kalmasını önleme
     $(window).on('pageshow', function(e) {
         if (e.originalEvent && e.originalEvent.persisted) {
-            $('#btn-complete-order').prop('disabled', false);
+            renderCheckoutButton(false);
             updateTotals();
         }
     });
@@ -537,13 +563,17 @@ function updateTotals() {
         subtotal += i.price * qty;
     });
         
-    const standardCost = subtotal >= 500 ? 0 : 50;
-    const expressCost = subtotal >= 500 ? 70 : 120;
-    $('#standard-shipping-price').text(standardCost === 0 ? 'Ücretsiz' : formatTL(standardCost));
-    $('#express-shipping-price').text(formatTL(expressCost));
+    const isFreeShipping = subtotal >= 500;
+    const baseShipping = isFreeShipping ? 0 : 50;
+    const expressCost = isFreeShipping ? 70 : 120;
+
+    // Hazırlama Seçenekleri Kart Fiyat Etiketleri
+    $('#standard-shipping-price').text('Ücretsiz / Dahil');
+    $('#express-shipping-price').text('+₺70.00');
 
     const selectedShipping = $('input[name="shipping-method"]:checked').val() || 'standard';
-    shippingCost = selectedShipping === 'standard' ? standardCost : expressCost;
+    const isExpress = selectedShipping === 'express';
+    shippingCost = isExpress ? expressCost : baseShipping;
         
     let discountAmount = 0;
     if (appliedDiscount) {
@@ -555,7 +585,15 @@ function updateTotals() {
         if (discountAmount > subtotal) discountAmount = subtotal;
     }
 
-    $('#summ-shipping').text(formatTL(shippingCost));
+    // Sipariş Özeti Satırları: Kargo ve Üretim Hızı Ayrımı
+    $('#summ-subtotal').text(formatTL(subtotal));
+    $('#summ-shipping').text(baseShipping === 0 ? 'Ücretsiz' : formatTL(baseShipping));
+    
+    if (isExpress) {
+        $('#summ-production-speed').html('<span style="color: var(--accent); font-weight: 700;">Öncelikli (+₺70,00)</span>');
+    } else {
+        $('#summ-production-speed').text('Standart (Dahil)');
+    }
         
     if (discountAmount > 0) {
         $('#summ-discount-row').show();
@@ -568,7 +606,34 @@ function updateTotals() {
         
     // Buton ve genel ara yüz fiyatlarını eşitle
     $('#summ-total').text(formatTL(total));
-    $('#final-price-btn').text(formatTL(total));
+    renderCheckoutButton(false, '', total);
+}
+
+function renderCheckoutButton(isLoading = false, loadingText = 'İşleniyor...', amount = null) {
+    const $btn = $('#btn-complete-order');
+    if (!$btn.length) return;
+    
+    let priceText = '';
+    if (amount !== null && typeof amount !== 'undefined') {
+        priceText = formatTL(amount);
+    } else {
+        const existingPrice = $('#final-price-btn').text();
+        priceText = existingPrice || '₺0.00';
+    }
+
+    if (isLoading) {
+        $btn.prop('disabled', true).css('opacity', '0.85');
+        $btn.html(`
+            <span class="btn-checkout-left"><i class="fa-solid fa-circle-notch fa-spin"></i> ${loadingText}</span>
+            <span class="btn-checkout-price" id="final-price-btn">${priceText}</span>
+        `);
+    } else {
+        $btn.prop('disabled', false).css('opacity', '1');
+        $btn.html(`
+            <span class="btn-checkout-left"><i class="fa-solid fa-lock"></i> Güvenle Öde</span>
+            <span class="btn-checkout-price" id="final-price-btn">${priceText}</span>
+        `);
+    }
 }
 
 function formatTL(price) {
@@ -651,8 +716,6 @@ async function processPayment() {
     }
     const totalAmount = Math.max(0, subtotal + shippingCost - discountAmount);
 
-    $btn.prop('disabled', true).text('İşleniyor...');
-
     // 🛡️ ADRES DOĞRULAMA VE VERİ TOPLAMA BLOĞU (HTML ID'lerine göre tam eşitleme sağlandı)
     if (user.isAnonymous) {
         shippingInfo = {
@@ -667,13 +730,13 @@ async function processPayment() {
         
         if (!shippingInfo.email || !shippingInfo.phone || !shippingInfo.name || !shippingInfo.surname || !shippingInfo.address || !shippingInfo.city) {
             showToast("Lütfen tüm teslimat bilgilerini eksiksiz doldurun.", "error");
-            $btn.prop('disabled', false).html('<span id="final-price-btn">' + formatTL(totalAmount) + '</span> Öde');
+            renderCheckoutButton(false, '', totalAmount);
             return;
         }
     } else {
         if (!selectedAddress) {
             showToast("Lütfen bir teslimat adresi seçin veya yeni ekleyin.", "error");
-            $btn.prop('disabled', false).html('<span id="final-price-btn">' + formatTL(totalAmount) + '</span> Öde');
+            renderCheckoutButton(false, '', totalAmount);
             return;
         }
         let firstName = selectedAddress.name || '';
@@ -695,6 +758,9 @@ async function processPayment() {
             zip: selectedAddress.zip || ''
         };
     }
+
+    // Doğrulama başarılı -> Butonu yükleniyor moduna al
+    renderCheckoutButton(true, 'İşleniyor...', totalAmount);
 
     const orderData = {
         userId: user.uid,
@@ -744,7 +810,7 @@ async function processPayment() {
 
         // --- 2. AŞAMA: GERÇEK IYZICO KREDİ KARTI AKIŞI ---
         if (paymentMethod === 'iyzico') {
-            $btn.text('Ödeme Sayfası Hazırlanıyor...');
+            renderCheckoutButton(true, 'Ödeme Sayfası Hazırlanıyor...', totalAmount);
             
             const createIyzicoPayment = httpsCallable(functions, 'createIyzicoPayment');
             const payResult = await createIyzicoPayment({ 
@@ -763,7 +829,7 @@ async function processPayment() {
     } catch (e) {
         console.error("Payment Process Error:", e);
         showToast("Sipariş işlenirken bir hata oluştu: " + (e.message || ""), "error");
-        $btn.prop('disabled', false).html('<span id="final-price-btn">' + formatTL(totalAmount) + '</span> Öde');
+        renderCheckoutButton(false, '', totalAmount);
     }
 }
 

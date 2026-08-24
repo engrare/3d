@@ -84,7 +84,17 @@ h3 { margin: 24px 0 14px; font-size: 1.15rem; font-weight: 700; color: var(--pri
     border-radius: 10px; font-family: inherit; transition: 0.2s;
     font-size: 0.9rem; box-sizing: border-box; background: #FFFFFF;
 }
-.input-box:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+.select-box, select.input-box {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748B'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 36px;
+    cursor: pointer;
+}
+.input-box:focus, .select-box:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
 
 /* ==========================================================================
    ELEGANT 2-COLUMN DELIVERY & ADDRESS OPTIONS
@@ -590,7 +600,7 @@ h3 { margin: 24px 0 14px; font-size: 1.15rem; font-weight: 700; color: var(--pri
 /* ==========================================================================
    MOBILE RESPONSIVE (TELEFON BOYUTLARI - YAN YANA ELEGANT 2-COLUMN)
    ========================================================================== */
-@media (max-width: 900px) {
+@media (max-width: 768px) {
     .checkout-wrapper {
         grid-template-columns: 1fr;
         padding-top: var(--nav-height, 70px);
