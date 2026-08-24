@@ -5,12 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Engrare Ödeme</title>
     <link rel="icon" type="image/png" href="https://www.engrare.com/files/photos/title_icon.png" sizes="48x48">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://code.jquery.com">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Using shared style plus specific overrides -->
-    <link rel="stylesheet" href="../myStyle.css?v=49">
+    <link rel="stylesheet" href="../myStyle.css?v=50">
     <link rel="stylesheet" href="myStyle.css?v=5">
 
     <script type="importmap">
@@ -23,6 +28,7 @@
             }
         }
     </script>
+    <link rel="modulepreload" href="../preview-engine.js">
 </head>
 <body>
     <nav class="navbar">
@@ -352,8 +358,8 @@
                     <div class="pay-tab-body">
                         <span class="pay-tab-title">Banka / Kredi Kartı</span>
                         <div class="card-brands-row">
-                            <i class="fa-brands fa-cc-visa"></i>
-                            <i class="fa-brands fa-cc-mastercard"></i>
+                            <span class="troy-pill">VISA</span>
+                            <span class="troy-pill">MASTERCARD</span>
                             <span class="troy-pill">TROY</span>
                         </div>
                     </div>

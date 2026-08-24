@@ -1,7 +1,4 @@
-import { initializeApp } from "firebase/app";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, signInAnonymously, sendPasswordResetEmail } from "firebase/auth";
-import { getDatabase, ref, set, push, onValue, remove, get } from "firebase/database";
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { getPreviewImage } from './preview-engine.js';
 
 // --- FIREBASE CONFIG ---
 const firebaseConfig = {
@@ -15,10 +12,45 @@ const firebaseConfig = {
     measurementId: "G-NLSV32JMM2"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getDatabase(app);
-const storage = getStorage(app);
+/* --------------------------------------------------------------------------
+   FIREBASE: TEMBEL (LAZY) YUKLEME
+   Onceden 4 Firebase SDK modulu (~400 KB) statik import ediliyordu; bu yuzden
+   urunler ekrana basilmadan once tamaminin inip ayrisitirilmasi gerekiyordu.
+   Artik SDK arka planda, ilk cizimden SONRA yukleniyor. Firebase'e ihtiyac
+   duyan her isleyici basinda `await fbReady()` cagiriyor.
+   -------------------------------------------------------------------------- */
+let auth, db, storage;
+let createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
+    onAuthStateChanged, updateProfile, signInAnonymously, sendPasswordResetEmail;
+let ref, set, onValue, remove, get;
+let storageRef, uploadBytes, getDownloadURL, deleteObject;
+
+let _fbPromise = null;
+function fbReady() {
+    if (!_fbPromise) {
+        _fbPromise = Promise.all([
+            import("firebase/app"),
+            import("firebase/auth"),
+            import("firebase/database"),
+            import("firebase/storage")
+        ]).then(([appM, authM, dbM, stM]) => {
+            ({ createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
+               onAuthStateChanged, updateProfile, signInAnonymously,
+               sendPasswordResetEmail } = authM);
+            ({ ref, set, onValue, remove, get } = dbM);
+            storageRef      = stM.ref;
+            uploadBytes     = stM.uploadBytes;
+            getDownloadURL  = stM.getDownloadURL;
+            deleteObject    = stM.deleteObject;
+
+            const app = appM.initializeApp(firebaseConfig);
+            auth    = authM.getAuth(app);
+            db      = dbM.getDatabase(app);
+            storage = stM.getStorage(app);
+        });
+    }
+    return _fbPromise;
+}
 
 let cart = [];
 let currentProduct = null;
@@ -312,7 +344,7 @@ $(document).ready(function() {
     });
 
     // Navigasyon — üst menü ve nav-trigger'lar
-    $('.nav-menu li, .nav-trigger, .dropdown-item').click(function(e) {
+    $('.nav-menu li, .nav-trigger').click(function(e) {
         e.stopPropagation();
         const target = $(this).data('target');
         if (target) switchPage(target);
@@ -328,20 +360,18 @@ $(document).ready(function() {
     // Sepete Ekle
     $('#add-to-cart').click(addToCart);
 
-    // Firebase Auth İzleyici
-    onAuthStateChanged(auth, (user) => {
+    // Firebase Auth İzleyici — SDK indikten sonra bağlanır (ilk çizimi bloklamaz)
+    fbReady().then(() => onAuthStateChanged(auth, (user) => {
         if (user) {
             if (user.isAnonymous) {
                 $('#nav-login-btn').css('display', 'flex');
                 $('#nav-user-profile').hide();
-                $('#nav-logout-container').hide();
                 // Alt menü: misafir görünümü
                 $('#mobile-nav-login').show();
                 $('#mobile-nav-profile').hide();
             } else {
                 $('#nav-login-btn').hide();
                 $('#nav-user-profile').css('display', 'flex');
-                $('#nav-logout-container').css('display', 'flex');
                 $('#dash-user-name').text(user.displayName || "Kullanıcı");
                 $('#dash-user-email').text(user.email);
                 // Alt menü: giriş yapılmış görünümü
@@ -367,15 +397,15 @@ $(document).ready(function() {
         } else {
             $('#nav-login-btn').css('display', 'flex');
             $('#nav-user-profile').hide();
-            $('#nav-logout-container').hide();
             // Alt menü: çıkış yapılmış görünümü
             $('#mobile-nav-login').show();
             $('#mobile-nav-profile').hide();
         }
-    });
+    }));
 
     // Çıkış Yap
-    $('#action-logout').click(() => {
+    $('#action-logout').click(async () => {
+        await fbReady();
         signOut(auth).then(() => {
             switchPage('#products-page');
             showToast("Çıkış yapıldı.", "success");
@@ -383,8 +413,9 @@ $(document).ready(function() {
     });
 
     // Checkout Modal Devam
-    $('#btn-checkout-start').click(function() {
+    $('#btn-checkout-start').click(async function() {
         if(cart.length === 0) return showToast("Sepetiniz boş.", "error");
+        await fbReady();
         if (auth.currentUser && !auth.currentUser.isAnonymous) {
             window.location.href = "./payment";
         } else {
@@ -398,6 +429,7 @@ $(document).ready(function() {
     });
 
     $('#modal-btn-guest').click(async () => {
+        await fbReady();
         if (!auth.currentUser) await signInAnonymously(auth);
         window.location.href = "./payment";
     });
@@ -440,39 +472,16 @@ $(document).ready(function() {
         $('#' + targetId).toggleClass('open');
     });
 
+    // Sepet satırındaki renk seçici
     $(document).on('click', '.pla-swatch', function(e) {
         e.stopPropagation();
-        const inputId = $(this).data('input');
-        const isCart = $(this).data('cart-index') !== undefined;
-        
-        if (isCart) {
-            const index = $(this).data('cart-index');
-            const c1 = $(this).data('color1') || $(this).data('color');
-            const c2 = $(this).data('color2') || c1;
-            cart[index].textColor = c1;
-            cart[index].objColor = c2;
-            saveCart();
-            renderCart();
-        } else {
-            const color = $(this).data('color');
-            $('#' + inputId).val(color);
-            $('#' + inputId + '-btn').css('background-color', color);
-            $(this).closest('.pla-options-dropdown').removeClass('open');
-            
-            if (inputId === 'custom-obj-color') {
-                $('.preview-object-color-layer').css('background-color', color);
-            } else if (inputId === 'custom-text-color') {
-                $('.preview-dynamic-text').css('color', color);
-                $('.preview-dynamic-logo').css('background-color', color); // Logoyu metin rengine boya
-                
-                if (typeof currentProduct !== 'undefined' && currentProduct && currentProduct.isCustomObject) {
-                    $('.preview-object-color-layer').css('background-color', color);
-                } else if (window.applyFilterToPreview && typeof currentProduct !== 'undefined' && currentProduct) {
-                    // Renk değiştiğinde filtreyi tekrar uygula
-                    window.applyFilterToPreview(currentProduct.id, color);
-                }
-            }
-        }
+        const index = $(this).data('cart-index');
+        if (index === undefined || !cart[index]) return;
+        const c1 = $(this).data('color1') || $(this).data('color');
+        cart[index].textColor = c1;
+        cart[index].objColor = $(this).data('color2') || c1;
+        saveCart();
+        renderCart();
     });
 
     $('#custom-object-input').on('change', function() {
@@ -508,8 +517,7 @@ $(document).ready(function() {
         
         // Eğer üründe logo varsa Storage'dan sil
         if (itemToRemove && itemToRemove.logoStoragePath) {
-            const sRef = storageRef(storage, itemToRemove.logoStoragePath);
-            deleteObject(sRef).catch(err => console.error("Logo silinemedi:", err));
+            deleteCartLogo(itemToRemove.logoStoragePath);
         }
         
         cart.splice(itemIndex, 1);
@@ -568,6 +576,7 @@ $(document).ready(function() {
 
     $('#address-form').submit(async (e) => {
         e.preventDefault();
+        await fbReady();
         if (!auth.currentUser) return;
         
         const userId = auth.currentUser.uid;
@@ -592,6 +601,7 @@ $(document).ready(function() {
     });
 
     $(document).on('click', '.delete-addr-btn', async function() {
+        await fbReady();
         if (!auth.currentUser) return;
         if (!confirm('Bu adresi silmek istediğinize emin misiniz?')) return;
         
@@ -605,6 +615,7 @@ $(document).ready(function() {
     });
 
     $(document).on('click', '.edit-addr-btn', async function() {
+        await fbReady();
         if (!auth.currentUser) return;
         const addrId = $(this).data('id');
         
@@ -653,6 +664,7 @@ $(document).ready(function() {
         $btn.prop('disabled', true).text('Giriş Yapılıyor...');
 
         try {
+            await fbReady();
             await signInWithEmailAndPassword(auth, email, pass);
             showToast("Başarıyla giriş yapıldı.", "success");
             switchPage('#products-page');
@@ -678,6 +690,7 @@ $(document).ready(function() {
         $btn.prop('disabled', true).text('Gönderiliyor...');
 
         try {
+            await fbReady();
             await sendPasswordResetEmail(auth, email);
             showToast("Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.", "success");
             $('#forgot-email').val('');
@@ -711,6 +724,7 @@ $(document).ready(function() {
         $btn.prop('disabled', true).text('Hesap Oluşturuluyor...');
 
         try {
+            await fbReady();
             const userCred = await createUserWithEmailAndPassword(auth, email, pass);
             await updateProfile(userCred.user, { displayName: fullname });
             
@@ -797,33 +811,23 @@ $(document).ready(function() {
     });
 
     // --- 2D PREVIEW LISTENER'LARI ---
-    const $dynText   = $('.preview-dynamic-text');
-    const $printArea = $('.preview-printable-area');
-
-    function updateDynamicTextSpacing() { 
-        $('.preview-dynamic-text').css('letter-spacing', 'normal'); 
-    }
+    const $dynText = $('.preview-dynamic-text');
+    let textFitRaf = 0;
     $('#custom-text-input').on('input.preview', function() {
         const val = $(this).val();
         const defaultText = (typeof currentProduct !== 'undefined' && currentProduct && currentProduct.customTextPlaceholderPreview)
             ? currentProduct.customTextPlaceholderPreview : 'ENGRARE';
         $dynText.text(val || defaultText);
-        if(typeof window.fitTextToContainer === 'function') window.fitTextToContainer();
-        updateDynamicTextSpacing();
+        // Her tuş vuruşunda değil, kare başına bir kez ölçüm yap
+        if (textFitRaf) return;
+        textFitRaf = requestAnimationFrame(() => {
+            textFitRaf = 0;
+            if (typeof window.fitTextToContainer === 'function') window.fitTextToContainer();
+        });
     });
 
     // Font is fixed to AGENCYB
     $dynText.css('font-family', "'AGENCYB', sans-serif");
-
-    $('.align-btn').on('click', function() {
-        $('.align-btn').removeClass('active').css({ 'background': 'white', 'color': 'inherit', 'border-color': 'var(--border)' });
-        $(this).addClass('active').css({ 'background': 'var(--primary)', 'color': 'white', 'border-color': 'var(--primary)' });
-        const align = $(this).data('align');
-        $dynText.css('text-align', align);
-        if      (align === 'left')  $printArea.css('justify-content', 'flex-start');
-        else if (align === 'right') $printArea.css('justify-content', 'flex-end');
-        else                        $printArea.css('justify-content', 'center');
-    });
 
     window.fitTextToContainer = function() {
         $('.preview-printable-area').each(function() {
@@ -864,20 +868,7 @@ $(document).ready(function() {
             // Kenar taşmalarını önlemek için %96 emniyet katsayısı
             $text.css('font-size', (targetFontSize * 0.96) + 'px');
         });
-
-        if (typeof updateDynamicTextSpacing === 'function') {
-            updateDynamicTextSpacing();
-        }
     };
-
-    $(window).on('resize', function() { 
-        if(typeof updateDynamicTextSpacing === 'function') updateDynamicTextSpacing(); 
-        if(typeof window.fitTextToContainer === 'function') window.fitTextToContainer(); 
-        if(typeof updateMobileHeader === 'function') {
-            const activePageId = $('.page.active').attr('id') ? '#' + $('.page.active').attr('id') : '#products-page';
-            updateMobileHeader(activePageId);
-        }
-    });
 
     // --- LOGO YÜKLEME ---
     
@@ -938,15 +929,6 @@ $(document).on('click', '.nav-back-link, .nav-back-icon-box, #mobile-detail-back
     switchPage('#products-page');
 });
 
-function enterDesignMode() {
-    // No-op
-}
-function exitDesignMode() {
-    // No-op
-}
-
-
-
 function resetCarouselState() {
     const $carousel = $('#detail-main-carousel');
     if ($carousel.length && $carousel[0]) {
@@ -963,17 +945,14 @@ function resetCarouselState() {
 }
 
 function switchPage(targetId, pushState = true) {
-    // If we're leaving the product detail page, always clean up design mode & carousel
+    // Detay sayfasından çıkarken karuseli başa sar
     if (targetId !== '#product-detail-page') {
-        if (typeof exitDesignMode === 'function') exitDesignMode();
         const $c = $('#detail-main-carousel');
         if ($c.length && $c[0]) {
             $c.css('scroll-behavior', 'auto');
             $c[0].scrollLeft = 0;
             $c.scrollLeft(0);
         }
-    } else {
-        if (typeof enterDesignMode === 'function') enterDesignMode();
     }
 
     const $current = $('.page.active');
@@ -1004,6 +983,11 @@ function switchPage(targetId, pushState = true) {
                 $target.css('display', ''); // clean up inline block, CSS handles it
                 if (targetId === '#product-detail-page') {
                     resetCarouselState();
+                    // Sayfa görünür olduktan SONRA ölç: önizleme önbellekten anında
+                    // geldiğinde kutu, sayfa daha gizliyken hesaplanmış olabiliyor.
+                    if (typeof window.updatePreviewBoxDimensions === 'function') {
+                        window.updatePreviewBoxDimensions();
+                    }
                     if (typeof window.fitTextToContainer === 'function') {
                         window.fitTextToContainer();
                     }
@@ -1017,6 +1001,9 @@ function switchPage(targetId, pushState = true) {
         if(typeof updateMobileHeader === 'function') updateMobileHeader(targetId);
         if (targetId === '#product-detail-page') {
             resetCarouselState();
+            if (typeof window.updatePreviewBoxDimensions === 'function') {
+                window.updatePreviewBoxDimensions();
+            }
             if (typeof window.fitTextToContainer === 'function') {
                 window.fitTextToContainer();
             }
@@ -1026,14 +1013,14 @@ function switchPage(targetId, pushState = true) {
 
 
 function renderProducts() {
-    const $grid = $('#products-grid-container');
-    $grid.empty();
-    products.forEach(p => {
+    // Tek seferde HTML üret, tek seferde DOM'a yaz (her kart için ayrı append
+    // her seferinde yeniden yerleşim/boyama tetikliyordu).
+    const html = products.map(p => {
         const imgObj = p.images[0] || { src: "./content/default.jpg" };
         const imgSrc = imgObj.src;
-        $grid.append(`
+        return `
             <div class="model-card" onclick="openProductDetail(${p.id})">
-                <div class="card-image"><img src="${imgSrc}" alt="${p.name}"/></div>
+                <div class="card-image"><img src="${imgSrc}" alt="${p.name}" width="400" height="250" loading="lazy" decoding="async"/></div>
                 <div class="model-info">
                     <div class="model-title">${p.name}</div>
                     <div class="model-desc">${p.desc}</div>
@@ -1042,8 +1029,9 @@ function renderProducts() {
                     </div>
                 </div>
             </div>
-        `);
-    });
+        `;
+    }).join('');
+    $('#products-grid-container').html(html);
 }
 
 window.openProductDetail = function(id, pushHistory = true) {
@@ -1060,26 +1048,35 @@ window.openProductDetail = function(id, pushHistory = true) {
     // Thumbnails
     const $thumbs = $('#detail-thumbnails');
     $thumbs.empty();
-    
+
+    const slides = [], thumbs = [];
     if(p.images && p.images.length > 0) {
         p.images.forEach((imgObj, idx) => {
-            $carousel.append(`
+            slides.push(`
                 <div style="position: relative; min-width: 100%; height: 100%; scroll-snap-align: start;">
-                    <img src="${imgObj.src}" style="width: 100%; height: 100%; object-fit: cover;">
+                    <img src="${imgObj.src}" loading="${idx === 0 ? 'eager' : 'lazy'}" decoding="async" style="width: 100%; height: 100%; object-fit: cover;">
                 </div>
             `);
-            $thumbs.append(`<img src="${imgObj.src}" class="product-thumb" data-idx="${idx}" onclick="changeMainImage(${idx})" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid ${idx===0?'var(--accent)':'transparent'}; opacity: ${idx===0?'1':'0.6'}; transition: 0.2s;">`);
+            thumbs.push(`<img src="${imgObj.src}" class="product-thumb" data-idx="${idx}" loading="lazy" decoding="async" onclick="changeMainImage(${idx})" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid ${idx===0?'var(--accent)':'transparent'}; opacity: ${idx===0?'1':'0.6'}; transition: border-color .2s, opacity .2s;">`);
         });
+        $carousel.html(slides.join(''));
+        $thumbs.html(thumbs.join(''));
     } else {
         $carousel.append(`<img src="./content/default.jpg" style="min-width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start;">`);
     }
 
-    // Scroll senkronizasyonu
+    // Scroll senkronizasyonu — kare başına en fazla bir kez çalışır
+    let carouselRaf = 0;
     $carousel.off('scroll').on('scroll', function() {
-        const width = $(this).width();
+        if (carouselRaf) return;
+        carouselRaf = requestAnimationFrame(() => { carouselRaf = 0; syncCarouselUi(); });
+    });
+
+    function syncCarouselUi() {
+        const width = $carousel.width();
         if (!width || width <= 0) return;
-        
-        const scrollLeft = $(this).scrollLeft();
+
+        const scrollLeft = $carousel.scrollLeft();
         const maxScroll = $carousel[0].scrollWidth - width;
         const idx = Math.round(scrollLeft / width);
         $('.product-thumb').css({'border-color': 'transparent', 'opacity': '0.6'});
@@ -1098,19 +1095,19 @@ window.openProductDetail = function(id, pushHistory = true) {
         } else {
             $('#carousel-next').css({ 'opacity': '1', 'pointer-events': 'auto' });
         }
-    });
+    }
 
     // Fare (Mouse) ile Sürükleyip Kaydırma (Drag to scroll)
     $carousel.css({'cursor': 'grab', 'user-select': 'none'});
     
-    // Carousel Ok Tuşları
-    $('#carousel-prev').click(function() {
+    // Carousel Ok Tuşları — .off() olmadan her ürün açılışında handler birikiyordu
+    $('#carousel-prev').off('click.carousel').on('click.carousel', function() {
         const $carousel = $('#detail-main-carousel');
         const width = $carousel.width();
         const currentIdx = Math.round($carousel.scrollLeft() / width);
         if(currentIdx > 0) window.changeMainImage(currentIdx - 1);
     });
-    $('#carousel-next').click(function() {
+    $('#carousel-next').off('click.carousel').on('click.carousel', function() {
         const $carousel = $('#detail-main-carousel');
         const width = $carousel.width();
         const maxIdx = currentProduct.images.length - 1;
@@ -1207,53 +1204,28 @@ window.openProductDetail = function(id, pushHistory = true) {
             $objSelect.append(`<option value="${idx}">${obj.objectName}</option>`);
         });
         
-        $('#color-label-text').text('Renk:');
-        $('#color-wrapper-obj').hide();
-        $('#color-separator').hide();
-        
         $('#customization-text-group').hide();
-        $('#customization-font-group').hide();
-        $('#customization-size-group').hide();
         if (p.allowLogo) $('#customization-logo-group').show();
         else $('#customization-logo-group').hide();
     } else if (p.disableTextInput) {
         $('#customization-object-group').hide();
         $('#customization-text-group').hide();
-        $('#customization-font-group').hide();
         $('#customization-logo-group').hide();
     } else if (p.isCustomText === false) {
         $('#customization-object-group').hide();
-        // isCustomText: false — yazı, font ve boyut gizle, renk etiketlerini özelleştir
+        // isCustomText: false — yazı girişini gizle
         $('#customization-text-group').hide();
-        $('#customization-font-group').hide();
-        $('#customization-size-group').hide();
         if (p.allowLogo) {
             $('#customization-logo-group').show();
         } else {
             $('#customization-logo-group').hide();
         }
-        // Renk etiketlerini ürüne özel metinlerle değiştir
-        $('#color-label-text').text(p.CustomColorText1 || 'Renk 1:');
-        $('#color-wrapper-obj').show();
-        $('#color-separator').show();
-        $('#color-label-obj').text(p.CustomColorText2 || 'Renk 2:');
         // 2D önizlemede yazıyı gizle
         $('.preview-dynamic-text').text('');
     } else {
         $('#customization-object-group').hide();
         $('#customization-text-group').show();
-        $('#customization-font-group').show();
-        if (p.fixedTextSize) {
-            $('#customization-size-group').hide();
-        } else {
-            $('#customization-size-group').show();
-        }
-        // Etiketleri varsayılana sıfırla
-        $('#color-label-text').text('Yazı:');
-        $('#color-wrapper-obj').show();
-        $('#color-separator').show();
-        $('#color-label-obj').text('Obje:');
-        
+
         if (p.allowLogo) {
             $('#customization-logo-group').show();
         } else {
@@ -1292,9 +1264,7 @@ window.openProductDetail = function(id, pushHistory = true) {
     $('.preview-dynamic-text').css('font-family', "'AGENCYB', sans-serif");
 
     $('#custom-text-color').val('#FBC02D');
-    $('#custom-text-color-btn').css('background-color', '#FBC02D');
     $('#custom-obj-color').val('#222222');
-    $('#custom-obj-color-btn').css('background-color', '#222222');
     
     // Temizle Logo (Varsayılan yüklemesi aşağıda yapılacak)
     $('#custom-logo-input').val('');
@@ -1313,9 +1283,6 @@ window.openProductDetail = function(id, pushHistory = true) {
             'text-align': 'center'
         });
         // Auto scale
-        
-        $('.align-btn').removeClass('active').css({'background': 'white', 'color': 'inherit', 'border-color': 'var(--border)'});
-        $('.align-btn[data-align="center"]').addClass('active').css({'background': 'var(--primary)', 'color': 'white', 'border-color': 'var(--primary)'});
         
         const textArea = p.previewTextArea || { top: '15%', left: '10%', width: '80%', height: '70%' };
         $('.preview-printable-area').css({
@@ -1340,7 +1307,6 @@ window.openProductDetail = function(id, pushHistory = true) {
             
             // Varsayılan logoyu yükle
             const defaultLogo = './content/engrare_logo_elegant.svg';
-            const maskSize = 51 * 2.1; // size 51 * logoMultiplier 2.1
             $('.preview-dynamic-logo').css({
                 'mask-image': `url(${defaultLogo})`,
                 '-webkit-mask-image': `url(${defaultLogo})`,
@@ -1395,9 +1361,6 @@ window.openProductDetail = function(id, pushHistory = true) {
         const slug = slugify(p.name);
         window.history.pushState({ page: '#product-detail-page', productId: p.id }, "", window.location.pathname + '?detail=' + slug);
     }
-
-    // Set up mobile sticky-preview observer after the page is rendered
-    setTimeout(() => { if (typeof setupDesignModeObserver === 'function') enterDesignMode(); }, 80);
 };
 
 window.changeMainImage = function(idx) {
@@ -1422,7 +1385,7 @@ async function addToCart() {
     const textColor = $('#custom-text-color').val();
     const objColor = $('#custom-obj-color').val();
     const textSize = 'Auto';
-    const textAlign = $('.align-btn.active').data('align') || 'center';
+    const textAlign = 'center';
     
     const selectedObjectIdx = currentProduct.isCustomObject ? $('#custom-object-input').val() : null;
     const selectedObjectName = selectedObjectIdx !== null && currentProduct.isCustomObject[selectedObjectIdx] 
@@ -1479,6 +1442,7 @@ async function addToCart() {
             const $btn = $('#add-to-cart');
             $btn.prop('disabled', true).css('opacity', '0.7');
             try {
+                await fbReady();
                 const ext = logoFile.name.split('.').pop();
                 const fileName = `logos/cart_${item.id}_${Math.random().toString(36).substring(2)}.${ext}`;
                 const sRef = storageRef(storage, fileName);
@@ -1516,6 +1480,60 @@ function loadCart() {
     }
 }
 
+/* Sepet ve sipariş detayındaki 2D kutunun en-boy oranı (iki yerde aynıydı) */
+function previewAspectFor(p, item) {
+    if (!p) return 1.71;
+    if (p.id === 1) return 3.594;
+    if (p.id === 2) return 1.710;
+    if (p.isCustomObject) {
+        const sel = (item.selectedObject || "").toLowerCase();
+        if (sel.includes("fenerbahçe") || sel.includes("fb")) return 0.894;
+        if (sel.includes("galatasaray") || sel.includes("gs")) return 0.653;
+        if (sel.includes("trabzon")) return 0.678;
+        if (sel.includes("beşiktaş") || sel.includes("bjk")) return 0.699;
+        return 0.75;
+    }
+    return 1.71;
+}
+
+/* Kutu içi ölçüler */
+function previewBoxSize(aspect, maxBox, minSide) {
+    return aspect >= 1
+        ? { w: maxBox, h: Math.max(minSide, Math.round(maxBox / aspect)) }
+        : { w: Math.max(minSide, Math.round(maxBox * aspect)), h: maxBox };
+}
+
+/* Sipariş durumu rozetleri — her sipariş satırında yeniden kurulmasın diye modül düzeyinde */
+const ORDER_STATUS_MAP = {
+    'pending_payment': { text: 'Ödeme Bekliyor', icon: 'fa-solid fa-circle-exclamation', color: '#EF4444', bg: '#FEE2E2' },
+    'Ödeme Bekliyor': { text: 'Ödeme Bekliyor', icon: 'fa-solid fa-circle-exclamation', color: '#EF4444', bg: '#FEE2E2' },
+    'paid': { text: 'Ödendi', icon: 'fa-solid fa-sack-dollar', color: '#166534', bg: '#DCFCE7' },
+    'Ödendi': { text: 'Ödendi', icon: 'fa-solid fa-sack-dollar', color: '#166534', bg: '#DCFCE7' },
+    'Hazirlaniyor': { text: 'Hazırlanıyor', icon: 'fa-solid fa-clock', color: '#92400E', bg: '#FEF3C7' },
+    'Hazırlanıyor': { text: 'Hazırlanıyor', icon: 'fa-solid fa-clock', color: '#92400E', bg: '#FEF3C7' },
+    'Kargolandi': { text: 'Kargolandı', icon: 'fa-solid fa-truck', color: '#1E40AF', bg: '#DBEAFE' },
+    'Kargolandı': { text: 'Kargolandı', icon: 'fa-solid fa-truck', color: '#1E40AF', bg: '#DBEAFE' },
+    'Teslim Edildi': { text: 'Teslim Edildi', icon: 'fa-solid fa-box-open', color: '#7E22CE', bg: '#F3E8FF' },
+    'Iptal': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' },
+    'İptal': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' },
+    'Iptal Edildi': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' },
+    'İptal Edildi': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' },
+    'cancelled': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' }
+};
+function orderStatus(raw) {
+    return ORDER_STATUS_MAP[raw] || { text: raw || 'Hazırlanıyor', icon: 'fa-solid fa-circle-question', color: '#475569', bg: '#F1F5F9' };
+}
+
+/* Sipariş tarihini biçimlendir */
+function orderDateText(order) {
+    const createdAt = order.createdAt || order.timestamp || order.date || order.serverTimestamp || order.paidAt;
+    if (!createdAt) return 'Bilinmiyor';
+    if (typeof createdAt === 'object' && createdAt._seconds) {
+        return new Date(createdAt._seconds * 1000).toLocaleString('tr-TR');
+    }
+    return new Date(createdAt).toLocaleString('tr-TR');
+}
+
 function renderCart() {
     const $area = $('#cart-items-area');
     $area.empty();
@@ -1530,34 +1548,12 @@ function renderCart() {
     }
 
     let sub = 0;
+    const rows = [];
     cart.forEach((item, index) => {
         sub += item.price * item.quantity;
         const p = products.find(prod => prod.id === item.productId);
 
-        // Aspect ratio hesaplama
-        let aspect = 1.71;
-        if (p) {
-            if (p.id === 1) aspect = 3.594;
-            else if (p.id === 2) aspect = 1.710;
-            else if (p.isCustomObject) {
-                const sel = (item.selectedObject || "").toLowerCase();
-                if (sel.includes("fenerbahçe") || sel.includes("fb")) aspect = 0.894;
-                else if (sel.includes("galatasaray") || sel.includes("gs")) aspect = 0.653;
-                else if (sel.includes("trabzon")) aspect = 0.678;
-                else if (sel.includes("beşiktaş") || sel.includes("bjk")) aspect = 0.699;
-                else aspect = 0.75;
-            }
-        }
-
-        const maxBox = 112;
-        let innerW, innerH;
-        if (aspect >= 1) {
-            innerW = maxBox;
-            innerH = Math.max(26, Math.round(maxBox / aspect));
-        } else {
-            innerH = maxBox;
-            innerW = Math.max(26, Math.round(maxBox * aspect));
-        }
+        const { w: innerW, h: innerH } = previewBoxSize(previewAspectFor(p, item), 112, 26);
 
         const textArea = (p && p.previewTextArea) ? p.previewTextArea : { top: '15%', left: '10%', width: '80%', height: '70%' };
         const logoArea = (p && p.previewLogoArea) ? p.previewLogoArea : { top: '15%', left: '10%', width: '80%', height: '70%' };
@@ -1587,7 +1583,7 @@ function renderCart() {
             `;
         }
 
-        $area.append(`
+        rows.push(`
             <div class="cart-item">
                 <div style="display:flex; align-items:center; gap: 16px; width: 100%;">
                     <!-- Büyütülmüş 2D Canlı Önizleme Kutusu -->
@@ -1667,10 +1663,11 @@ function renderCart() {
                 </div>
             </div>
         `);
-
-        // Her ürün için 2D canvas önizlemesini yükle
-        window.renderCartItemPreview(index);
     });
+
+    // Tüm satırları tek seferde DOM'a yaz, sonra 2D önizlemeleri çiz
+    $area.html(rows.join(''));
+    for (let i = 0; i < cart.length; i++) window.renderCartItemPreview(i);
 
     const remaining = 500 - sub;
     const progressPercent = Math.min((sub / 500) * 100, 100);
@@ -1736,7 +1733,7 @@ window.renderCartItemPreview = function(index) {
     if (!item) return;
     const p = products.find(prod => prod.id === item.productId);
     if (!p) return;
-    
+
     let src = `./content/products/${item.productId}/preview.png`;
     let isCustom = false;
     if (p.isCustomObject) {
@@ -1744,73 +1741,15 @@ window.renderCartItemPreview = function(index) {
         if (obj) src = obj.src;
         isCustom = true;
     }
-    
-    const img = new Image();
-    img.crossOrigin = "Anonymous";
-    img.onload = function() {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        
-        try {
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
-            const width = canvas.width;
-            const height = canvas.height;
-            const targetRgb = window.hexToRgb ? window.hexToRgb(item.textColor || '#FBC02D') : { r: 251, g: 192, b: 45 };
-            
-            let minX = width, minY = height, maxX = 0, maxY = 0;
-            let found = false;
-            
-            for (let y = 0; y < height; y++) {
-                for (let x = 0; x < width; x++) {
-                    const idx = (y * width + x) * 4;
-                    const r = data[idx], g = data[idx + 1], b = data[idx + 2], a = data[idx + 3];
-                    const isWhite = (r > 240 && g > 240 && b > 240 && a > 200);
-                    if (!isWhite) {
-                        if (x < minX) minX = x;
-                        if (x > maxX) maxX = x;
-                        if (y < minY) minY = y;
-                        if (y > maxY) maxY = y;
-                        found = true;
-                    }
-                    if (!isCustom && r < 60 && g < 60 && b < 60 && a > 0) {
-                        data[idx] = targetRgb.r;
-                        data[idx + 1] = targetRgb.g;
-                        data[idx + 2] = targetRgb.b;
-                    }
-                }
-            }
-            
-            ctx.putImageData(imageData, 0, 0);
-            
-            if (found && maxX > minX && maxY > minY) {
-                const cropW = maxX - minX + 1;
-                const cropH = maxY - minY + 1;
-                const cropCanvas = document.createElement('canvas');
-                cropCanvas.width = cropW;
-                cropCanvas.height = cropH;
-                cropCanvas.getContext('2d').drawImage(canvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
-                $(`#cart-overlay-img-${index}`).attr('src', cropCanvas.toDataURL()).show();
-            } else {
-                $(`#cart-overlay-img-${index}`).attr('src', canvas.toDataURL()).show();
-            }
-        } catch (e) {
-            $(`#cart-overlay-img-${index}`).attr('src', src).show();
+
+    getPreviewImage(src, isCustom ? null : window.hexToRgb(item.textColor || '#FBC02D'), function(url, aspect, status) {
+        $(`#cart-overlay-img-${index}`).attr('src', status === 'ok' ? url : src).show();
+        if (status !== 'error') {
+            setTimeout(() => {
+                if (typeof window.fitCartItemText === 'function') window.fitCartItemText(index);
+            }, 30);
         }
-        
-        setTimeout(() => {
-            if (typeof window.fitCartItemText === 'function') {
-                window.fitCartItemText(index);
-            }
-        }, 30);
-    };
-    img.onerror = function() {
-        $(`#cart-overlay-img-${index}`).attr('src', src).show();
-    };
-    img.src = src;
+    });
 };
 
 window.updateCartQty = function(index, change) {
@@ -1819,8 +1758,7 @@ window.updateCartQty = function(index, change) {
     if (newQty <= 0) {
         const itemToRemove = cart[index];
         if (itemToRemove && itemToRemove.logoStoragePath) {
-            const sRef = storageRef(storage, itemToRemove.logoStoragePath);
-            deleteObject(sRef).catch(err => console.error("Logo silinemedi:", err));
+            deleteCartLogo(itemToRemove.logoStoragePath);
         }
         cart.splice(index, 1);
         saveCart();
@@ -1848,7 +1786,7 @@ function showToast(message, type = "info") {
 function loadUserOrders(userId) {
     if (!userId) return;
     const ordersRef = ref(db, `users/${userId}/orders`);
-    
+
     onValue(ordersRef, (snapshot) => {
         const data = snapshot.val();
         const $list = $('#orders-list');
@@ -1864,36 +1802,11 @@ function loadUserOrders(userId) {
                     return tB - tA;
                 });
 
+            const cards = [];
             orders.forEach((order) => {
-                const createdAt = order.createdAt || order.timestamp || order.date || order.serverTimestamp || order.paidAt;
-                let dateStr = 'Bilinmiyor';
-                if (createdAt) {
-                    if (typeof createdAt === 'object' && createdAt._seconds) {
-                        dateStr = new Date(createdAt._seconds * 1000).toLocaleString('tr-TR');
-                    } else {
-                        dateStr = new Date(createdAt).toLocaleString('tr-TR');
-                    }
-                }
+                const dateStr = orderDateText(order);
                 const total = order.totalAmount || order.total || 0;
-                
-                // Sadeleştirilmiş durum haritası
-                const statusMap = {
-                    'pending_payment': { text: 'Ödeme Bekliyor', icon: 'fa-solid fa-circle-exclamation', color: '#EF4444', bg: '#FEE2E2' },
-                    'Ödeme Bekliyor': { text: 'Ödeme Bekliyor', icon: 'fa-solid fa-circle-exclamation', color: '#EF4444', bg: '#FEE2E2' },
-                    'paid': { text: 'Ödendi', icon: 'fa-solid fa-sack-dollar', color: '#166534', bg: '#DCFCE7' },
-                    'Ödendi': { text: 'Ödendi', icon: 'fa-solid fa-sack-dollar', color: '#166534', bg: '#DCFCE7' },
-                    'Hazirlaniyor': { text: 'Hazırlanıyor', icon: 'fa-solid fa-clock', color: '#92400E', bg: '#FEF3C7' },
-                    'Hazırlanıyor': { text: 'Hazırlanıyor', icon: 'fa-solid fa-clock', color: '#92400E', bg: '#FEF3C7' },
-                    'Kargolandi': { text: 'Kargolandı', icon: 'fa-solid fa-truck', color: '#1E40AF', bg: '#DBEAFE' },
-                    'Kargolandı': { text: 'Kargolandı', icon: 'fa-solid fa-truck', color: '#1E40AF', bg: '#DBEAFE' },
-                    'Teslim Edildi': { text: 'Teslim Edildi', icon: 'fa-solid fa-box-open', color: '#7E22CE', bg: '#F3E8FF' },
-                    'Iptal': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' },
-                    'İptal': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' },
-                    'Iptal Edildi': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' },
-                    'İptal Edildi': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' },
-                    'cancelled': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' }
-                };
-                const status = statusMap[order.status] || { text: order.status || 'Hazırlanıyor', icon: 'fa-solid fa-circle-question', color: '#475569', bg: '#F1F5F9' };
+                const status = orderStatus(order.status);
                 
                 let itemsArray = [];
                 if (order.items) {
@@ -1930,20 +1843,20 @@ function loadUserOrders(userId) {
                     if (imageList.length > 3) {
                         // 3'ten fazla ürün varsa: 2 tanesi görsel, 3.sü kalan miktar (+X şeklinde)
                         for (let i = 0; i < 2; i++) {
-                            imagesHtml += `<img src="${imageList[i]}" style="width: 45px; height: 45px; border-radius: 50%; border: 2.5px solid white; object-fit: cover; box-shadow: var(--shadow-sm); margin-left: ${i === 0 ? '0' : '-15px'}; z-index: ${5 - i};">`;
+                            imagesHtml += `<img src="${imageList[i]}" loading="lazy" decoding="async" style="width: 45px; height: 45px; border-radius: 50%; border: 2.5px solid white; object-fit: cover; box-shadow: var(--shadow-sm); margin-left: ${i === 0 ? '0' : '-15px'}; z-index: ${5 - i};">`;
                         }
                         const extra = imageList.length - 2;
                         imagesHtml += `<div style="width: 45px; height: 45px; border-radius: 50%; border: 2.5px solid white; background: #E2E8F0; color: #475569; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm); margin-left: -15px; z-index: 3;">+${extra}</div>`;
                     } else {
                         // 3 ve daha az ise hepsini görsel olarak bas
                         for (let i = 0; i < imageList.length; i++) {
-                            imagesHtml += `<img src="${imageList[i]}" style="width: 45px; height: 45px; border-radius: 50%; border: 2.5px solid white; object-fit: cover; box-shadow: var(--shadow-sm); margin-left: ${i === 0 ? '0' : '-15px'}; z-index: ${5 - i};">`;
+                            imagesHtml += `<img src="${imageList[i]}" loading="lazy" decoding="async" style="width: 45px; height: 45px; border-radius: 50%; border: 2.5px solid white; object-fit: cover; box-shadow: var(--shadow-sm); margin-left: ${i === 0 ? '0' : '-15px'}; z-index: ${5 - i};">`;
                         }
                     }
                     imagesHtml += `</div>`;
                 }
 
-                $list.append(`
+                cards.push(`
                     <div class="order-card" onclick="openOrderDetail('${order.id}')" style="padding: 20px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 15px; background: white; cursor: pointer;">
                         <div class="order-card-inner">
                             <div class="order-card-left" style="display: flex; align-items: center; gap: 15px;">
@@ -1962,6 +1875,7 @@ function loadUserOrders(userId) {
                     </div>
                 `);
             });
+            $list.html(cards.join(''));
         } else {
             $list.html('<div style="text-align:center; padding:40px; color:var(--text-muted); font-size:0.98rem;">Henüz bir siparişiniz bulunmuyor.</div>');
         }
@@ -2012,72 +1926,14 @@ window.renderOrderDetailPreview = function(item, index) {
         isCustom = true;
     }
 
-    const img = new Image();
-    img.crossOrigin = "Anonymous";
-    img.onload = function() {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-
-        try {
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
-            const width = canvas.width;
-            const height = canvas.height;
-            const targetRgb = window.hexToRgb ? window.hexToRgb(item.textColor || '#FBC02D') : { r: 251, g: 192, b: 45 };
-
-            let minX = width, minY = height, maxX = 0, maxY = 0;
-            let found = false;
-
-            for (let y = 0; y < height; y++) {
-                for (let x = 0; x < width; x++) {
-                    const idx = (y * width + x) * 4;
-                    const r = data[idx], g = data[idx + 1], b = data[idx + 2], a = data[idx + 3];
-                    const isWhite = (r > 240 && g > 240 && b > 240 && a > 200);
-                    if (!isWhite) {
-                        if (x < minX) minX = x;
-                        if (x > maxX) maxX = x;
-                        if (y < minY) minY = y;
-                        if (y > maxY) maxY = y;
-                        found = true;
-                    }
-                    if (!isCustom && r < 60 && g < 60 && b < 60 && a > 0) {
-                        data[idx] = targetRgb.r;
-                        data[idx + 1] = targetRgb.g;
-                        data[idx + 2] = targetRgb.b;
-                    }
-                }
-            }
-
-            ctx.putImageData(imageData, 0, 0);
-
-            if (found && maxX > minX && maxY > minY) {
-                const cropW = maxX - minX + 1;
-                const cropH = maxY - minY + 1;
-                const cropCanvas = document.createElement('canvas');
-                cropCanvas.width = cropW;
-                cropCanvas.height = cropH;
-                cropCanvas.getContext('2d').drawImage(canvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
-                $(`#order-detail-overlay-img-${index}`).attr('src', cropCanvas.toDataURL()).show();
-            } else {
-                $(`#order-detail-overlay-img-${index}`).attr('src', canvas.toDataURL()).show();
-            }
-        } catch (e) {
-            $(`#order-detail-overlay-img-${index}`).attr('src', src).show();
+    getPreviewImage(src, isCustom ? null : window.hexToRgb(item.textColor || '#FBC02D'), function(url, aspect, status) {
+        $(`#order-detail-overlay-img-${index}`).attr('src', status === 'ok' ? url : src).show();
+        if (status !== 'error') {
+            setTimeout(() => {
+                if (typeof window.fitOrderDetailText === 'function') window.fitOrderDetailText(index);
+            }, 30);
         }
-
-        setTimeout(() => {
-            if (typeof window.fitOrderDetailText === 'function') {
-                window.fitOrderDetailText(index);
-            }
-        }, 30);
-    };
-    img.onerror = function() {
-        $(`#order-detail-overlay-img-${index}`).attr('src', src).show();
-    };
-    img.src = src;
+    });
 };
 
 window.openOrderDetail = function(orderId) {
@@ -2092,30 +1948,8 @@ window.openOrderDetail = function(orderId) {
     if (itemsArray.length > 0) {
         itemsHtml = itemsArray.map((item, index) => {
             const p = products.find(prod => prod.id === item.productId || prod.id === parseInt(item.productId));
-            
-            let aspect = 1.71;
-            if (p) {
-                if (p.id === 1) aspect = 3.594;
-                else if (p.id === 2) aspect = 1.710;
-                else if (p.isCustomObject) {
-                    const sel = (item.selectedObject || "").toLowerCase();
-                    if (sel.includes("fenerbahçe") || sel.includes("fb")) aspect = 0.894;
-                    else if (sel.includes("galatasaray") || sel.includes("gs")) aspect = 0.653;
-                    else if (sel.includes("trabzon")) aspect = 0.678;
-                    else if (sel.includes("beşiktaş") || sel.includes("bjk")) aspect = 0.699;
-                    else aspect = 0.75;
-                }
-            }
 
-            const maxBox = 56;
-            let innerW, innerH;
-            if (aspect >= 1) {
-                innerW = maxBox;
-                innerH = Math.max(16, Math.round(maxBox / aspect));
-            } else {
-                innerH = maxBox;
-                innerW = Math.max(16, Math.round(maxBox * aspect));
-            }
+            const { w: innerW, h: innerH } = previewBoxSize(previewAspectFor(p, item), 56, 16);
 
             const textArea = (p && p.previewTextArea) ? p.previewTextArea : { top: '15%', left: '10%', width: '80%', height: '70%' };
             const logoArea = (p && p.previewLogoArea) ? p.previewLogoArea : { top: '15%', left: '10%', width: '80%', height: '70%' };
@@ -2181,34 +2015,9 @@ window.openOrderDetail = function(orderId) {
         `;
     }
 
-    const createdAt = order.createdAt || order.timestamp || order.date || order.serverTimestamp || order.paidAt;
-    let dateStr = 'Bilinmiyor';
-    if (createdAt) {
-        if (typeof createdAt === 'object' && createdAt._seconds) {
-            dateStr = new Date(createdAt._seconds * 1000).toLocaleString('tr-TR');
-        } else {
-            dateStr = new Date(createdAt).toLocaleString('tr-TR');
-        }
-    }
+    const dateStr = orderDateText(order);
     const total = order.totalAmount || order.total || 0;
-
-    const statusMap = {
-        'pending_payment': { text: 'Ödeme Bekliyor', icon: 'fa-solid fa-circle-exclamation', color: '#EF4444', bg: '#FEE2E2' },
-        'Ödeme Bekliyor': { text: 'Ödeme Bekliyor', icon: 'fa-solid fa-circle-exclamation', color: '#EF4444', bg: '#FEE2E2' },
-        'paid': { text: 'Ödendi', icon: 'fa-solid fa-sack-dollar', color: '#166534', bg: '#DCFCE7' },
-        'Ödendi': { text: 'Ödendi', icon: 'fa-solid fa-sack-dollar', color: '#166534', bg: '#DCFCE7' },
-        'Hazirlaniyor': { text: 'Hazırlanıyor', icon: 'fa-solid fa-clock', color: '#92400E', bg: '#FEF3C7' },
-        'Hazırlanıyor': { text: 'Hazırlanıyor', icon: 'fa-solid fa-clock', color: '#92400E', bg: '#FEF3C7' },
-        'Kargolandi': { text: 'Kargolandı', icon: 'fa-solid fa-truck', color: '#1E40AF', bg: '#DBEAFE' },
-        'Kargolandı': { text: 'Kargolandı', icon: 'fa-solid fa-truck', color: '#1E40AF', bg: '#DBEAFE' },
-        'Teslim Edildi': { text: 'Teslim Edildi', icon: 'fa-solid fa-box-open', color: '#7E22CE', bg: '#F3E8FF' },
-        'Iptal': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' },
-        'İptal': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' },
-        'Iptal Edildi': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' },
-        'İptal Edildi': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' },
-        'cancelled': { text: 'İptal Edildi', icon: 'fa-solid fa-ban', color: '#EF4444', bg: '#FEE2E2' }
-    };
-    const statusObj = statusMap[order.status] || { text: order.status || 'Hazırlanıyor', icon: 'fa-solid fa-circle-question', color: '#475569', bg: '#F1F5F9' };
+    const statusObj = orderStatus(order.status);
     const statusBadge = `<span style="background: ${statusObj.bg}; color: ${statusObj.color}; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;"><i class="${statusObj.icon}" style="margin-right: 4px;"></i>${statusObj.text}</span>`;
 
     let ibanWarningHtml = '';
@@ -2266,6 +2075,15 @@ window.openOrderDetail = function(orderId) {
     $('body').addClass('no-scroll');
 };
 
+/* Sepetteki bir ürünün Storage'daki logosunu siler (Firebase SDK tembel yüklenir) */
+function deleteCartLogo(path) {
+    if (!path) return;
+    fbReady().then(() => {
+        deleteObject(storageRef(storage, path))
+            .catch(err => console.error("Logo silinemedi:", err));
+    });
+}
+
 // --- KONTROL PANELİ: ADRESLERİ DETAYLI YÜKLEME VE DÜZENLEME ---
 function loadUserAddresses(userId) {
     if (!userId) return;
@@ -2278,13 +2096,14 @@ function loadUserAddresses(userId) {
         $list.empty();
         
         if (data) {
+            const cards = [];
             Object.entries(data).forEach(([id, addr]) => {
                 const fullname = addr.fullname || 'İsimsiz';
                 const details = addr.details || addr.address || 'Adres detayı belirtilmemiş';
                 const location = addr.district ? `${addr.district} / ${addr.city}` : (addr.city || '');
                 const phone = addr.phone ? `<br><i class="fa-solid fa-phone" style="font-size:0.75rem;"></i> ${addr.phone}` : '';
 
-                $list.append(`
+                cards.push(`
                     <div class="address-card">
                         <div style="font-weight: 700; color: var(--primary); margin-bottom: 6px; font-size: 1.05rem;">
                             <i class="fa-solid fa-location-dot" style="color: var(--accent);"></i> ${addr.title || 'Adres'}
@@ -2300,6 +2119,7 @@ function loadUserAddresses(userId) {
                     </div>
                 `);
             });
+            $list.html(cards.join(''));
         } else {
             $list.html('<div style="text-align:center; padding:40px; color:var(--text-muted);">Kayıtlı adresiniz bulunmuyor.</div>');
         }
@@ -2307,6 +2127,7 @@ function loadUserAddresses(userId) {
 }
 
 // --- DYNAMIC IMAGE FILTERING ---
+
 window.hexToRgb = function(hex) {
     var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? {
@@ -2318,91 +2139,23 @@ window.hexToRgb = function(hex) {
 
 window.applyFilterToPreview = function(productId, textColorHex, customSrc) {
     if (!productId && !customSrc) return;
-    
+
     const imgUrl = customSrc || `./content/products/${productId}/preview.png`;
-    const targetRgb = window.hexToRgb(textColorHex || '#FBC02D');
-    
-    const img = new Image();
-    img.crossOrigin = "Anonymous";
-    img.onload = function() {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        
-        try {
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
-            const width = canvas.width;
-            const height = canvas.height;
-            
-            let minX = width, minY = height, maxX = 0, maxY = 0;
-            let found = false;
-            
-            for (let y = 0; y < height; y++) {
-                for (let x = 0; x < width; x++) {
-                    const idx = (y * width + x) * 4;
-                    const r = data[idx];
-                    const g = data[idx + 1];
-                    const b = data[idx + 2];
-                    const a = data[idx + 3];
-                    
-                    // Beyaz/kenar boşluğu pikselini tespit et (RGB > 240 ve tam opak)
-                    const isWhiteBg = (r > 240 && g > 240 && b > 240 && a > 200);
-                    if (!isWhiteBg) {
-                        if (x < minX) minX = x;
-                        if (x > maxX) maxX = x;
-                        if (y < minY) minY = y;
-                        if (y > maxY) maxY = y;
-                        found = true;
-                    }
-                    
-                    // Siyah veya çok koyu gri olan (RGB < 60) ve şeffaf olmayan pikselleri metin rengine boya
-                    if (!customSrc && r < 60 && g < 60 && b < 60 && a > 0) {
-                        data[idx] = targetRgb.r;     // red
-                        data[idx + 1] = targetRgb.g; // green
-                        data[idx + 2] = targetRgb.b; // blue
-                    }
-                }
-            }
-            
-            ctx.putImageData(imageData, 0, 0);
-            
-            if (found && maxX > minX && maxY > minY) {
-                const cropW = maxX - minX + 1;
-                const cropH = maxY - minY + 1;
-                const aspect = cropW / cropH;
-                
-                const cropCanvas = document.createElement('canvas');
-                cropCanvas.width = cropW;
-                cropCanvas.height = cropH;
-                const cropCtx = cropCanvas.getContext('2d');
-                cropCtx.drawImage(canvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
-                
-                $('.preview-overlay-img').attr('src', cropCanvas.toDataURL()).show();
-                
-                if (typeof window.updatePreviewBoxDimensions === 'function') {
-                    window.updatePreviewBoxDimensions(aspect);
-                }
-            } else {
-                $('.preview-overlay-img').attr('src', canvas.toDataURL()).show();
-            }
-            
-            setTimeout(() => {
-                if (typeof window.fitTextToContainer === 'function') {
-                    window.fitTextToContainer();
-                }
-            }, 30);
-        } catch (e) {
-            console.error("Canvas filtering error:", e);
-            $('.preview-overlay-img').attr('src', imgUrl).show();
+    // Özel obje görselleri (takım kalemlikleri) yeniden renklendirilmez
+    const recolor = customSrc ? null : (textColorHex || '#FBC02D');
+
+    getPreviewImage(imgUrl, recolor ? window.hexToRgb(recolor) : null, function(url, aspect, status) {
+        if (status === 'error') { $('.preview-overlay-img').hide(); return; }
+
+        $('.preview-overlay-img').attr('src', status === 'ok' ? url : imgUrl).show();
+
+        if (aspect && typeof window.updatePreviewBoxDimensions === 'function') {
+            window.updatePreviewBoxDimensions(aspect);
         }
-    };
-    img.onerror = function() {
-        $('.preview-overlay-img').hide();
-    };
-    img.src = imgUrl;
+        setTimeout(() => {
+            if (typeof window.fitTextToContainer === 'function') window.fitTextToContainer();
+        }, 30);
+    });
 };
 
 window.updatePreviewBoxDimensions = function(aspect) {
@@ -2438,10 +2191,22 @@ window.updatePreviewBoxDimensions = function(aspect) {
     }
 };
 
+/* Tek, rAF ile kısıtlanmış resize işleyicisi.
+   Önceden iki ayrı ve kısıtlanmamış resize handler vardı; mobilde adres
+   çubuğu her açılıp kapandığında art arda yerleşim hesabı tetikliyorlardı. */
+let _resizeRaf = 0;
 $(window).on('resize', function() {
-    if (window.currentPreviewAspect && typeof window.updatePreviewBoxDimensions === 'function') {
-        window.updatePreviewBoxDimensions();
-    }
+    if (_resizeRaf) return;
+    _resizeRaf = requestAnimationFrame(function() {
+        _resizeRaf = 0;
+        if (window.currentPreviewAspect && typeof window.updatePreviewBoxDimensions === 'function') {
+            window.updatePreviewBoxDimensions();      // içinde fitTextToContainer da çağırır
+        } else if (typeof window.fitTextToContainer === 'function') {
+            window.fitTextToContainer();
+        }
+        const activeId = $('.page.active').attr('id');
+        updateMobileHeader(activeId ? '#' + activeId : '#products-page');
+    });
 });
 
 // --- DIAGONAL COLOR COMBINATIONS ---
@@ -2492,22 +2257,9 @@ $(document).on('click', '.diagonal-color-btn', function() {
     if (typeof currentProduct !== 'undefined' && currentProduct) {
         if (currentProduct.isCustomObject) {
             $('.preview-object-color-layer').css('background-color', c1);
-        } else if (window.applyFilterToPreview) {
+        } else {
             window.applyFilterToPreview(currentProduct.id, c1);
             $('.preview-object-color-layer').css('background-color', c2);
-        } else {
-            const rgb = typeof hexToRgb !== 'undefined' ? hexToRgb(c2) : window.hexToRgb(c2);
-            if (rgb) {
-                const feColorMatrix = document.getElementById('dynamic-color-matrix');
-                if (feColorMatrix) {
-                    feColorMatrix.setAttribute('values', `
-                        0 0 0 0 ${rgb.r / 255}
-                        0 0 0 0 ${rgb.g / 255}
-                        0 0 0 0 ${rgb.b / 255}
-                        0 0 0 1 0
-                    `);
-                }
-            }
         }
     }
 });

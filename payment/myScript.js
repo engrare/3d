@@ -1,7 +1,4 @@
-import { initializeApp } from "firebase/app";
-import { getAuth, onAuthStateChanged, signInAnonymously } from "firebase/auth";
-import { getDatabase, ref, set, push, onValue, get } from "firebase/database";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { getPreviewImage } from "../preview-engine.js";
 
 // Config Sabit Tutuldu
 const firebaseConfig = {
@@ -15,10 +12,39 @@ const firebaseConfig = {
 	measurementId: "G-NLSV32JMM2"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getDatabase(app);
-const functions = getFunctions(app, 'europe-west1');
+/* --------------------------------------------------------------------------
+   FIREBASE: TEMBEL (LAZY) YÜKLEME
+   Önceden 4 Firebase SDK modülü (~450 KB) statik import ediliyordu; bu yüzden
+   localStorage'dan okunan sipariş özeti bile SDK inip ayrıştırılmadan ekrana
+   gelmiyordu. Artık SDK ilk çizimden sonra arka planda yükleniyor; Firebase'e
+   ihtiyaç duyan her işleyici başında `await fbReady()` çağırıyor.
+   -------------------------------------------------------------------------- */
+let auth, db, functions;
+let onAuthStateChanged, signInAnonymously;
+let ref, set, push, onValue, get;
+let httpsCallable;
+
+let _fbPromise = null;
+function fbReady() {
+    if (!_fbPromise) {
+        _fbPromise = Promise.all([
+            import("firebase/app"),
+            import("firebase/auth"),
+            import("firebase/database"),
+            import("firebase/functions")
+        ]).then(([appM, authM, dbM, fnM]) => {
+            ({ onAuthStateChanged, signInAnonymously } = authM);
+            ({ ref, set, push, onValue, get } = dbM);
+            httpsCallable = fnM.httpsCallable;
+
+            const app = appM.initializeApp(firebaseConfig);
+            auth      = authM.getAuth(app);
+            db        = dbM.getDatabase(app);
+            functions = fnM.getFunctions(app, 'europe-west1');
+        });
+    }
+    return _fbPromise;
+}
 
 let cart = [];
 let selectedAddress = null;
@@ -103,8 +129,8 @@ const products = [
 $(document).ready(function() {
     loadCart();
         
-    // Auth State Yönetimi
-    onAuthStateChanged(auth, async (user) => {
+    // Auth State Yönetimi — SDK indikten sonra bağlanır (ilk çizimi bloklamaz)
+    fbReady().then(() => onAuthStateChanged(auth, async (user) => {
         if (user) {
             if (user.isAnonymous) {
                 // GUEST (MİSAFİR) MODU
@@ -142,7 +168,7 @@ $(document).ready(function() {
         } else {
             signInAnonymously(auth);
         }
-    });
+    }));
 
     // Telefon Formatlama / Maskeleme Fonksiyonu (05XX XXX XX XX)
     function formatPhoneNumber(value) {
@@ -211,6 +237,7 @@ $(document).ready(function() {
         
     // Adres Kaydetme
     $('#btn-save-address').click(async () => {
+        await fbReady();
         const user = auth.currentUser;
         if(!user) return;
                 
@@ -284,6 +311,7 @@ $(document).ready(function() {
         $(this).prop('disabled', true).text('Kontrol...');
 
         try {
+            await fbReady();
             const verifyDiscount = httpsCallable(functions, 'verifyDiscount');
             const result = await verifyDiscount({ code: code });
             const data = result.data;
@@ -358,10 +386,26 @@ function resolveAssetPath(src) {
     return src;
 }
 
+/* Önizleme kutusunun en-boy oranı */
+function previewAspectFor(p, item) {
+    if (!p) return 1.71;
+    if (p.id === 1) return 3.594;
+    if (p.id === 2) return 1.710;
+    if (p.isCustomObject) {
+        const sel = (item.selectedObject || "").toLowerCase();
+        if (sel.includes("fenerbahçe") || sel.includes("fb")) return 0.894;
+        if (sel.includes("galatasaray") || sel.includes("gs")) return 0.653;
+        if (sel.includes("trabzon")) return 0.678;
+        if (sel.includes("beşiktaş") || sel.includes("bjk")) return 0.699;
+        return 0.75;
+    }
+    return 1.71;
+}
+
 function renderCartSummary() {
     const $list = $('#order-items-list');
-    $list.empty();
     let subtotal = 0;
+    const rows = [];
 
     cart.forEach((item, index) => {
         const qty = parseInt(item.quantity || item.configuration?.quantity || 1);
@@ -369,20 +413,7 @@ function renderCartSummary() {
 
         const p = products.find(prod => prod.id === item.productId);
 
-        let aspect = 1.71;
-        if (p) {
-            if (p.id === 1) aspect = 3.594;
-            else if (p.id === 2) aspect = 1.710;
-            else if (p.isCustomObject) {
-                const sel = (item.selectedObject || "").toLowerCase();
-                if (sel.includes("fenerbahçe") || sel.includes("fb")) aspect = 0.894;
-                else if (sel.includes("galatasaray") || sel.includes("gs")) aspect = 0.653;
-                else if (sel.includes("trabzon")) aspect = 0.678;
-                else if (sel.includes("beşiktaş") || sel.includes("bjk")) aspect = 0.699;
-                else aspect = 0.75;
-            }
-        }
-
+        const aspect = previewAspectFor(p, item);
         const maxBox = 82;
         let innerW, innerH;
         if (aspect >= 1) {
@@ -397,7 +428,7 @@ function renderCartSummary() {
         const logoArea = (p && p.previewLogoArea) ? p.previewLogoArea : { top: '15%', left: '10%', width: '80%', height: '70%' };
         const isCustomObj = p && p.isCustomObject;
 
-        $list.append(`
+        rows.push(`
             <div class="summary-item">
                 <!-- 2D Canlı Önizleme Kutusu (Salt Okunur) -->
                 <div class="payment-2d-box">
@@ -434,9 +465,11 @@ function renderCartSummary() {
                 <div class="item-price">₺${(item.price * qty).toFixed(2)}</div>
             </div>
         `);
-
-        renderPaymentItemPreview(index);
     });
+
+    // Tek DOM yazımı, ardından önizlemeler
+    $list.html(rows.join(''));
+    for (let i = 0; i < cart.length; i++) renderPaymentItemPreview(i);
 
     $('#summ-subtotal').text(formatTL(subtotal));
     updateTotals();
@@ -473,7 +506,7 @@ function renderPaymentItemPreview(index) {
     const item = cart[index];
     if (!item) return;
     const p = products.find(prod => prod.id === item.productId);
-    
+
     let src = `../content/products/${item.productId}/preview.png`;
     let isCustom = false;
     if (p && p.isCustomObject) {
@@ -482,78 +515,17 @@ function renderPaymentItemPreview(index) {
             const oName = (o.objectName || "").toLowerCase();
             return oName === sel || oName.includes(sel) || sel.includes(oName);
         }) || p.isCustomObject[0];
-        if (obj) {
-            src = resolveAssetPath(obj.src);
-        }
+        if (obj) src = resolveAssetPath(obj.src);
         isCustom = true;
     }
-    
-    const img = new Image();
-    img.crossOrigin = "Anonymous";
-    img.onload = function() {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        
-        try {
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
-            const width = canvas.width;
-            const height = canvas.height;
-            const targetRgb = hexToRgb(item.textColor || '#FBC02D');
-            
-            let minX = width, minY = height, maxX = 0, maxY = 0;
-            let found = false;
-            
-            for (let y = 0; y < height; y++) {
-                for (let x = 0; x < width; x++) {
-                    const idx = (y * width + x) * 4;
-                    const r = data[idx], g = data[idx + 1], b = data[idx + 2], a = data[idx + 3];
-                    const isWhite = (r > 240 && g > 240 && b > 240 && a > 200);
-                    if (!isWhite) {
-                        if (x < minX) minX = x;
-                        if (x > maxX) maxX = x;
-                        if (y < minY) minY = y;
-                        if (y > maxY) maxY = y;
-                        found = true;
-                    }
-                    if (!isCustom && r < 60 && g < 60 && b < 60 && a > 0) {
-                        data[idx] = targetRgb.r;
-                        data[idx + 1] = targetRgb.g;
-                        data[idx + 2] = targetRgb.b;
-                    }
-                }
-            }
-            
-            ctx.putImageData(imageData, 0, 0);
-            
-            if (found && maxX > minX && maxY > minY) {
-                const cropW = maxX - minX + 1;
-                const cropH = maxY - minY + 1;
-                const croppedCanvas = document.createElement('canvas');
-                croppedCanvas.width = cropW;
-                croppedCanvas.height = cropH;
-                const croppedCtx = croppedCanvas.getContext('2d');
-                croppedCtx.drawImage(canvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
-                $(`#payment-overlay-img-${index}`).attr('src', croppedCanvas.toDataURL()).show();
-            } else {
-                $(`#payment-overlay-img-${index}`).attr('src', canvas.toDataURL()).show();
-            }
-            
-            setTimeout(() => {
-                fitPaymentItemText(index);
-            }, 40);
-        } catch (e) {
-            console.error("Payment canvas filtering error:", e);
-            $(`#payment-overlay-img-${index}`).attr('src', src).show();
-        }
-    };
-    img.onerror = function() {
-        $(`#payment-overlay-img-${index}`).hide();
-    };
-    img.src = src;
+
+    // Ortak, önbellekli motor: aynı görsel+renk ikinci kez istendiğinde iş yapılmaz
+    getPreviewImage(src, isCustom ? null : hexToRgb(item.textColor || '#FBC02D'), function(url, aspect, status) {
+        const $img = $(`#payment-overlay-img-${index}`);
+        if (status === 'error') { $img.hide(); return; }
+        $img.attr('src', status === 'ok' ? url : src).show();
+        setTimeout(() => fitPaymentItemText(index), 40);
+    });
 }
 
 function updateTotals() {
@@ -691,6 +663,7 @@ function loadUserAddresses(uid) {
 }
 
 async function processPayment() {
+    await fbReady();
     const user = auth.currentUser;
     if (!user) {
         showToast("Oturum hatası.", "error");
