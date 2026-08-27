@@ -107,16 +107,17 @@ const products = [
     },
 	{
         id: 3,
-        name: "Takıma Özel Kalemlik",
-        desc: "Üzerine isim yazdırılabilen takımlı kalemlik",
+        name: "Kişiselleştirilmiş QR & Kartvizit Standı",
+        desc: "İhtiyacınıza göre şekillenen profesyonel kartvizitlik.",
         price: 180,
 		isCustomObject: [
-
-            { objectName: "Fenerbahçe - 2 Adet Satıldı.", src: "./content/products/5/previewfb.png" },
-            { objectName: "Galatasaray - 1 Adet Satıldı.", src: "./content/products/5/previewgs.png" },
-            { objectName: "Trabzon - 0 Adet Satıldı.", src: "./content/products/5/previewtrabzon.png" },
-            { objectName: "Beşiktaş - 5 Adet Satıldı.", src: "./content/products/5/previewbjk.png" },
-
+            { objectName: "1 Kartvizit Bölmeli", src: "./content/products/5/preview-1-bolme.png" },
+            { objectName: "2 Kartvizit Bölmeli", src: "./content/products/5/preview-2-bolme.png" },
+            { objectName: "3 Kartvizit Bölmeli", src: "./content/products/5/preview-3-bolme.png" }
+        ],
+		isCustomQR:  [
+            { QR_Link: "1 Kartvizit Bölmeli", src: "./content/products/5/preview-1-bolme.png" },
+            { QR_Link: "2 Kartvizit Bölmeli", src: "./content/products/5/preview-2-bolme.png" }
         ],
 		 colors: [
             { color1: "#FBC02D", label1: "Arka"},
@@ -1198,10 +1199,49 @@ window.openProductDetail = function(id, pushHistory = true) {
     // Ürün özelleştirme alanlarını yönetme
     if (p.isCustomObject) {
         $('#customization-object-group').show();
-        const $objSelect = $('#custom-object-input');
-        $objSelect.empty();
+        const $objTabs = $('#custom-object-tabs');
+        const $objInput = $('#custom-object-input');
+        $objTabs.empty();
         p.isCustomObject.forEach((obj, idx) => {
-            $objSelect.append(`<option value="${idx}">${obj.objectName}</option>`);
+            const isActive = idx === 0;
+            const bg = isActive ? 'var(--primary)' : '#fff';
+            const color = isActive ? '#fff' : 'var(--text-main)';
+            const border = isActive ? 'var(--primary)' : 'var(--border)';
+            
+            const tabHtml = `
+                <div class="custom-object-tab" data-value="${idx}" 
+                     style="padding: 10px 15px; border-radius: 8px; border: 1px solid ${border}; 
+                            cursor: pointer; font-size: 0.9rem; font-weight: 600; text-align: center; 
+                            flex: 1; min-width: max-content; transition: all 0.2s; 
+                            background: ${bg}; color: ${color};">
+                    ${obj.objectName}
+                </div>
+            `;
+            $objTabs.append(tabHtml);
+        });
+
+        // Initialize hidden input
+        $objInput.val(0);
+
+        // Tab click event
+        $objTabs.find('.custom-object-tab').on('click', function() {
+            const val = $(this).data('value');
+            $objInput.val(val);
+            
+            // Update visual states
+            $objTabs.find('.custom-object-tab').css({
+                'background': '#fff',
+                'color': 'var(--text-main)',
+                'border-color': 'var(--border)'
+            });
+            $(this).css({
+                'background': 'var(--primary)',
+                'color': '#fff',
+                'border-color': 'var(--primary)'
+            });
+            
+            // Trigger change for preview update
+            $objInput.trigger('change');
         });
         
         $('#customization-text-group').hide();
@@ -2263,6 +2303,5 @@ $(document).on('click', '.diagonal-color-btn', function() {
         }
     }
 });
-
 
 
