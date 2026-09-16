@@ -1,0 +1,55 @@
+# ============================================================================
+# BEYAZ LISTE: Varsayilan olarak HER SEY yoksayilir; yalnizca sitede herkese
+# acik olmasi gereken dosyalar asagida "!" ile izinlidir.
+# Yeni bir sayfa/gorsel eklerseniz buraya da eklemeyi unutmayin.
+# (functions/, .env, zip, STL, notlar ve eski site dosyalari yayinlanmaz.)
+# ============================================================================
+/*
+
+!/.gitignore
+!/.github/
+!/CNAME
+!/index.html
+!/myScript.js
+!/myStyle.css
+!/preview-engine.js
+
+# Odeme sayfalari
+!/payment/
+/payment/*
+!/payment/index.html
+!/payment/myScript.js
+!/payment/myStyle.css
+!/payment/result.html
+!/payment/kvkk.html
+!/payment/sozlesme.html
+
+# Yonetim paneli (veriler sunucu tarafinda yetkiyle korunuyor; fiyat hesaplayici yayinlanmaz)
+!/admin/
+/admin/*
+!/admin/index.html
+!/admin/myScript.js
+!/admin/myStyle.css
+
+# Yasal metinler
+!/mevzuat/
+/mevzuat/*
+!/mevzuat/mevzuat_script.js
+!/mevzuat/*/
+/mevzuat/*/*
+!/mevzuat/*/index.html
+
+# Gorseller ve yazi tipi
+!/content/
+/content/*
+!/content/AGENCYB.TTF
+!/content/default_user.png
+!/content/engrare_logo_elegant.png
+!/content/engrare_logo_elegant.svg
+!/content/social/
+!/content/products/
+/content/products/*-old/
+
+# 3D model dosyalari hicbir yerde yayinlanmaz
+*.stl
+*.STL

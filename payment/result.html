@@ -229,7 +229,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
             </div>
-            <h2 class="status-title">Ödeme Başarısız Hatası</h2>
+            <h2 class="status-title">Ödeme Başarısız</h2>
             <p class="status-desc" id="error-message-text">Banka kartı bakiyesi yetersiz veya işlem 3D Secure onayından geçemedi.</p>
         </div>
 
@@ -289,18 +289,26 @@
                 return;
             }
 
+            // onAuthStateChanged birden fazla kez tetiklenebilir; doğrulama yalnızca bir kez yapılmalı
+            let verificationStarted = false;
             onAuthStateChanged(auth, async (user) => {
                 if (user && !user.isAnonymous) {
                     $('#btn-orders-redirect').show();
                 }
-                
+                if (verificationStarted) return;
+                verificationStarted = true;
+
                 try {
                     const iyzicoVerifyPayment = httpsCallable(functions, 'iyzicoVerifyPayment');
                     const response = await iyzicoVerifyPayment({ token: token });
-                    const result = response.data;
+                    const result = response.data || {};
 
-                    if (result && result.status === 'success') {
+                    if (result.status === 'success') {
                         showSuccessState(result.orderId);
+                    } else if (result.status === 'partial_success') {
+                        // Para çekildi ama sipariş kaydı yazılamadı: kullanıcıya "başarısız" denmemeli
+                        showErrorState("Ödemeniz alındı ancak siparişiniz kaydedilirken bir sorun oluştu. Lütfen bu sayfayı yenileyin; sorun devam ederse kaya@engrare.com adresine yazın.");
+                        $('#status-error .status-title').text('Ödeme Alındı');
                     } else {
                         showErrorState(result.errorMessage || "Ödeme banka tarafından onaylanmadı.");
                     }

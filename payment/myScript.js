@@ -21,7 +21,7 @@ const firebaseConfig = {
    -------------------------------------------------------------------------- */
 let auth, db, functions;
 let onAuthStateChanged, signInAnonymously;
-let ref, set, push, onValue, get;
+let ref, set, push, onValue, get, update;
 let httpsCallable;
 
 let _fbPromise = null;
@@ -34,7 +34,7 @@ function fbReady() {
             import("firebase/functions")
         ]).then(([appM, authM, dbM, fnM]) => {
             ({ onAuthStateChanged, signInAnonymously } = authM);
-            ({ ref, set, push, onValue, get } = dbM);
+            ({ ref, set, push, onValue, get, update } = dbM);
             httpsCallable = fnM.httpsCallable;
 
             const app = appM.initializeApp(firebaseConfig);
@@ -50,6 +50,27 @@ let cart = [];
 let selectedAddress = null;
 let shippingCost = 50.00;
 let appliedDiscount = null;
+let savedAddresses = {};
+let isProcessingPayment = false;
+
+/* --- XSS KORUMASI --- */
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function safeColor(value, fallback) {
+    return /^#[0-9a-fA-F]{6}$/.test(value) ? value : fallback;
+}
+
+/* CSS url(...) içinde güvenle kullanılabilecek adres (tırnak/parantez içermez) */
+function safeUrl(value) {
+    return (typeof value === 'string' && /^[A-Za-z0-9\-._~:/?#@!$&+,=%;]+$/.test(value)) ? value : '';
+}
 
 const products = [
     {
@@ -101,21 +122,21 @@ const products = [
         ]
     },
     {
+        // Ana sayfadaki (../myScript.js) ürün 3 ile aynı olmalı
         id: 3,
-        name: "Takıma Özel Kalemlik",
-        desc: "Üzerine isim yazdırılabilen takımlı kalemlik",
+        name: "Kişiselleştirilmiş QR & Kartvizit Standı",
+        desc: "İhtiyacınıza göre şekillenen profesyonel kartvizitlik.",
         price: 180,
         isCustomObject: [
-            { objectName: "Fenerbahçe - 2 Adet Satıldı.", src: "./content/products/5/previewfb.png" },
-            { objectName: "Galatasaray - 1 Adet Satıldı.", src: "./content/products/5/previewgs.png" },
-            { objectName: "Trabzon - 0 Adet Satıldı.", src: "./content/products/5/previewtrabzon.png" },
-            { objectName: "Beşiktaş - 5 Adet Satıldı.", src: "./content/products/5/previewbjk.png" }
+            { objectName: "1 Kartvizit Bölmeli", src: "./content/products/5/preview-1-bolme.png" },
+            { objectName: "2 Kartvizit Bölmeli", src: "./content/products/5/preview-2-bolme.png" },
+            { objectName: "3 Kartvizit Bölmeli", src: "./content/products/5/preview-3-bolme.png" }
         ],
         colors: [
-            { color1: "#FBC02D", label1: "Arka" },
-            { color1: "#FFFFFF", label1: "Arka" },
-            { color1: "#222222", label1: "Arka" },
-            { color1: "#E91E63", label1: "Arka" }
+            { color1: "#FBC02D", color2: "#222222", label1: "Yazı", label2: "Zemin" },
+            { color1: "#FFFFFF", color2: "#1976D2", label1: "Yazı", label2: "Zemin" },
+            { color1: "#222222", color2: "#FFFFFF", label1: "Yazı", label2: "Zemin" },
+            { color1: "#E91E63", color2: "#388E3C", label1: "Yazı", label2: "Zemin" }
         ],
         images: [
             { src: "./content/products/5/1.jpg" },
@@ -144,29 +165,31 @@ $(document).ready(function() {
                 $('#guest-address-section').hide();
                 $('#user-address-section').show();
                                 
-                // Profil Bilgilerini Yükle
-                const profileRef = ref(db, `users/${user.uid}/profile`);
-                const snapshot = await get(profileRef);
-                if (snapshot.exists()) {
-                    const profile = snapshot.val();
-                    const displayName = profile.fullname || profile.username || user.displayName || "Kullanıcı";
-                    $('#checkout-user-name').text(displayName);
-                    $('#checkout-user-email').text(profile.email || user.email);
-                    if (user.photoURL) {
-                        $('#checkout-user-img').attr('src', user.photoURL);
-                    }
-                    $('#user-profile-header').css('display', 'flex');
-                } else {
-                    // Veritabanında profil yoksa Auth verisine dön
-                    $('#checkout-user-name').text(user.displayName || "Kullanıcı");
-                    $('#checkout-user-email').text(user.email);
-                    $('#user-profile-header').css('display', 'flex');
-                }
-
+                // Adresler profilden bağımsız yüklensin: profil okunamazsa ödeme engellenmesin
                 loadUserAddresses(user.uid);
+
+                // Profil Bilgilerini Yükle
+                let profile = null;
+                try {
+                    const snapshot = await get(ref(db, `users/${user.uid}/profile`));
+                    profile = snapshot.val();
+                } catch (error) {
+                    console.warn("Profil okunamadı:", error);
+                }
+                // Veritabanında profil yoksa Auth verisine dön
+                const displayName = (profile && (profile.fullname || profile.username)) || user.displayName || "Kullanıcı";
+                $('#checkout-user-name').text(displayName);
+                $('#checkout-user-email').text((profile && profile.email) || user.email || '');
+                if (user.photoURL) {
+                    $('#checkout-user-img').attr('src', user.photoURL);
+                }
+                $('#user-profile-header').css('display', 'flex');
             }
         } else {
-            signInAnonymously(auth);
+            signInAnonymously(auth).catch((error) => {
+                console.error("Misafir oturumu açılamadı:", error);
+                showToast("Oturum başlatılamadı. Lütfen sayfayı yenileyin.", "error");
+            });
         }
     }));
 
@@ -240,64 +263,82 @@ $(document).ready(function() {
         await fbReady();
         const user = auth.currentUser;
         if(!user) return;
-                
+
+        const name = $('#new-addr-name').val().trim();
+        const surname = $('#new-addr-surname').val().trim();
+        const fullAddress = $('#new-addr-full').val().trim();
+        // Ana sayfadaki "Adreslerim" de bu adresi okuyabilsin diye iki formatın alanları birlikte yazılıyor
         const addr = {
             title: $('#new-addr-title').val().trim(),
-            name: $('#new-addr-name').val().trim(),
-            surname: $('#new-addr-surname').val().trim(),
-            address: $('#new-addr-full').val().trim(),
+            name: name,
+            surname: surname,
+            fullname: `${name} ${surname}`.trim(),
+            address: fullAddress,
+            details: fullAddress,
             city: $('#new-addr-city').val().trim(),
             phone: $('#new-addr-phone').val().trim()
         };
 
-        if(!addr.title || !addr.address || !addr.name || !addr.surname) {
+        if(!addr.title || !addr.address || !addr.name || !addr.surname || !addr.city) {
             showToast("Lütfen zorunlu alanları doldurun.", "error");
             return;
         }
 
         const editId = $('#edit-addr-id').val();
-        
-        if (editId) {
-            const editRef = ref(db, `users/${user.uid}/addresses/${editId}`);
-            window.lastSavedAddressId = editId;
-            await set(editRef, addr);
-            
-            const $radio = $(`input[name="shipping-address"][data-id="${editId}"]`);
-            if ($radio.length) $radio.prop('checked', true).trigger('change');
-            
-            showToast("Adres başarıyla güncellendi ve seçildi.", "success");
-        } else {
-            const newRef = push(ref(db, `users/${user.uid}/addresses`));
-            window.lastSavedAddressId = newRef.key;
-            await set(newRef, addr);
-            showToast("Adres kaydedildi ve seçildi.", "success");
+        const $btn = $('#btn-save-address');
+        $btn.prop('disabled', true);
+
+        try {
+            if (editId) {
+                const editRef = ref(db, `users/${user.uid}/addresses/${editId}`);
+                window.lastSavedAddressId = editId;
+                // update: ana sayfada girilen ilçe (district) gibi alanlar korunur
+                await update(editRef, addr);
+                showToast("Adres başarıyla güncellendi ve seçildi.", "success");
+            } else {
+                const newRef = push(ref(db, `users/${user.uid}/addresses`));
+                window.lastSavedAddressId = newRef.key;
+                await set(newRef, addr);
+                showToast("Adres kaydedildi ve seçildi.", "success");
+            }
+
+            $('#new-address-form').slideUp();
+            $('#new-address-form input, #new-address-form select').val(''); // Temizle
+            $('#edit-addr-id').val('');
+        } catch (error) {
+            console.error("Adres kaydedilemedi:", error);
+            window.lastSavedAddressId = null;
+            showToast("Adres kaydedilemedi. Lütfen bilgileri kontrol edip tekrar deneyin.", "error");
+        } finally {
+            $btn.prop('disabled', false);
         }
-        
-        $('#new-address-form').slideUp();
-        $('#new-address-form input, #new-address-form select').val(''); // Temizle
-        $('#edit-addr-id').val('');
     });
 
-    // Adres Düzenleme Butonu
-    window.editAddress = function(id, encData) {
-        const addr = JSON.parse(decodeURIComponent(encData));
+    // Adres Düzenleme Butonu (satır içi onclick yerine: adres verisi HTML'e gömülmüyor)
+    $(document).on('click', '.btn-addr-edit', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const id = String($(this).attr('data-id'));
+        const addr = savedAddresses[id];
+        if (!addr) return;
+        const fallbackName = (addr.fullname || '').split(/\s+/);
         $('#edit-addr-id').val(id);
         $('#new-addr-title').val(addr.title || '');
-        $('#new-addr-name').val(addr.name || addr.fullname || '');
-        $('#new-addr-surname').val(addr.surname || '');
+        $('#new-addr-name').val(addr.name || fallbackName[0] || '');
+        $('#new-addr-surname').val(addr.surname || fallbackName.slice(1).join(' '));
         $('#new-addr-full').val(addr.address || addr.details || '');
         $('#new-addr-city').val(addr.city || '');
         $('#new-addr-phone').val(addr.phone || '');
         $('#new-address-form').slideDown();
-    };
+    });
 
     // Adres Seçimi Değişimi
     $(document).on('change', 'input[name="shipping-address"]', function() {
         $('.address-option').removeClass('active');
         $(this).closest('.address-option').addClass('active');
-        window.currentSelectedAddressId = $(this).data('id');
-        const val = $(this).val();
-        if(val) selectedAddress = JSON.parse(decodeURIComponent(val));
+        const id = String($(this).attr('data-id'));
+        window.currentSelectedAddressId = id;
+        if (savedAddresses[id]) selectedAddress = savedAddresses[id];
     });
 
     // İndirim Kodu Uygulama Butonu
@@ -364,11 +405,20 @@ $(document).ready(function() {
 });
 
 function loadCart() {
-    const stored = localStorage.getItem('engrare_cart');
-    if (stored) {
-        cart = JSON.parse(stored);
-        renderCartSummary();
+    let stored = null;
+    try {
+        stored = JSON.parse(localStorage.getItem('engrare_cart') || 'null');
+    } catch (e) {
+        console.error("Sepet verisi okunamadı:", e);
     }
+    cart = Array.isArray(stored) ? stored.filter(item => item && typeof item === 'object') : [];
+    // Fiyat ve ad her zaman güncel katalogdan (sunucu da aynı şekilde yeniden hesaplıyor)
+    cart.forEach(item => {
+        const p = products.find(prod => prod.id === item.productId);
+        if (p) { item.price = p.price; item.name = p.name; }
+    });
+    $('#cart-badge').text(cart.length);
+    renderCartSummary();
 }
 
 function hexToRgb(hex) {
@@ -380,7 +430,7 @@ function hexToRgb(hex) {
 }
 
 function resolveAssetPath(src) {
-    if (!src) return '';
+    if (!src || typeof src !== 'string') return '';
     if (src.startsWith('./')) return '../' + src.slice(2);
     if (src.startsWith('content/')) return '../' + src;
     return src;
@@ -408,10 +458,14 @@ function renderCartSummary() {
     const rows = [];
 
     cart.forEach((item, index) => {
-        const qty = parseInt(item.quantity || item.configuration?.quantity || 1);
+        const qty = parseInt(item.quantity || item.configuration?.quantity || 1) || 1;
         subtotal += item.price * qty;
 
         const p = products.find(prod => prod.id === item.productId);
+        const textColor = safeColor(item.textColor, '#FBC02D');
+        const objColor = safeColor(item.objColor, textColor);
+        // "./content/..." gibi göreli logolar bu sayfada bir üst klasörden çözülmeli
+        const logoUrl = safeUrl(resolveAssetPath(item.logoUrl));
 
         const aspect = previewAspectFor(p, item);
         const maxBox = 82;
@@ -434,7 +488,7 @@ function renderCartSummary() {
                 <div class="payment-2d-box">
                     <div class="payment-preview-inner" id="payment-preview-inner-${index}" style="position: relative; overflow: hidden; border-radius: 4px; width: ${innerW}px; height: ${innerH}px; background: #ffffff;">
                         <!-- Zemin Renk Katmanı -->
-                        <div class="payment-obj-layer" id="payment-obj-layer-${index}" style="position: absolute; inset: 0; background-color: ${item.objColor || item.textColor || '#222222'}; z-index: 1;"></div>
+                        <div class="payment-obj-layer" id="payment-obj-layer-${index}" style="position: absolute; inset: 0; background-color: ${objColor}; z-index: 1;"></div>
                         
                         <!-- Kırpılmış PNG Görseli -->
                         <img class="payment-overlay-img" id="payment-overlay-img-${index}" src="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 2; display: none;">
@@ -442,14 +496,14 @@ function renderCartSummary() {
                         <!-- Canlı Metin Alanı -->
                         ${isCustomObj ? '' : `
                         <div class="payment-printable-area" id="payment-print-area-${index}" style="position: absolute; top: ${textArea.top}; left: ${textArea.left}; width: ${textArea.width}; height: ${textArea.height}; z-index: 3; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                            <span class="payment-dynamic-text" id="payment-dynamic-text-${index}" style="color: ${item.textColor || '#FBC02D'}; font-family: ${item.font || "'AGENCYB', sans-serif"}; font-size: 13px; font-weight: 700; text-align: center; width: auto; word-break: break-word; display: inline-block; line-height: 1;">${item.customText || ''}</span>
+                            <span class="payment-dynamic-text" id="payment-dynamic-text-${index}" style="color: ${textColor}; font-family: 'AGENCYB', sans-serif; font-size: 13px; font-weight: 700; text-align: center; width: auto; word-break: break-word; display: inline-block; line-height: 1;">${escapeHtml(item.customText || '')}</span>
                         </div>
                         `}
-                        
+
                         <!-- Canlı Logo Alanı -->
-                        ${(item.logoUrl && !isCustomObj) ? `
+                        ${(logoUrl && !isCustomObj) ? `
                         <div class="payment-logo-area" id="payment-logo-area-${index}" style="position: absolute; top: ${logoArea.top}; left: ${logoArea.left}; width: ${logoArea.width}; height: ${logoArea.height}; z-index: 3; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                            <div class="payment-dynamic-logo" id="payment-dynamic-logo-${index}" style="width: 100%; height: 100%; mask-image: url(${item.logoUrl}); -webkit-mask-image: url(${item.logoUrl}); mask-size: contain; -webkit-mask-size: contain; mask-repeat: no-repeat; -webkit-mask-repeat: no-repeat; mask-position: center; -webkit-mask-position: center; background-color: ${item.textColor || '#FBC02D'};"></div>
+                            <div class="payment-dynamic-logo" id="payment-dynamic-logo-${index}" style="width: 100%; height: 100%; mask-image: url(${logoUrl}); -webkit-mask-image: url(${logoUrl}); mask-size: contain; -webkit-mask-size: contain; mask-repeat: no-repeat; -webkit-mask-repeat: no-repeat; mask-position: center; -webkit-mask-position: center; background-color: ${textColor};"></div>
                         </div>
                         ` : ''}
                     </div>
@@ -457,10 +511,10 @@ function renderCartSummary() {
 
                 <!-- Bilgi Alanı (Düzenleme Yok) -->
                 <div class="item-info">
-                    <div class="item-name">${item.name}</div>
-                    ${item.selectedObject ? `<div class="item-meta">Takım/Obje: <span style="font-weight:600; color:var(--text-main);">${item.selectedObject}</span></div>` : ''}
-                    ${item.customText ? `<div class="item-meta">Yazı: <span style="font-weight:600; color:var(--text-main);">"${item.customText}"</span></div>` : ''}
-                    <div class="item-meta">Adet: <span style="font-weight:600; color:var(--text-main);">${qty}</span></div>
+                    <div class="item-name">${escapeHtml(item.name)}</div>
+                    ${item.selectedObject ? `<div class="item-meta">Takım/Obje: <span style="font-weight:600; color:var(--text-main);">${escapeHtml(item.selectedObject)}</span></div>` : ''}
+                    ${item.customText ? `<div class="item-meta">Yazı: <span style="font-weight:600; color:var(--text-main);">"${escapeHtml(item.customText)}"</span></div>` : ''}
+                    <div class="item-meta">Adet: <span style="font-weight:600; color:var(--text-main);">${escapeHtml(qty)}</span></div>
                 </div>
                 <div class="item-price">₺${(item.price * qty).toFixed(2)}</div>
             </div>
@@ -531,7 +585,7 @@ function renderPaymentItemPreview(index) {
 function updateTotals() {
     let subtotal = 0;
     cart.forEach(i => {
-        const qty = parseInt(i.quantity || i.configuration?.quantity || 1);
+        const qty = parseInt(i.quantity || i.configuration?.quantity || 1) || 1;
         subtotal += i.price * qty;
     });
         
@@ -617,43 +671,52 @@ function loadUserAddresses(uid) {
         const $container = $('#saved-addresses-container');
         $container.empty();
                 
-        if (snapshot.exists()) {
-            const data = snapshot.val();
-            
-            let targetId = window.lastSavedAddressId || window.currentSelectedAddressId || Object.keys(data)[0];
-            if (!data[targetId]) targetId = Object.keys(data)[0];
-            
+        const data = snapshot.val() || {};
+        savedAddresses = {};
+        Object.entries(data).forEach(([id, addr]) => {
+            if (addr && typeof addr === 'object') savedAddresses[id] = addr;
+        });
+        const ids = Object.keys(savedAddresses);
+
+        if (ids.length > 0) {
+            let targetId = window.lastSavedAddressId || window.currentSelectedAddressId || ids[0];
+            if (!savedAddresses[targetId]) targetId = ids[0];
+
             window.currentSelectedAddressId = targetId;
-            selectedAddress = data[targetId];
+            selectedAddress = savedAddresses[targetId];
             window.lastSavedAddressId = null;
 
-            Object.entries(data).forEach(([id, addr]) => {
-                const val = encodeURIComponent(JSON.stringify(addr));
+            const cards = ids.map((id) => {
+                const addr = savedAddresses[id];
                 const addressText = addr.address || addr.details || '';
                 const titleText = addr.title || 'Adresim';
+                // Ana sayfada kaydedilen adreslerde ad/soyad yerine "fullname" alanı var
+                const personName = addr.fullname || [addr.name, addr.surname].filter(Boolean).join(' ');
+                const location = [addr.district, addr.city].filter(Boolean).join(' / ');
                 const isChecked = (id === targetId);
-                
-                $container.append(`
+
+                return `
                     <label class="delivery-option address-option ${isChecked ? 'active' : ''}">
-                        <input type="radio" name="shipping-address" data-id="${id}" value="${val}" ${isChecked ? 'checked' : ''} style="display:none;">
+                        <input type="radio" name="shipping-address" data-id="${escapeHtml(id)}" ${isChecked ? 'checked' : ''} style="display:none;">
                         <div class="del-top-row">
                             <div class="del-icon-wrapper"><i class="fa-solid fa-location-dot"></i></div>
                             <div style="display:flex; align-items:center; gap:6px;">
-                                <button type="button" onclick="editAddress('${id}', '${val}'); return false;" class="btn-addr-edit" title="Düzenle"><i class="fa-solid fa-pen"></i></button>
+                                <button type="button" data-id="${escapeHtml(id)}" class="btn-addr-edit" title="Düzenle"><i class="fa-solid fa-pen"></i></button>
                                 <i class="fa-solid fa-circle-check check-icon" style="position:static; font-size:1.05rem;"></i>
                             </div>
                         </div>
                         <div class="del-body" style="margin-top:6px;">
-                            <span class="del-title">${titleText}</span>
-                            <span class="del-desc" style="font-weight:600; color:var(--primary); margin-bottom:2px;">${addr.name} ${addr.surname}</span>
-                            <span class="del-desc" style="overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${addressText}</span>
+                            <span class="del-title">${escapeHtml(titleText)}</span>
+                            <span class="del-desc" style="font-weight:600; color:var(--primary); margin-bottom:2px;">${escapeHtml(personName)}</span>
+                            <span class="del-desc" style="overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${escapeHtml(addressText)}</span>
                         </div>
                         <div class="del-footer" style="margin-top:4px;">
-                            <span class="del-desc" style="font-weight:600; color:var(--text-muted); font-size:0.75rem;">${addr.city || ''}</span>
+                            <span class="del-desc" style="font-weight:600; color:var(--text-muted); font-size:0.75rem;">${escapeHtml(location)}</span>
                         </div>
                     </label>
-                `);
+                `;
             });
+            $container.html(cards.join(''));
             $('#new-address-form').hide();
         } else {
             $('#new-address-form').show();
@@ -663,21 +726,38 @@ function loadUserAddresses(uid) {
 }
 
 async function processPayment() {
+    // Çift tıklamada iki sipariş / iki ödeme formu oluşmasın
+    if (isProcessingPayment) return;
+    isProcessingPayment = true;
+    try {
+        await runPayment();
+    } finally {
+        isProcessingPayment = false;
+    }
+}
+
+async function runPayment() {
+    if (cart.length === 0) {
+        showToast("Sepetiniz boş.", "error");
+        return;
+    }
+
+    renderCheckoutButton(true, 'İşleniyor...');
     await fbReady();
     const user = auth.currentUser;
     if (!user) {
-        showToast("Oturum hatası.", "error");
+        showToast("Oturum hatası. Lütfen sayfayı yenileyin.", "error");
+        updateTotals();
         return;
     }
 
     const shippingMethod = $('input[name="shipping-method"]:checked').val() || "standard";
     const paymentMethod = $('.pay-tab.active').data('method') || "iyzico";
-    const $btn = $('#btn-complete-order');
-    
+
     let shippingInfo = {};
 
     // Toplam Tutar Matematik Hesabı
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * parseInt(item.quantity || item.configuration?.quantity || 1)), 0);
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * (parseInt(item.quantity || item.configuration?.quantity || 1) || 1)), 0);
     let discountAmount = 0;
     if (appliedDiscount) {
          if (appliedDiscount.type === 'percent') {
@@ -706,6 +786,16 @@ async function processPayment() {
             renderCheckoutButton(false, '', totalAmount);
             return;
         }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shippingInfo.email)) {
+            showToast("Lütfen geçerli bir e-posta adresi girin.", "error");
+            renderCheckoutButton(false, '', totalAmount);
+            return;
+        }
+        if (shippingInfo.phone.replace(/\D/g, '').length !== 11) {
+            showToast("Lütfen telefon numaranızı 05XX XXX XX XX biçiminde girin.", "error");
+            renderCheckoutButton(false, '', totalAmount);
+            return;
+        }
     } else {
         if (!selectedAddress) {
             showToast("Lütfen bir teslimat adresi seçin veya yeni ekleyin.", "error");
@@ -725,11 +815,18 @@ async function processPayment() {
             surname: lastName,
             fullname: selectedAddress.fullname || (firstName + ' ' + lastName).trim(),
             address: selectedAddress.address || selectedAddress.details || '',
+            district: selectedAddress.district || '',
             city: selectedAddress.city || '',
             phone: selectedAddress.phone || '',
             email: user.email || '',
             zip: selectedAddress.zip || ''
         };
+
+        if (!shippingInfo.fullname || !shippingInfo.address || !shippingInfo.city) {
+            showToast("Seçili adreste ad, açık adres veya şehir eksik. Lütfen adresi düzenleyin.", "error");
+            renderCheckoutButton(false, '', totalAmount);
+            return;
+        }
     }
 
     // Doğrulama başarılı -> Butonu yükleniyor moduna al
@@ -759,26 +856,32 @@ async function processPayment() {
             });
 
             const orderResponse = orderResult.data;
-            if (orderResponse && orderResponse.success) {
-                const orderId = orderResponse.orderId;
-                localStorage.removeItem('engrare_cart');
-
-                // Havale durumunda doğrudan sayfa içi başarı kutusunu gösteriyoruz
-                $('.checkout-form-section > :not(#payment-success-container)').hide();
-                $('.checkout-summary').hide();
-                $('.checkout-wrapper').css('grid-template-columns', '1fr');
-                
-                $('#success-order-id').text('#' + orderId);
-                $('#success-order-ref').text(orderId);
-                
-                if (totalAmount === 0) {
-                    $('.iban-box').html('<h3 style="color:#10B981; margin-top:20px;">Ödeme Tamamlandı</h3><p>Siparişiniz ücretsiz olarak başarıyla oluşturuldu.</p>');
-                }
-                
-                $('#payment-success-container').fadeIn();
-                window.scrollTo(0, 0);
-                return;
+            if (!orderResponse || !orderResponse.success) {
+                throw new Error("Sipariş oluşturulamadı.");
             }
+
+            const orderId = orderResponse.orderId;
+            cart = [];
+            localStorage.removeItem('engrare_cart');
+            $('#cart-badge').text(0);
+
+            // Havale durumunda doğrudan sayfa içi başarı kutusunu gösteriyoruz
+            $('.checkout-form-section > :not(#payment-success-container)').hide();
+            $('.checkout-summary').hide();
+            $('.checkout-wrapper').css('grid-template-columns', '1fr');
+
+            $('#success-order-id').text('#' + orderId);
+            $('#success-order-ref').text(orderId);
+
+            // Tutar sunucunun hesapladığı değere göre belirlenir
+            if (Number(orderResponse.totalAmount) === 0) {
+                $('.elegant-iban-card, .elegant-warning-box').hide();
+                $('#payment-success-container > p').first().text('Siparişiniz ücretsiz olarak başarıyla oluşturuldu. Bizi tercih ettiğiniz için teşekkür ederiz.');
+            }
+
+            $('#payment-success-container').fadeIn();
+            window.scrollTo(0, 0);
+            return;
         }
 
         // --- 2. AŞAMA: GERÇEK IYZICO KREDİ KARTI AKIŞI ---
@@ -786,14 +889,17 @@ async function processPayment() {
             renderCheckoutButton(true, 'Ödeme Sayfası Hazırlanıyor...', totalAmount);
             
             const createIyzicoPayment = httpsCallable(functions, 'createIyzicoPayment');
-            const payResult = await createIyzicoPayment({ 
-                orderData: orderData, 
+            const payResult = await createIyzicoPayment({
+                orderData: orderData,
+                discountCode: appliedDiscount ? appliedDiscount.code : null,
                 origin: window.location.origin
             });
-            
-            if (payResult.data && payResult.data.status === 'success' && payResult.data.paymentPageUrl) {
+
+            const paymentPageUrl = payResult.data && payResult.data.paymentPageUrl;
+            // Yalnızca iyzico'nun kendi alan adına yönlendir
+            if (payResult.data.status === 'success' && /^https:\/\/([a-z0-9-]+\.)*iyzipay\.com([/?#]|$)/i.test(paymentPageUrl || '')) {
                 showToast("Ödeme sayfasına aktarılıyorsunuz...", "success");
-                window.location.href = payResult.data.paymentPageUrl;
+                window.location.href = paymentPageUrl;
             } else {
                 throw new Error("Ödeme linki oluşturulamadı.");
             }

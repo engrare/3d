@@ -52,6 +52,47 @@ function fbReady() {
     return _fbPromise;
 }
 
+/* Oturum kalıcı depodan geri yüklenene kadar bekler. SDK yeni indiğinde
+   auth.currentUser henüz null olabilir; bu durumda giriş yapmış kullanıcı
+   misafir sanılıyor, hatta anonim oturumla eziliyordu. */
+async function authReady() {
+    await fbReady();
+    return new Promise((resolve) => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            unsubscribe();
+            resolve(user);
+        });
+    });
+}
+
+/* --- XSS KORUMASI ---
+   Kullanıcının girdiği metinler (sepet, sipariş, adres) HTML'e yazılmadan önce
+   kaçışlanır; stil içine giren renk ve adresler ayrıca doğrulanır. */
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function safeColor(value, fallback) {
+    return /^#[0-9a-fA-F]{6}$/.test(value) ? value : fallback;
+}
+
+/* CSS url(...) ve src içinde güvenle kullanılabilecek adres (tırnak/parantez içermez) */
+function safeUrl(value) {
+    return (typeof value === 'string' && /^[A-Za-z0-9\-._~:/?#@!$&+,=%;]+$/.test(value)) ? value : '';
+}
+
+const MAX_QUANTITY = 999;
+function clampQty(value) {
+    const qty = parseInt(value, 10);
+    if (isNaN(qty) || qty < 1) return 1;
+    return Math.min(qty, MAX_QUANTITY);
+}
+
 let cart = [];
 let currentProduct = null;
 
@@ -99,7 +140,7 @@ const products = [
         previewTextArea: { top: '49.2%', left: '6.5%', width: '86.6%', height: '44.8%' },
         previewLogoArea: { top: '8.6%', left: '2.8%', width: '93.9%', height: '42.0%' },
 		 colors: [
-            { color1: "#FBC02D", color2: "#222222", label1: "Yazı", label2: "Zemin" },
+            { color1: "#FBC02F", color2: "#222222", label1: "Yazı", label2: "Zemin" },
             { color1: "#FFFFFF", color2: "#1976D2", label1: "Yazı", label2: "Zemin" },
             { color1: "#222222", color2: "#FFFFFF", label1: "Yazı", label2: "Zemin" },
             { color1: "#E91E63", color2: "#388E3C", label1: "Yazı", label2: "Zemin" }
@@ -111,19 +152,40 @@ const products = [
         desc: "İhtiyacınıza göre şekillenen profesyonel kartvizitlik.",
         price: 180,
 		isCustomObject: [
-            { objectName: "1 Kartvizit Bölmeli", src: "./content/products/5/preview-1-bolme.png" },
-            { objectName: "2 Kartvizit Bölmeli", src: "./content/products/5/preview-2-bolme.png" },
-            { objectName: "3 Kartvizit Bölmeli", src: "./content/products/5/preview-3-bolme.png" }
+            { 
+                objectName: "1 Kartvizit Bölmeli", 
+                src: "./content/products/5/preview-1-bolme.png",
+                previewSocialLogo1: { top_left_x: '42.0%', top_left_y: '38.0%', top_right_x: '48.0%', top_right_y: '34.0%', bottom_right_x: '48.0%', bottom_right_y: '42.0%', bottom_left_x: '42.0%', bottom_left_y: '46.0%' },
+                previewSocialQR1: { top_left_x: '42.0%', top_left_y: '50.0%', top_right_x: '55.0%', top_right_y: '40.0%', bottom_right_x: '55.0%', bottom_right_y: '60.0%', bottom_left_x: '42.0%', bottom_left_y: '70.0%' },
+                previewSocialLogo2: { top_left_x: '60.0%', top_left_y: '28.0%', top_right_x: '66.0%', top_right_y: '24.0%', bottom_right_x: '66.0%', bottom_right_y: '32.0%', bottom_left_x: '60.0%', bottom_left_y: '36.0%' },
+                previewSocialQR2: { top_left_x: '60.0%', top_left_y: '40.0%', top_right_x: '73.0%', top_right_y: '30.0%', bottom_right_x: '73.0%', bottom_right_y: '50.0%', bottom_left_x: '60.0%', bottom_left_y: '60.0%' }
+            },
+            { 
+                objectName: "2 Kartvizit Bölmeli", 
+                src: "./content/products/5/preview-2-bolme.png",
+                previewSocialLogo1: { top_left_x: '44.0%', top_left_y: '36.0%', top_right_x: '50.0%', top_right_y: '32.0%', bottom_right_x: '50.0%', bottom_right_y: '40.0%', bottom_left_x: '44.0%', bottom_left_y: '44.0%' },
+                previewSocialQR1: { top_left_x: '44.0%', top_left_y: '48.0%', top_right_x: '57.0%', top_right_y: '38.0%', bottom_right_x: '57.0%', bottom_right_y: '58.0%', bottom_left_x: '44.0%', bottom_left_y: '68.0%' },
+                previewSocialLogo2: { top_left_x: '62.0%', top_left_y: '26.0%', top_right_x: '68.0%', top_right_y: '22.0%', bottom_right_x: '68.0%', bottom_right_y: '30.0%', bottom_left_x: '62.0%', bottom_left_y: '34.0%' },
+                previewSocialQR2: { top_left_x: '62.0%', top_left_y: '38.0%', top_right_x: '75.0%', top_right_y: '28.0%', bottom_right_x: '75.0%', bottom_right_y: '48.0%', bottom_left_x: '62.0%', bottom_left_y: '58.0%' }
+            },
+            { 
+                objectName: "3 Kartvizit Bölmeli", 
+                src: "./content/products/5/preview-3-bolme.png",
+                previewSocialLogo1: { top_left_x: '46.0%', top_left_y: '34.0%', top_right_x: '52.0%', top_right_y: '30.0%', bottom_right_x: '52.0%', bottom_right_y: '38.0%', bottom_left_x: '46.0%', bottom_left_y: '42.0%' },
+                previewSocialQR1: { top_left_x: '46.0%', top_left_y: '46.0%', top_right_x: '59.0%', top_right_y: '36.0%', bottom_right_x: '59.0%', bottom_right_y: '56.0%', bottom_left_x: '46.0%', bottom_left_y: '66.0%' },
+                previewSocialLogo2: { top_left_x: '64.0%', top_left_y: '24.0%', top_right_x: '70.0%', top_right_y: '20.0%', bottom_right_x: '70.0%', bottom_right_y: '28.0%', bottom_left_x: '64.0%', bottom_left_y: '32.0%' },
+                previewSocialQR2: { top_left_x: '64.0%', top_left_y: '36.0%', top_right_x: '77.0%', top_right_y: '26.0%', bottom_right_x: '77.0%', bottom_right_y: '46.0%', bottom_left_x: '64.0%', bottom_left_y: '56.0%' }
+            }
         ],
 		isCustomQR:  [
             { QR_Link: "1 Kartvizit Bölmeli", src: "./content/products/5/preview-1-bolme.png" },
             { QR_Link: "2 Kartvizit Bölmeli", src: "./content/products/5/preview-2-bolme.png" }
         ],
 		 colors: [
-            { color1: "#FBC02D", label1: "Arka"},
-            { color1: "#FFFFFF", label1: "Arka"},
-            { color1: "#222222", label1: "Arka"},
-            { color1: "#E91E63", label1: "Arka"}
+            { color1: "#FBC02D", color2: "#222222", label1: "Yazı", label2: "Zemin" },
+            { color1: "#FFFFFF", color2: "#1976D2", label1: "Yazı", label2: "Zemin" },
+            { color1: "#222222", color2: "#FFFFFF", label1: "Yazı", label2: "Zemin" },
+            { color1: "#E91E63", color2: "#388E3C", label1: "Yazı", label2: "Zemin" }
         ],
         images: [
             { src: "./content/products/5/1.jpg" },
@@ -238,11 +300,9 @@ function cropTransparentSpace(dataUrl, callback) {
 }
 
 $(document).ready(function() {
-    // Alt menü tıklama olayları
-    $(document).on('click', '#mobile-nav-login, #mobile-nav-profile', function() {
-        const target = $(this).attr('data-target');
-        if (target) switchPage(target);
-    });
+    // Not: Alt menü tıklamaları aşağıdaki '.bottom-nav-item' işleyicisiyle yönetiliyor.
+    // Burada ikinci bir işleyici olması sayfa geçişini iki kez tetikleyip geçmişe
+    // (history) çift kayıt ekliyordu.
 
     $('#upload-logo-trigger').on('click', function() {
         $('#custom-logo-input').click();
@@ -363,6 +423,14 @@ $(document).ready(function() {
 
     // Firebase Auth İzleyici — SDK indikten sonra bağlanır (ilk çizimi bloklamaz)
     fbReady().then(() => onAuthStateChanged(auth, (user) => {
+        // Önceki oturumun canlı dinleyicilerini kapat ve ekranda kalan verisini temizle
+        stopUserDataListeners();
+
+        const isRegistered = !!user && !user.isAnonymous;
+        if (!isRegistered && activePageId === '#dashboard-page') {
+            switchPage('#login-page', false);
+        }
+
         if (user) {
             if (user.isAnonymous) {
                 $('#nav-login-btn').css('display', 'flex');
@@ -407,21 +475,16 @@ $(document).ready(function() {
     // Çıkış Yap
     $('#action-logout').click(async () => {
         await fbReady();
+        switchPage('#products-page');
         signOut(auth).then(() => {
-            switchPage('#products-page');
             showToast("Çıkış yapıldı.", "success");
-        });
+        }).catch(() => showToast("Çıkış yapılamadı.", "error"));
     });
 
     // Checkout Modal Devam
     $('#btn-checkout-start').click(async function() {
         if(cart.length === 0) return showToast("Sepetiniz boş.", "error");
-        await fbReady();
-        if (auth.currentUser && !auth.currentUser.isAnonymous) {
-            window.location.href = "./payment";
-        } else {
-            $('#auth-decision-modal').addClass('open');
-        }
+        window.location.href = "./payment";
     });
 
     $('#modal-btn-login').click(() => {
@@ -430,9 +493,14 @@ $(document).ready(function() {
     });
 
     $('#modal-btn-guest').click(async () => {
-        await fbReady();
-        if (!auth.currentUser) await signInAnonymously(auth);
-        window.location.href = "./payment";
+        try {
+            const user = await authReady();
+            if (!user) await signInAnonymously(auth);
+            window.location.href = "./payment";
+        } catch (error) {
+            console.error("Misafir oturumu açılamadı:", error);
+            showToast("Misafir oturumu başlatılamadı. Lütfen tekrar deneyin.", "error");
+        }
     });
 
     // Modal Kapatma Mantığı (Dışa Tıklama / Tıklayıp Sürükleyip Bırakınca Yanlışlıkla Kapanmama)
@@ -490,8 +558,11 @@ $(document).ready(function() {
             const idx = $(this).val();
             const obj = currentProduct.isCustomObject[idx];
             if (obj) {
+                const textColor = $('#custom-text-color').val() || '#FBC02D';
+                const objColor = $('#custom-obj-color').val() || '#222222';
+                $('.preview-object-color-layer').css('background-color', objColor);
                 if (window.applyFilterToPreview) {
-                    window.applyFilterToPreview(currentProduct.id, null, obj.src);
+                    window.applyFilterToPreview(currentProduct.id, textColor, obj.src);
                 } else {
                     $('.preview-overlay-img').attr('src', obj.src);
                 }
@@ -529,9 +600,8 @@ $(document).ready(function() {
     // Sepet İçi Düzenleme (Adet / Yazı - Canlı 2D Güncelleme)
     $(document).on('change', '.cart-qty-input', function() {
         const index = $(this).data('index');
-        let newQty = parseInt($(this).val());
-        if(newQty < 1 || isNaN(newQty)) newQty = 1;
-        cart[index].quantity = newQty;
+        if (!cart[index]) return;
+        cart[index].quantity = clampQty($(this).val());
         saveCart();
         renderCart();
     });
@@ -582,14 +652,21 @@ $(document).ready(function() {
         
         const userId = auth.currentUser.uid;
         const addrId = $('#addr-id').val() || Date.now().toString();
-        
+
+        const fullname = $('#addr-fullname').val().trim();
+        const nameParts = fullname.split(/\s+/);
+        const details = $('#addr-details').val().trim();
+        // Ödeme sayfası da bu adresi okuyabilsin diye iki formatın alanları birlikte yazılıyor
         const addrData = {
             title: $('#addr-title').val().trim(),
-            fullname: $('#addr-fullname').val().trim(),
+            fullname: fullname,
+            name: nameParts[0] || '',
+            surname: nameParts.slice(1).join(' '),
             phone: $('#addr-phone').val().trim(),
             city: $('#addr-city').val().trim(),
             district: $('#addr-district').val().trim(),
-            details: $('#addr-details').val().trim()
+            details: details,
+            address: details
         };
 
         try {
@@ -626,7 +703,7 @@ $(document).ready(function() {
         $('#address-modal-title').text('Adresi Düzenle');
         $('#addr-id').val(addrId);
         $('#addr-title').val(addr.title || '');
-        $('#addr-fullname').val(addr.fullname || '');
+        $('#addr-fullname').val(addr.fullname || [addr.name, addr.surname].filter(Boolean).join(' '));
         $('#addr-phone').val(addr.phone || '');
         $('#addr-city').val(addr.city || '');
         $('#addr-district').val(addr.district || '');
@@ -639,19 +716,15 @@ $(document).ready(function() {
 
     // Detay Sayfası Miktar Artırma/Azaltma ve Manuel Giriş
     $('#quantity-input').on('change', function() {
-        let val = parseInt($(this).val());
-        if (val < 1 || isNaN(val)) {
-            val = 1;
-        }
-        $(this).val(val);
+        $(this).val(clampQty($(this).val()));
     });
     $('#detail-qty-minus').click(function() {
-        let val = parseInt($('#quantity-input').val()) || 1;
+        let val = clampQty($('#quantity-input').val());
         if (val > 1) $('#quantity-input').val(val - 1);
     });
     $('#detail-qty-plus').click(function() {
-        let val = parseInt($('#quantity-input').val()) || 1;
-        $('#quantity-input').val(val + 1);
+        let val = clampQty($('#quantity-input').val());
+        $('#quantity-input').val(Math.min(val + 1, MAX_QUANTITY));
     });
 
     // --- GİRİŞ YAP İŞLEMİ ---
@@ -945,7 +1018,13 @@ function resetCarouselState() {
     $('#carousel-next').css({ 'opacity': hasMultiple ? '1' : '0.3', 'pointer-events': hasMultiple ? 'auto' : 'none' });
 }
 
+let activePageId = '#products-page';
+let pageSwitchToken = 0;
+
 function switchPage(targetId, pushState = true) {
+    const $target = $(targetId);
+    if (!$target.length) return;
+
     // Detay sayfasından çıkarken karuseli başa sar
     if (targetId !== '#product-detail-page') {
         const $c = $('#detail-main-carousel');
@@ -957,9 +1036,14 @@ function switchPage(targetId, pushState = true) {
     }
 
     const $current = $('.page.active');
-    const $target = $(targetId);
-    
+
     if ($current.length && $current[0] === $target[0]) return;
+
+    activePageId = targetId;
+    // Hızlı art arda tıklamalarda eski geçişlerin geri çağrıları iptal edilir;
+    // aksi halde iki sayfa aynı anda görünür kalabiliyordu.
+    const token = ++pageSwitchToken;
+    $('.page').not($current).not($target).stop(true, false).removeClass('active').css({ display: '', opacity: '' });
 
     $('.nav-menu li').removeClass('active');
     $(`.nav-menu li[data-target="${targetId}"]`).addClass('active');
@@ -973,13 +1057,15 @@ function switchPage(targetId, pushState = true) {
 
     if ($current.length) {
         $current.fadeOut(120, function() {
+            if (token !== pageSwitchToken) return;
             $current.removeClass('active');
             $current.css('display', ''); // clean up
-            
+
             window.scrollTo(0, 0);
             if(typeof updateMobileHeader === 'function') updateMobileHeader(targetId);
-            
+
             $target.fadeIn(120, function() {
+                if (token !== pageSwitchToken) return;
                 $target.addClass('active');
                 $target.css('display', ''); // clean up inline block, CSS handles it
                 if (targetId === '#product-detail-page') {
@@ -1034,6 +1120,116 @@ function renderProducts() {
     }).join('');
     $('#products-grid-container').html(html);
 }
+function applyPerspectiveTransform(el, coords, w, h) {
+    if (!el || !coords) {
+        if(el) { el.style.transform = ''; el.style.display = 'none'; }
+        return;
+    }
+    const x0 = (parseFloat(coords.top_left_x) / 100) * w;
+    const y0 = (parseFloat(coords.top_left_y) / 100) * h;
+    const x1 = (parseFloat(coords.top_right_x) / 100) * w;
+    const y1 = (parseFloat(coords.top_right_y) / 100) * h;
+    const x2 = (parseFloat(coords.bottom_right_x) / 100) * w;
+    const y2 = (parseFloat(coords.bottom_right_y) / 100) * h;
+    const x3 = (parseFloat(coords.bottom_left_x) / 100) * w;
+    const y3 = (parseFloat(coords.bottom_left_y) / 100) * h;
+
+    let dx1 = x1 - x2, dy1 = y1 - y2;
+    let dx2 = x3 - x2, dy2 = y3 - y2;
+    let dx3 = x0 - x1 + x2 - x3;
+    let dy3 = y0 - y1 + y2 - y3;
+
+    let m11, m12, m13, m21, m22, m23, m31, m32, m33;
+    if (Math.abs(dx3) < 0.001 && Math.abs(dy3) < 0.001) {
+        m11 = x1 - x0; m21 = x2 - x1; m31 = x0;
+        m12 = y1 - y0; m22 = y2 - y1; m32 = y0;
+        m13 = 0;       m23 = 0;       m33 = 1;
+    } else {
+        let det1 = dx1 * dy2 - dy1 * dx2;
+        if (det1 === 0) return; 
+        let a13 = (dx3 * dy2 - dy3 * dx2) / det1;
+        let a23 = (dx1 * dy3 - dy1 * dx3) / det1;
+
+        m11 = x1 - x0 + a13 * x1; m21 = x3 - x0 + a23 * x3; m31 = x0;
+        m12 = y1 - y0 + a13 * y1; m22 = y3 - y0 + a23 * y3; m32 = y0;
+        m13 = a13;                m23 = a23;                m33 = 1;
+    }
+
+    m11 /= w; m12 /= w; m13 /= w;
+    m21 /= h; m22 /= h; m23 /= h;
+
+    const mat = [ m11, m12, 0, m13, m21, m22, 0, m23, 0, 0, 1, 0, m31, m32, 0, m33 ];
+    el.style.transformOrigin = '0 0';
+    el.style.transform = `matrix3d(${mat.join(',')})`;
+    el.style.display = 'block';
+}
+
+window.updateSocialPreview = function() {
+    if (!currentProduct || !currentProduct.isCustomObject) return;
+    const objIndex = parseInt($('#custom-object-input').val() || '0');
+    const obj = currentProduct.isCustomObject[objIndex];
+    if (!obj || (!obj.previewSocialLogo1 && !obj.previewSocialLogo2)) return;
+
+    const $box = $('#advanced-2d-preview-box');
+    const w = $box.width();
+    const h = $box.height();
+    const color = $('#custom-text-color').val() || '#000000';
+
+    [1, 2].forEach(i => {
+        const plat = $(`#custom-social-platform-${i}`).val();
+        const link = $(`#custom-social-link-${i}`).val().trim();
+        const qrArea = document.getElementById(`preview-social-qr-area-${i}`);
+        const logoArea = document.getElementById(`preview-social-logo-area-${i}`);
+        const coordsQR = obj[`previewSocialQR${i}`];
+        const coordsLogo = obj[`previewSocialLogo${i}`];
+
+        if (link && coordsQR) {
+            if (typeof QRious !== 'undefined') {
+                const qr = new QRious({
+                    value: link,
+                    size: 300,
+                    foreground: color,
+                    background: 'transparent'
+                });
+                $(`#preview-social-qr-img-${i}`).attr('src', qr.toDataURL());
+            }
+            applyPerspectiveTransform(qrArea, coordsQR, w, h);
+        } else if (qrArea) {
+            qrArea.style.display = 'none';
+        }
+
+        if (coordsLogo && logoArea) {
+            let logoUrl = `./content/social/${plat}.png`;
+            $(`#preview-social-logo-img-${i}`).attr('src', logoUrl);
+            applyPerspectiveTransform(logoArea, coordsLogo, w, h);
+        }
+    });
+};
+
+$(document).ready(function() {
+    $(document).on('click', '.social-icon-btn', function() {
+        const target = $(this).closest('.social-icon-row').data('target');
+        const plat = $(this).data('plat');
+        $(this).siblings().removeClass('active');
+        $(this).addClass('active');
+        $(`#custom-social-platform-${target}`).val(plat);
+        if(window.updateSocialPreview) window.updateSocialPreview();
+    });
+
+    $(document).on('input change', '#custom-social-link-1, #custom-social-link-2', function() {
+        if(window.updateSocialPreview) window.updateSocialPreview();
+    });
+    
+    $(document).on('change', '#custom-object-input', function() {
+        if(window.updateSocialPreview) window.updateSocialPreview();
+    });
+    
+    $(window).on('resize', function() {
+        if(window.updateSocialPreview && $('#product-detail-page').hasClass('active')) {
+            window.updateSocialPreview();
+        }
+    });
+});
 
 window.openProductDetail = function(id, pushHistory = true) {
     const p = products.find(x => x.id === id);
@@ -1247,12 +1443,28 @@ window.openProductDetail = function(id, pushHistory = true) {
         $('#customization-text-group').hide();
         if (p.allowLogo) $('#customization-logo-group').show();
         else $('#customization-logo-group').hide();
+        
+        if (p.isCustomObject && p.isCustomObject[0] && p.isCustomObject[0].previewSocialLogo1) {
+            $('#customization-social-group').show();
+            $('#custom-social-platform-1').val('instagram');
+            $('#custom-social-link-1').val('');
+            $('#custom-social-platform-2').val('twitter');
+            $('#custom-social-link-2').val('');
+            $('.social-icon-row[data-target="1"] .social-icon-btn').removeClass('active');
+            $('.social-icon-row[data-target="1"] .social-icon-btn[data-plat="instagram"]').addClass('active');
+            $('.social-icon-row[data-target="2"] .social-icon-btn').removeClass('active');
+            $('.social-icon-row[data-target="2"] .social-icon-btn[data-plat="twitter"]').addClass('active');
+        } else {
+            $('#customization-social-group').hide();
+        }
     } else if (p.disableTextInput) {
         $('#customization-object-group').hide();
         $('#customization-text-group').hide();
         $('#customization-logo-group').hide();
+        $('#customization-social-group').hide();
     } else if (p.isCustomText === false) {
         $('#customization-object-group').hide();
+        $('#customization-social-group').hide();
         // isCustomText: false — yazı girişini gizle
         $('#customization-text-group').hide();
         if (p.allowLogo) {
@@ -1263,6 +1475,7 @@ window.openProductDetail = function(id, pushHistory = true) {
         // 2D önizlemede yazıyı gizle
         $('.preview-dynamic-text').text('');
     } else {
+        $('#customization-social-group').hide();
         $('#customization-object-group').hide();
         $('#customization-text-group').show();
 
@@ -1290,11 +1503,8 @@ window.openProductDetail = function(id, pushHistory = true) {
             });
         } else {
             $textInput.attr('type', 'text');
-            if (p.maxlength) {
-                $textInput.attr('maxlength', p.maxlength);
-            } else {
-                $textInput.removeAttr('maxlength');
-            }
+            // Sunucu da metni 100 karakterle sınırlıyor
+            $textInput.attr('maxlength', p.maxlength || 100);
         }
     }
     
@@ -1307,7 +1517,14 @@ window.openProductDetail = function(id, pushHistory = true) {
     $('#custom-obj-color').val('#222222');
     
     // Temizle Logo (Varsayılan yüklemesi aşağıda yapılacak)
+    // Dosya girişi sıfırlandığı için yüklenen logo balonu ve seçili logo da sıfırlanmalı;
+    // aksi halde sepete dosya yerine megabaytlarca base64 veri yazılıyordu.
     $('#custom-logo-input').val('');
+    $('#custom-uploaded-bubble').hide().removeAttr('data-src').removeClass('active');
+    $('#custom-uploaded-img').attr('src', '');
+    $('.logo-bubble').css('border-color', 'var(--border)').removeClass('active');
+    $('.default-logo-bubble').first().css('border-color', 'var(--primary)').addClass('active');
+    $('.preview-dynamic-logo').attr('data-active-logo', './content/engrare_logo_elegant.svg');
     
     
     // 2D Preview Box Reset
@@ -1367,18 +1584,33 @@ window.openProductDetail = function(id, pushHistory = true) {
         // Boyutlandırma tetiklemesini containerlar görünür olduktan SONRA yap ki tarayıcı mask-size'ı doğru hesaplasın.
         setTimeout(() => { if(typeof window.fitTextToContainer === 'function') window.fitTextToContainer(); }, 10);
         
-        $('.preview-object-color-layer').css('background-color', '#222222');
+        const initialC1 = (p.colors && p.colors[0]) ? p.colors[0].color1 : '#FBC02D';
+        const initialC2 = (p.colors && p.colors[0] && p.colors[0].color2) ? p.colors[0].color2 : initialC1;
+        
+        $('#custom-text-color').val(initialC1);
+        $('#custom-obj-color').val(initialC2);
+        $('.preview-object-color-layer').css('background-color', initialC2);
+
         if (p.isCustomObject) {
+            const objObj = p.isCustomObject[0] || {};
+            const objSrc = objObj.src ? objObj.src : null;
             if (window.applyFilterToPreview) {
-                window.applyFilterToPreview(p.id, null, p.isCustomObject[0].src);
-            } else {
-                $('.preview-overlay-img').attr('src', p.isCustomObject[0].src).show();
+                window.applyFilterToPreview(p.id, initialC1, objSrc);
+            } else if (objSrc) {
+                $('.preview-overlay-img').attr('src', objSrc).show();
             }
-            $('.preview-object-color-layer').css('background-color', $('#custom-text-color').val());
-        } else if (window.applyFilterToPreview) {
-            window.applyFilterToPreview(p.id, '#FBC02D'); // Varsayılan metin rengiyle filtrele
+            if(objObj.previewSocialLogo1) {
+                setTimeout(() => { if(typeof window.updateSocialPreview === 'function') window.updateSocialPreview(); }, 100);
+            } else {
+                $('.preview-social-qr-area, .preview-social-logo-area').hide();
+            }
         } else {
-            $('.preview-overlay-img').attr('src', `./content/products/${p.id}/preview.png`).show();
+            $('.preview-social-qr-area, .preview-social-logo-area').hide();
+            if (window.applyFilterToPreview) {
+                window.applyFilterToPreview(p.id, initialC1);
+            } else {
+                $('.preview-overlay-img').attr('src', `./content/products/${p.id}/preview.png`).show();
+            }
         }
     }
     
@@ -1418,9 +1650,9 @@ window.changeMainImage = function(idx) {
 
 async function addToCart() {
     if(!currentProduct) return;
-    
+
     const text = $('#custom-text-input').val().trim();
-    const qty = parseInt($('#quantity-input').val()) || 1;
+    const qty = clampQty($('#quantity-input').val());
     const font = "'AGENCYB', sans-serif";
     const textColor = $('#custom-text-color').val();
     const objColor = $('#custom-obj-color').val();
@@ -1472,7 +1704,11 @@ async function addToCart() {
         quantity: qty,
         textSize: textSize,
         textAlign: textAlign,
-        selectedObject: selectedObjectName
+        selectedObject: selectedObjectName,
+        socialPlatform1: $('#customization-social-group').is(':visible') ? $('#custom-social-platform-1').val() : null,
+        socialLink1: $('#customization-social-group').is(':visible') ? $('#custom-social-link-1').val().trim() : null,
+        socialPlatform2: $('#customization-social-group').is(':visible') ? $('#custom-social-platform-2').val() : null,
+        socialLink2: $('#customization-social-group').is(':visible') ? $('#custom-social-link-2').val().trim() : null
     };
     
     const activeLogoSrc = $('#preview-dynamic-logo').attr('data-active-logo');
@@ -1482,11 +1718,13 @@ async function addToCart() {
             const $btn = $('#add-to-cart');
             $btn.prop('disabled', true).css('opacity', '0.7');
             try {
-                await fbReady();
-                const ext = logoFile.name.split('.').pop();
+                // Storage kuralları oturum ister: giriş yoksa misafir (anonim) oturum aç
+                let user = await authReady();
+                if (!user) user = (await signInAnonymously(auth)).user;
+                const ext = (logoFile.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '');
                 const fileName = `logos/cart_${item.id}_${Math.random().toString(36).substring(2)}.${ext}`;
                 const sRef = storageRef(storage, fileName);
-                await uploadBytes(sRef, logoFile);
+                await uploadBytes(sRef, logoFile, { customMetadata: { owner: user.uid } });
                 item.logoUrl = await getDownloadURL(sRef);
                 item.logoStoragePath = fileName;
             } catch (error) {
@@ -1505,19 +1743,28 @@ async function addToCart() {
 }
 
 function saveCart() {
-    localStorage.setItem('engrare_cart', JSON.stringify(cart));
+    try {
+        localStorage.setItem('engrare_cart', JSON.stringify(cart));
+    } catch (e) {
+        console.error("Sepet kaydedilemedi:", e);
+        showToast("Sepet kaydedilemedi. Tarayıcı depolama alanı dolu olabilir.", "error");
+    }
     $('#cart-badge').text(cart.length);
     $('#mobile-cart-badge').text(cart.length);
 }
 
 function loadCart() {
-    const stored = localStorage.getItem('engrare_cart');
-    if (stored) {
-        cart = JSON.parse(stored);
-        $('#cart-badge').text(cart.length);
-        $('#mobile-cart-badge').text(cart.length);
-        renderCart();
+    let stored = null;
+    try {
+        stored = JSON.parse(localStorage.getItem('engrare_cart') || 'null');
+    } catch (e) {
+        // Bozuk sepet verisi tüm sayfayı çökertmesin
+        console.error("Sepet verisi okunamadı, sıfırlanıyor:", e);
     }
+    cart = Array.isArray(stored) ? stored.filter(item => item && typeof item === 'object') : [];
+    $('#cart-badge').text(cart.length);
+    $('#mobile-cart-badge').text(cart.length);
+    renderCart();
 }
 
 /* Sepet ve sipariş detayındaki 2D kutunun en-boy oranı (iki yerde aynıydı) */
@@ -1548,6 +1795,7 @@ const ORDER_STATUS_MAP = {
     'pending_payment': { text: 'Ödeme Bekliyor', icon: 'fa-solid fa-circle-exclamation', color: '#EF4444', bg: '#FEE2E2' },
     'Ödeme Bekliyor': { text: 'Ödeme Bekliyor', icon: 'fa-solid fa-circle-exclamation', color: '#EF4444', bg: '#FEE2E2' },
     'paid': { text: 'Ödendi', icon: 'fa-solid fa-sack-dollar', color: '#166534', bg: '#DCFCE7' },
+    'payment_review': { text: 'Ödeme İnceleniyor', icon: 'fa-solid fa-magnifying-glass-dollar', color: '#92400E', bg: '#FEF3C7' },
     'Ödendi': { text: 'Ödendi', icon: 'fa-solid fa-sack-dollar', color: '#166534', bg: '#DCFCE7' },
     'Hazirlaniyor': { text: 'Hazırlanıyor', icon: 'fa-solid fa-clock', color: '#92400E', bg: '#FEF3C7' },
     'Hazırlanıyor': { text: 'Hazırlanıyor', icon: 'fa-solid fa-clock', color: '#92400E', bg: '#FEF3C7' },
@@ -1581,8 +1829,8 @@ function renderCart() {
     if(cart.length === 0) {
         $area.html('<div style="text-align:center; padding:35px 20px; color:var(--text-muted); background: white; border-radius: 14px; border: 1px solid var(--border); font-size: 1rem;"><i class="fa-solid fa-cart-shopping" style="font-size: 2rem; color: #cbd5e1; margin-bottom: 12px; display: block;"></i>Sepetinizde ürün bulunmuyor.</div>');
         $('#val-subtotal').text("₺0.00");
-        $('#shipping-display').text("₺50.00");
-        $('#val-total').text("₺50.00"); 
+        $('#shipping-display').text("₺0.00");
+        $('#val-total').text("₺0.00");
         $('#free-shipping-progress-container').empty();
         return;
     }
@@ -1590,8 +1838,17 @@ function renderCart() {
     let sub = 0;
     const rows = [];
     cart.forEach((item, index) => {
-        sub += item.price * item.quantity;
         const p = products.find(prod => prod.id === item.productId);
+        // Fiyat her zaman güncel katalogdan; eski/değiştirilmiş sepet verisine güvenilmez
+        if (p) { item.price = p.price; item.name = p.name; }
+        item.quantity = clampQty(item.quantity);
+        sub += (Number(item.price) || 0) * item.quantity;
+
+        const textColor = safeColor(item.textColor, '#FBC02D');
+        const objColor = safeColor(item.objColor, textColor);
+        const logoUrl = safeUrl(item.logoUrl);
+        const itemName = escapeHtml(item.name);
+        const customText = escapeHtml(item.customText || '');
 
         const { w: innerW, h: innerH } = previewBoxSize(previewAspectFor(p, item), 112, 26);
 
@@ -1605,13 +1862,13 @@ function renderCart() {
             p.colors.forEach(c => {
                 const color1 = c.color1;
                 const color2 = c.color2 || c.color1;
-                const isSingle = !c.color2 || c.color1 === c.color2 || p.isCustomObject;
+                const isSingle = !c.color2 || c.color1 === c.color2;
                 const bg = isSingle ? color1 : `linear-gradient(135deg, ${color1} 50%, ${color2} 50%)`;
                 const titleText = isSingle ? (c.label1 || 'Renk') : `${c.label1 || 'Yazı'} / ${c.label2 || 'Zemin'}`;
                 swatches += `<div class="pla-swatch dual-swatch" data-color1="${color1}" data-color2="${color2}" data-cart-index="${index}" style="background: ${bg}; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border);" title="${titleText}"></div>`;
             });
-            const isCurrentSingle = !item.objColor || item.textColor === item.objColor || p.isCustomObject;
-            const currentBg = isCurrentSingle ? (item.objColor || item.textColor || '#222222') : `linear-gradient(135deg, ${item.textColor} 50%, ${item.objColor} 50%)`;
+            const isCurrentSingle = textColor === objColor;
+            const currentBg = isCurrentSingle ? objColor : `linear-gradient(135deg, ${textColor} 50%, ${objColor} 50%)`;
             colorDropdownHtml = `
                 <div style="position: relative;">
                     <div class="pla-color-select" data-target="cart-dropdown-color-${index}" style="width: 28px; height: 28px; border-radius: 50%; background: ${currentBg}; border: 2px solid var(--border); cursor: pointer;" title="Renk Değiştir"></div>
@@ -1630,7 +1887,7 @@ function renderCart() {
                     <div class="cart-2d-box">
                         <div class="cart-preview-inner" id="cart-preview-inner-${index}" style="position: relative; overflow: hidden; border-radius: 4px; width: ${innerW}px; height: ${innerH}px; background: #ffffff;">
                             <!-- Zemin Renk Katmanı -->
-                            <div class="cart-obj-layer" id="cart-obj-layer-${index}" style="position: absolute; inset: 0; background-color: ${item.objColor || item.textColor || '#222222'}; z-index: 1;"></div>
+                            <div class="cart-obj-layer" id="cart-obj-layer-${index}" style="position: absolute; inset: 0; background-color: ${objColor}; z-index: 1;"></div>
                             
                             <!-- Kırpılmış PNG Görseli -->
                             <img class="cart-overlay-img" id="cart-overlay-img-${index}" src="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 2; display: none;">
@@ -1638,14 +1895,34 @@ function renderCart() {
                             <!-- Canlı Metin Alanı -->
                             ${isCustomObj ? '' : `
                             <div class="cart-printable-area" id="cart-print-area-${index}" style="position: absolute; top: ${textArea.top}; left: ${textArea.left}; width: ${textArea.width}; height: ${textArea.height}; z-index: 3; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                                <span class="cart-dynamic-text" id="cart-dynamic-text-${index}" style="color: ${item.textColor || '#FBC02D'}; font-family: ${item.font || "'AGENCYB', sans-serif"}; font-size: 14px; text-align: center; width: auto; word-break: break-word; display: inline-block; line-height: 1;">${item.customText || ''}</span>
+                                <span class="cart-dynamic-text" id="cart-dynamic-text-${index}" style="color: ${textColor}; font-family: 'AGENCYB', sans-serif; font-size: 14px; text-align: center; width: auto; word-break: break-word; display: inline-block; line-height: 1;">${customText}</span>
                             </div>
                             `}
-                            
+
                             <!-- Canlı Logo Alanı -->
-                            ${(item.logoUrl && !isCustomObj) ? `
+                            ${(logoUrl && !isCustomObj) ? `
                             <div class="cart-logo-area" id="cart-logo-area-${index}" style="position: absolute; top: ${logoArea.top}; left: ${logoArea.left}; width: ${logoArea.width}; height: ${logoArea.height}; z-index: 3; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                                <div class="cart-dynamic-logo" id="cart-dynamic-logo-${index}" style="width: 100%; height: 100%; mask-image: url(${item.logoUrl}); -webkit-mask-image: url(${item.logoUrl}); mask-size: contain; -webkit-mask-size: contain; mask-repeat: no-repeat; -webkit-mask-repeat: no-repeat; mask-position: center; -webkit-mask-position: center; background-color: ${item.textColor || '#FBC02D'};"></div>
+                                <div class="cart-dynamic-logo" id="cart-dynamic-logo-${index}" style="width: 100%; height: 100%; mask-image: url(${logoUrl}); -webkit-mask-image: url(${logoUrl}); mask-size: contain; -webkit-mask-size: contain; mask-repeat: no-repeat; -webkit-mask-repeat: no-repeat; mask-position: center; -webkit-mask-position: center; background-color: ${textColor};"></div>
+                            </div>
+                            ` : ''}
+                            
+                            <!-- Canlı Sosyal Medya QR ve Logo Alanı 1 -->
+                            ${(isCustomObj && item.socialPlatform1) ? `
+                            <div class="cart-social-qr-area" id="cart-social-qr-area-1-${index}" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 3; display: none; transform-origin: 0 0;">
+                                <img id="cart-social-qr-img-1-${index}" src="" style="width:100%; height:100%; object-fit:fill;">
+                            </div>
+                            <div class="cart-social-logo-area" id="cart-social-logo-area-1-${index}" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 3; display: none; transform-origin: 0 0;">
+                                <img id="cart-social-logo-img-1-${index}" src="" style="width:100%; height:100%; object-fit:contain;" onerror="this.style.visibility='hidden'" onload="this.style.visibility='visible'">
+                            </div>
+                            ` : ''}
+                            
+                            <!-- Canlı Sosyal Medya QR ve Logo Alanı 2 -->
+                            ${(isCustomObj && item.socialPlatform2) ? `
+                            <div class="cart-social-qr-area" id="cart-social-qr-area-2-${index}" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 3; display: none; transform-origin: 0 0;">
+                                <img id="cart-social-qr-img-2-${index}" src="" style="width:100%; height:100%; object-fit:fill;">
+                            </div>
+                            <div class="cart-social-logo-area" id="cart-social-logo-area-2-${index}" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 3; display: none; transform-origin: 0 0;">
+                                <img id="cart-social-logo-img-2-${index}" src="" style="width:100%; height:100%; object-fit:contain;" onerror="this.style.visibility='hidden'" onload="this.style.visibility='visible'">
                             </div>
                             ` : ''}
                         </div>
@@ -1656,7 +1933,9 @@ function renderCart() {
                         <!-- Üst Satır: Başlık & Fiyat -->
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
                             <div>
-                                <div style="font-weight:700; font-size: 1.02rem; color: var(--primary); line-height: 1.3;">${item.name}</div>
+                                <div style="font-weight:700; font-size: 1.02rem; color: var(--primary); line-height: 1.3;">${itemName}</div>
+                                ${item.socialPlatform1 ? `<div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 3px;">1. Platform: <span style="font-weight: 600; color: var(--text-main); text-transform: capitalize;">${escapeHtml(item.socialPlatform1)}</span> (${escapeHtml(item.socialLink1 || '')})</div>` : ''}
+                                ${item.socialPlatform2 ? `<div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">2. Platform: <span style="font-weight: 600; color: var(--text-main); text-transform: capitalize;">${escapeHtml(item.socialPlatform2)}</span> (${escapeHtml(item.socialLink2 || '')})</div>` : ''}
                             </div>
                             <span style="font-weight:800; font-size: 1.15rem; color:var(--primary); white-space: nowrap;">₺${(item.price * item.quantity).toFixed(2)}</span>
                         </div>
@@ -1677,7 +1956,7 @@ function renderCart() {
                         <div style="width: 100%;">
                             <div style="position: relative; width: 100%;">
                                 <i class="fa-solid fa-pen-clip" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.8rem;"></i>
-                                <input type="text" class="cart-text-input" data-index="${index}" value="${item.customText}" placeholder="Ürün üzerine yazılacak metin..." style="font-family: ${item.font || 'inherit'}; width: 100%; padding: 7px 10px 7px 30px; font-size: 0.88rem; border: 1px solid var(--border); border-radius: 8px; background: #F8FAFC; color: var(--text-main); outline: none; transition: 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='var(--accent)'; this.style.background='#fff';" onblur="this.style.borderColor='var(--border)'; this.style.background='#F8FAFC';">
+                                <input type="text" class="cart-text-input" data-index="${index}" value="${customText}" maxlength="100" placeholder="Ürün üzerine yazılacak metin..." style="font-family: 'AGENCYB', sans-serif; width: 100%; padding: 7px 10px 7px 30px; font-size: 0.88rem; border: 1px solid var(--border); border-radius: 8px; background: #F8FAFC; color: var(--text-main); outline: none; transition: 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='var(--accent)'; this.style.background='#fff';" onblur="this.style.borderColor='var(--border)'; this.style.background='#F8FAFC';">
                             </div>
                         </div>
                         `}
@@ -1776,17 +2055,53 @@ window.renderCartItemPreview = function(index) {
 
     let src = `./content/products/${item.productId}/preview.png`;
     let isCustom = false;
+    let customObj = null;
     if (p.isCustomObject) {
-        const obj = p.isCustomObject.find(o => o.objectName === item.selectedObject) || p.isCustomObject[0];
-        if (obj) src = obj.src;
+        customObj = p.isCustomObject.find(o => o.objectName === item.selectedObject) || p.isCustomObject[0];
+        if (customObj) src = customObj.src;
         isCustom = true;
     }
 
-    getPreviewImage(src, isCustom ? null : window.hexToRgb(item.textColor || '#FBC02D'), function(url, aspect, status) {
+    getPreviewImage(src, window.hexToRgb(item.textColor || '#FBC02D'), function(url, aspect, status) {
+        // Görsel hazırlanırken sepet değiştiyse (silme/yeniden çizim) yanlış satıra yazma
+        if (cart[index] !== item) return;
         $(`#cart-overlay-img-${index}`).attr('src', status === 'ok' ? url : src).show();
         if (status !== 'error') {
             setTimeout(() => {
+                if (cart[index] !== item) return;
                 if (typeof window.fitCartItemText === 'function') window.fitCartItemText(index);
+
+                // Add social perspective updates if it's a social item
+                if (isCustom && (item.socialPlatform1 || item.socialPlatform2) && customObj) {
+                    const box = document.getElementById(`cart-preview-inner-${index}`);
+                    if (!box) return;
+                    const w = box.offsetWidth;
+                    const h = box.offsetHeight;
+                    
+                    [1, 2].forEach(i => {
+                        const plat = item[`socialPlatform${i}`];
+                        const link = item[`socialLink${i}`];
+                        const coordsQR = customObj[`previewSocialQR${i}`];
+                        const coordsLogo = customObj[`previewSocialLogo${i}`];
+                        
+                        if (link && coordsQR && typeof QRious !== 'undefined') {
+                            const qr = new QRious({
+                                value: link,
+                                size: 150,
+                                foreground: item.textColor || '#000000',
+                                background: 'transparent'
+                            });
+                            $(`#cart-social-qr-img-${i}-${index}`).attr('src', qr.toDataURL());
+                            applyPerspectiveTransform(document.getElementById(`cart-social-qr-area-${i}-${index}`), coordsQR, w, h);
+                        }
+                        
+                        if (plat && coordsLogo) {
+                            const logoUrl = `./content/social/${plat}.png`;
+                            $(`#cart-social-logo-img-${i}-${index}`).attr('src', logoUrl);
+                            applyPerspectiveTransform(document.getElementById(`cart-social-logo-area-${i}-${index}`), coordsLogo, w, h);
+                        }
+                    });
+                }
             }, 30);
         }
     });
@@ -1815,7 +2130,8 @@ function showToast(message, type = "info") {
     const $container = $('#toast-container');
     const id = Date.now();
     const icon = type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check';
-    const $toast = $(`<div id="toast-${id}" class="toast ${type}"><i class="fa-solid ${icon} toast-icon"></i><span class="toast-message">${message}</span></div>`);
+    const $toast = $(`<div id="toast-${id}" class="toast ${type}"><i class="fa-solid ${icon} toast-icon"></i><span class="toast-message"></span></div>`);
+    $toast.find('.toast-message').text(message);
     $container.append($toast);
     setTimeout(() => {
         $toast.addClass('hiding');
@@ -1823,17 +2139,35 @@ function showToast(message, type = "info") {
     }, 2000);
 }
 
+/* Oturum değiştiğinde (çıkış / başka hesapla giriş) eski canlı dinleyiciler
+   kapatılmazsa önceki kullanıcının siparişleri ve adresleri ekranda kalıyordu. */
+let userDataUnsubscribers = [];
+function stopUserDataListeners() {
+    userDataUnsubscribers.forEach(unsubscribe => unsubscribe());
+    userDataUnsubscribers = [];
+    window.userOrders = {};
+    window.userAddresses = {};
+    $('#orders-list').html('Siparişler yükleniyor...');
+    $('#addresses-list').empty();
+    $('#dash-user-name').text('Kullanıcı');
+    $('#dash-user-email').text('');
+}
+
+$(document).on('click', '.order-card[data-order-id]', function() {
+    window.openOrderDetail(String($(this).attr('data-order-id')));
+});
+
 function loadUserOrders(userId) {
     if (!userId) return;
     const ordersRef = ref(db, `users/${userId}/orders`);
 
-    onValue(ordersRef, (snapshot) => {
+    userDataUnsubscribers.push(onValue(ordersRef, (snapshot) => {
         const data = snapshot.val();
         const $list = $('#orders-list');
         $list.empty();
-        
+        window.userOrders = data || {};
+
         if (data) {
-            window.userOrders = data;
             // Siparişleri tarihe göre yeniden eskiye sırala
             const orders = Object.entries(data).map(([id, val]) => ({ id, ...val }))
                 .sort((a, b) => {
@@ -1845,25 +2179,25 @@ function loadUserOrders(userId) {
             const cards = [];
             orders.forEach((order) => {
                 const dateStr = orderDateText(order);
-                const total = order.totalAmount || order.total || 0;
+                const total = Number(order.totalAmount || order.total || 0);
                 const status = orderStatus(order.status);
-                
+
                 let itemsArray = [];
                 if (order.items) {
-                    itemsArray = Array.isArray(order.items) ? order.items : Object.values(order.items);
+                    itemsArray = (Array.isArray(order.items) ? order.items : Object.values(order.items)).filter(Boolean);
                 }
-                
+
                 let orderItemsHtml = "";
                 if (itemsArray.length > 0) {
                     orderItemsHtml = itemsArray.map(item => `
                         <div style="margin-bottom: 6px;">
-                            <div style="font-weight: 600; color: var(--primary); font-size: 0.9rem;">${item.name} <span style="font-size: 0.8rem; color: var(--text-muted);">x${item.quantity || 1}</span></div>
-                            ${item.selectedObject ? `<div style="font-size: 0.8rem; color: #6b7280; margin-top: 2px;">Takım/Obje: ${item.selectedObject}</div>` : ''}
-                            ${item.customText ? `<div style="font-size: 0.8rem; color: #6b7280; margin-top: 2px;">Yazı: ${item.customText}</div>` : ''}
+                            <div style="font-weight: 600; color: var(--primary); font-size: 0.9rem;">${escapeHtml(item.name)} <span style="font-size: 0.8rem; color: var(--text-muted);">x${escapeHtml(item.quantity || 1)}</span></div>
+                            ${item.selectedObject ? `<div style="font-size: 0.8rem; color: #6b7280; margin-top: 2px;">Takım/Obje: ${escapeHtml(item.selectedObject)}</div>` : ''}
+                            ${item.customText ? `<div style="font-size: 0.8rem; color: #6b7280; margin-top: 2px;">Yazı: ${escapeHtml(item.customText)}</div>` : ''}
                         </div>
                     `).join('');
                 } else if (order.itemsSummary) {
-                    orderItemsHtml = `<div style="font-size: 0.85rem; color: var(--text-muted);">${order.itemsSummary}</div>`;
+                    orderItemsHtml = `<div style="font-size: 0.85rem; color: var(--text-muted);">${escapeHtml(order.itemsSummary)}</div>`;
                 }
 
                 // Siparişin ürün görsellerini arka arkaya yuvarlak şekilde listeleme
@@ -1872,20 +2206,20 @@ function loadUserOrders(userId) {
                     imagesHtml += `<div class="order-avatar-group" style="display: flex; align-items: center; justify-content: center; width: 110px; margin-right: 20px; flex-shrink: 0;">`;
                     let imageList = [];
                     itemsArray.forEach(item => {
-                        const qty = parseInt(item.quantity) || 1;
-                        for (let i = 0; i < qty; i++) {
-                            let img = item.image;
-                            if (typeof img === 'object' && img !== null) img = img.src;
-                            imageList.push(img || "./content/default.jpg");
-                        }
+                        const qty = Math.min(parseInt(item.quantity) || 1, 4); // en fazla 3 görsel + "+X" gösteriliyor
+                        let img = item.image;
+                        if (typeof img === 'object' && img !== null) img = img.src;
+                        img = safeUrl(img) || "./content/engrare_logo_elegant.png";
+                        for (let i = 0; i < qty; i++) imageList.push(img);
                     });
+                    const totalPieces = itemsArray.reduce((sum, item) => sum + (parseInt(item.quantity) || 1), 0);
                     
                     if (imageList.length > 3) {
                         // 3'ten fazla ürün varsa: 2 tanesi görsel, 3.sü kalan miktar (+X şeklinde)
                         for (let i = 0; i < 2; i++) {
                             imagesHtml += `<img src="${imageList[i]}" loading="lazy" decoding="async" style="width: 45px; height: 45px; border-radius: 50%; border: 2.5px solid white; object-fit: cover; box-shadow: var(--shadow-sm); margin-left: ${i === 0 ? '0' : '-15px'}; z-index: ${5 - i};">`;
                         }
-                        const extra = imageList.length - 2;
+                        const extra = totalPieces - 2;
                         imagesHtml += `<div style="width: 45px; height: 45px; border-radius: 50%; border: 2.5px solid white; background: #E2E8F0; color: #475569; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm); margin-left: -15px; z-index: 3;">+${extra}</div>`;
                     } else {
                         // 3 ve daha az ise hepsini görsel olarak bas
@@ -1897,19 +2231,19 @@ function loadUserOrders(userId) {
                 }
 
                 cards.push(`
-                    <div class="order-card" onclick="openOrderDetail('${order.id}')" style="padding: 20px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 15px; background: white; cursor: pointer;">
+                    <div class="order-card" data-order-id="${escapeHtml(order.id)}" style="padding: 20px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 15px; background: white; cursor: pointer;">
                         <div class="order-card-inner">
                             <div class="order-card-left" style="display: flex; align-items: center; gap: 15px;">
                                 ${imagesHtml}
                                 <div>
-                                    <h4 style="font-size: 1rem; color: var(--primary); margin-bottom: 5px;">Sipariş #${order.id.substring(0, 8).toUpperCase()}</h4>
+                                    <h4 style="font-size: 1rem; color: var(--primary); margin-bottom: 5px;">Sipariş #${escapeHtml(order.id.substring(0, 8).toUpperCase())}</h4>
                                     <div style="margin-bottom: 8px;">${orderItemsHtml}</div>
-                                    <span style="font-size: 0.8rem; color: var(--text-light);"><i class="fa-regular fa-calendar" style="margin-right: 5px;"></i>${dateStr}</span>
+                                    <span style="font-size: 0.8rem; color: var(--text-light);"><i class="fa-regular fa-calendar" style="margin-right: 5px;"></i>${escapeHtml(dateStr)}</span>
                                 </div>
                             </div>
                             <div class="order-card-right" style="text-align: right; flex-shrink: 0;">
-                                <div style="font-weight: 700; color: var(--primary); margin-bottom: 8px;">₺${total.toFixed(2)}</div>
-                                <span class="order-status-pill" style="background: ${status.bg}; color: ${status.color}; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;"><i class="${status.icon}" style="margin-right: 4px;"></i>${status.text}</span>
+                                <div style="font-weight: 700; color: var(--primary); margin-bottom: 8px;">₺${(total || 0).toFixed(2)}</div>
+                                <span class="order-status-pill" style="background: ${status.bg}; color: ${status.color}; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;"><i class="${status.icon}" style="margin-right: 4px;"></i>${escapeHtml(status.text)}</span>
                             </div>
                         </div>
                     </div>
@@ -1919,7 +2253,7 @@ function loadUserOrders(userId) {
         } else {
             $list.html('<div style="text-align:center; padding:40px; color:var(--text-muted); font-size:0.98rem;">Henüz bir siparişiniz bulunmuyor.</div>');
         }
-    });
+    }));
 }
 
 window.fitOrderDetailText = function(index) {
@@ -1956,33 +2290,67 @@ window.renderOrderDetailPreview = function(item, index) {
 
     let src = `./content/products/${item.productId}/preview.png`;
     let isCustom = false;
+    let customObj = null;
     if (p.isCustomObject) {
         const sel = (item.selectedObject || "").toLowerCase();
-        const obj = p.isCustomObject.find(o => {
+        customObj = p.isCustomObject.find(o => {
             const oName = (o.objectName || "").toLowerCase();
             return oName === sel || oName.includes(sel) || sel.includes(oName);
         }) || p.isCustomObject[0];
-        if (obj) src = obj.src;
+        if (customObj) src = customObj.src;
         isCustom = true;
     }
 
-    getPreviewImage(src, isCustom ? null : window.hexToRgb(item.textColor || '#FBC02D'), function(url, aspect, status) {
+    getPreviewImage(src, window.hexToRgb(item.textColor || '#FBC02D'), function(url, aspect, status) {
         $(`#order-detail-overlay-img-${index}`).attr('src', status === 'ok' ? url : src).show();
         if (status !== 'error') {
             setTimeout(() => {
                 if (typeof window.fitOrderDetailText === 'function') window.fitOrderDetailText(index);
+                
+                // Add social perspective updates if it's a social item
+                if (isCustom && (item.socialPlatform1 || item.socialPlatform2) && customObj) {
+                    const box = document.getElementById(`order-detail-preview-inner-${index}`);
+                    if (!box) return;
+                    const w = box.offsetWidth;
+                    const h = box.offsetHeight;
+                    
+                    [1, 2].forEach(i => {
+                        const plat = item[`socialPlatform${i}`];
+                        const link = item[`socialLink${i}`];
+                        const coordsQR = customObj[`previewSocialQR${i}`];
+                        const coordsLogo = customObj[`previewSocialLogo${i}`];
+                        
+                        if (link && coordsQR && typeof QRious !== 'undefined') {
+                            const qr = new QRious({
+                                value: link,
+                                size: 150,
+                                foreground: item.textColor || '#000000',
+                                background: 'transparent'
+                            });
+                            $(`#order-detail-social-qr-img-${i}-${index}`).attr('src', qr.toDataURL());
+                            applyPerspectiveTransform(document.getElementById(`order-detail-social-qr-area-${i}-${index}`), coordsQR, w, h);
+                        }
+                        
+                        if (plat && coordsLogo) {
+                            const logoUrl = `./content/social/${plat}.png`;
+                            $(`#order-detail-social-logo-img-${i}-${index}`).attr('src', logoUrl);
+                            applyPerspectiveTransform(document.getElementById(`order-detail-social-logo-area-${i}-${index}`), coordsLogo, w, h);
+                        }
+                    });
+                }
             }, 30);
         }
     });
 };
 
 window.openOrderDetail = function(orderId) {
-    const order = window.userOrders[orderId];
+    const order = window.userOrders && window.userOrders[orderId];
     if (!order) return;
-    
+    const orderNo = escapeHtml(String(order.id || orderId).substring(0, 8).toUpperCase());
+
     let itemsArray = [];
     if (order.items) {
-        itemsArray = Array.isArray(order.items) ? order.items : Object.values(order.items);
+        itemsArray = (Array.isArray(order.items) ? order.items : Object.values(order.items)).filter(Boolean);
     }
     let itemsHtml = '';
     if (itemsArray.length > 0) {
@@ -1994,13 +2362,16 @@ window.openOrderDetail = function(orderId) {
             const textArea = (p && p.previewTextArea) ? p.previewTextArea : { top: '15%', left: '10%', width: '80%', height: '70%' };
             const logoArea = (p && p.previewLogoArea) ? p.previewLogoArea : { top: '15%', left: '10%', width: '80%', height: '70%' };
             const isCustomObj = p && p.isCustomObject;
+            const textColor = safeColor(item.textColor, '#FBC02D');
+            const objColor = safeColor(item.objColor, textColor);
+            const logoUrl = safeUrl(item.logoUrl);
 
             // Renk Swatch'ı: Çift renkli ise ortadan 45 derece ayırmalı (diagonal split), tek renkli ise solid
             let swatchBg = '';
-            if (isCustomObj || !item.objColor || item.textColor === item.objColor) {
-                swatchBg = item.textColor || item.objColor || '#222222';
+            if (textColor === objColor) {
+                swatchBg = textColor;
             } else {
-                swatchBg = `linear-gradient(135deg, ${item.textColor || '#FBC02D'} 50%, ${item.objColor || '#222222'} 50%)`;
+                swatchBg = `linear-gradient(135deg, ${textColor} 50%, ${objColor} 50%)`;
             }
 
             return `
@@ -2010,7 +2381,7 @@ window.openOrderDetail = function(orderId) {
                     <div class="order-detail-2d-box" style="width: 64px; height: 64px; background: #ffffff; border-radius: 10px; border: 1px solid var(--border); overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
                         <div class="order-detail-preview-inner" id="order-detail-preview-inner-${index}" style="position: relative; overflow: hidden; border-radius: 3px; width: ${innerW}px; height: ${innerH}px; background: #ffffff;">
                             <!-- Zemin Renk Katmanı -->
-                            <div class="order-detail-obj-layer" id="order-detail-obj-layer-${index}" style="position: absolute; inset: 0; background-color: ${item.objColor || item.textColor || '#222222'}; z-index: 1;"></div>
+                            <div class="order-detail-obj-layer" id="order-detail-obj-layer-${index}" style="position: absolute; inset: 0; background-color: ${objColor}; z-index: 1;"></div>
                             
                             <!-- Kırpılmış PNG Görseli -->
                             <img class="order-detail-overlay-img" id="order-detail-overlay-img-${index}" src="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 2; display: none;">
@@ -2018,47 +2389,71 @@ window.openOrderDetail = function(orderId) {
                             <!-- Canlı Metin Alanı -->
                             ${isCustomObj ? '' : `
                             <div class="order-detail-printable-area" id="order-detail-print-area-${index}" style="position: absolute; top: ${textArea.top}; left: ${textArea.left}; width: ${textArea.width}; height: ${textArea.height}; z-index: 3; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                                <span class="order-detail-dynamic-text" id="order-detail-dynamic-text-${index}" style="color: ${item.textColor || '#FBC02D'}; font-family: ${item.font || "'AGENCYB', sans-serif"}; font-size: 9px; font-weight: 700; text-align: center; width: auto; word-break: break-word; display: inline-block; line-height: 1;">${item.customText || ''}</span>
+                                <span class="order-detail-dynamic-text" id="order-detail-dynamic-text-${index}" style="color: ${textColor}; font-family: 'AGENCYB', sans-serif; font-size: 9px; font-weight: 700; text-align: center; width: auto; word-break: break-word; display: inline-block; line-height: 1;">${escapeHtml(item.customText || '')}</span>
                             </div>
                             `}
-                            
+
                             <!-- Canlı Logo Alanı -->
-                            ${(item.logoUrl && !isCustomObj) ? `
+                            ${(logoUrl && !isCustomObj) ? `
                             <div class="order-detail-logo-area" id="order-detail-logo-area-${index}" style="position: absolute; top: ${logoArea.top}; left: ${logoArea.left}; width: ${logoArea.width}; height: ${logoArea.height}; z-index: 3; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                                <div class="order-detail-dynamic-logo" id="order-detail-dynamic-logo-${index}" style="width: 100%; height: 100%; mask-image: url(${item.logoUrl}); -webkit-mask-image: url(${item.logoUrl}); mask-size: contain; -webkit-mask-size: contain; mask-repeat: no-repeat; -webkit-mask-repeat: no-repeat; mask-position: center; -webkit-mask-position: center; background-color: ${item.textColor || '#FBC02D'};"></div>
+                                <div class="order-detail-dynamic-logo" id="order-detail-dynamic-logo-${index}" style="width: 100%; height: 100%; mask-image: url(${logoUrl}); -webkit-mask-image: url(${logoUrl}); mask-size: contain; -webkit-mask-size: contain; mask-repeat: no-repeat; -webkit-mask-repeat: no-repeat; mask-position: center; -webkit-mask-position: center; background-color: ${textColor};"></div>
                             </div>
                             ` : ''}
+                            
+                              <!-- Canlı Sosyal Medya QR ve Logo Alanı 1 -->
+                              ${(isCustomObj && item.socialPlatform1) ? `
+                              <div class="order-detail-social-qr-area" id="order-detail-social-qr-area-1-${index}" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 3; display: none; transform-origin: 0 0;">
+                                  <img id="order-detail-social-qr-img-1-${index}" src="" style="width:100%; height:100%; object-fit:fill;">
+                              </div>
+                              <div class="order-detail-social-logo-area" id="order-detail-social-logo-area-1-${index}" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 3; display: none; transform-origin: 0 0;">
+                                  <img id="order-detail-social-logo-img-1-${index}" src="" style="width:100%; height:100%; object-fit:contain;" onerror="this.style.visibility='hidden'" onload="this.style.visibility='visible'">
+                              </div>
+                              ` : ''}
+
+                              <!-- Canlı Sosyal Medya QR ve Logo Alanı 2 -->
+                              ${(isCustomObj && item.socialPlatform2) ? `
+                              <div class="order-detail-social-qr-area" id="order-detail-social-qr-area-2-${index}" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 3; display: none; transform-origin: 0 0;">
+                                  <img id="order-detail-social-qr-img-2-${index}" src="" style="width:100%; height:100%; object-fit:fill;">
+                              </div>
+                              <div class="order-detail-social-logo-area" id="order-detail-social-logo-area-2-${index}" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 3; display: none; transform-origin: 0 0;">
+                                  <img id="order-detail-social-logo-img-2-${index}" src="" style="width:100%; height:100%; object-fit:contain;" onerror="this.style.visibility='hidden'" onload="this.style.visibility='visible'">
+                              </div>
+                              ` : ''}
                         </div>
                     </div>
 
                     <!-- Ürün Bilgileri -->
                     <div style="flex: 1; min-width: 0;">
-                        <div style="font-weight: 700; color: var(--primary); font-size: 0.95rem; margin-bottom: 2px;">${item.name}</div>
-                        ${item.selectedObject ? `<div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 2px;">Takım/Obje: <span style="font-weight: 600; color: var(--primary);">${item.selectedObject}</span></div>` : ''}
-                        ${(item.customText && !isCustomObj) ? `<div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 2px;">Yazı: <span style="font-weight: 600; color: var(--primary);">"${item.customText}"</span></div>` : ''}
+                        <div style="font-weight: 700; color: var(--primary); font-size: 0.95rem; margin-bottom: 2px;">${escapeHtml(item.name)}</div>
+                        ${item.selectedObject ? `<div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 2px;">Takım/Obje: <span style="font-weight: 600; color: var(--primary);">${escapeHtml(item.selectedObject)}</span></div>` : ''}
+                        ${item.socialPlatform1 ? `<div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 2px;">1. Platform: <span style="font-weight: 600; color: var(--primary); text-transform: capitalize;">${escapeHtml(item.socialPlatform1)}</span> (${escapeHtml(item.socialLink1 || '')})</div>` : ''}
+                        ${item.socialPlatform2 ? `<div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 2px;">2. Platform: <span style="font-weight: 600; color: var(--primary); text-transform: capitalize;">${escapeHtml(item.socialPlatform2)}</span> (${escapeHtml(item.socialLink2 || '')})</div>` : ''}
+                        ${(item.customText && !isCustomObj) ? `<div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 2px;">Yazı: <span style="font-weight: 600; color: var(--primary);">"${escapeHtml(item.customText)}"</span></div>` : ''}
+                        ${item.socialPlatform ? `<div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 2px;">Platform: <span style="font-weight: 600; color: var(--primary); text-transform: capitalize;">${escapeHtml(item.socialPlatform)}</span></div>` : ''}
+                        ${item.socialLink ? `<div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 2px;">Link/Kullanıcı Adı: <span style="font-weight: 600; color: var(--primary);">${escapeHtml(item.socialLink)}</span></div>` : ''}
                         <div style="font-size: 0.82rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
                             <span>Renk:</span>
-                            <div style="width: 16px; height: 16px; border-radius: 50%; background: ${swatchBg}; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.08); flex-shrink: 0;" title="Yazı: ${item.textColor || ''} / Zemin: ${item.objColor || ''}"></div>
+                            <div style="width: 16px; height: 16px; border-radius: 50%; background: ${swatchBg}; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.08); flex-shrink: 0;" title="Yazı: ${textColor} / Zemin: ${objColor}"></div>
                         </div>
-                        <div style="font-size: 0.82rem; color: var(--text-muted);">Adet: <span style="font-weight: 600; color: var(--text-main);">${item.quantity || 1}</span></div>
+                        <div style="font-size: 0.82rem; color: var(--text-muted);">Adet: <span style="font-weight: 600; color: var(--text-main);">${escapeHtml(item.quantity || 1)}</span></div>
                     </div>
                 </div>
-                <div style="font-weight: 800; font-size: 1.05rem; color: var(--primary); white-space: nowrap;">₺${((item.price || 0) * (item.quantity || 1)).toFixed(2)}</div>
+                <div style="font-weight: 800; font-size: 1.05rem; color: var(--primary); white-space: nowrap;">₺${((Number(item.price) || 0) * (Number(item.quantity) || 1)).toFixed(2)}</div>
             </div>
         `}).join('');
     } else if (order.itemsSummary) {
         itemsHtml = `
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 10px;">
-                <div style="font-weight: 600;">${order.itemsSummary}</div>
-                <div style="font-weight: 600;">₺${(order.totalAmount || order.total || 0).toFixed(2)}</div>
+                <div style="font-weight: 600;">${escapeHtml(order.itemsSummary)}</div>
+                <div style="font-weight: 600;">₺${(Number(order.totalAmount || order.total) || 0).toFixed(2)}</div>
             </div>
         `;
     }
 
-    const dateStr = orderDateText(order);
-    const total = order.totalAmount || order.total || 0;
+    const dateStr = escapeHtml(orderDateText(order));
+    const total = Number(order.totalAmount || order.total) || 0;
     const statusObj = orderStatus(order.status);
-    const statusBadge = `<span style="background: ${statusObj.bg}; color: ${statusObj.color}; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;"><i class="${statusObj.icon}" style="margin-right: 4px;"></i>${statusObj.text}</span>`;
+    const statusBadge = `<span style="background: ${statusObj.bg}; color: ${statusObj.color}; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;"><i class="${statusObj.icon}" style="margin-right: 4px;"></i>${escapeHtml(statusObj.text)}</span>`;
 
     let ibanWarningHtml = '';
     if ((order.paymentMethod === 'havale' || order.paymentMethod === 'iban') && 
@@ -2071,11 +2466,11 @@ window.openOrderDetail = function(orderId) {
                 </div>
                 <p style="margin-bottom: 10px; font-size: 0.98rem;">
                     Siparişinizin onaylanması için ödemenizin banka hesaplarımıza ulaşması gerekmektedir. 
-                    Lütfen ödemenizi yaparken açıklama kısmına <strong>${order.id.substring(0, 8).toUpperCase()}</strong> sipariş numaranızı yazmayı unutmayınız.
+                    Lütfen ödemenizi yaparken açıklama kısmına <strong>${orderNo}</strong> sipariş numaranızı yazmayı unutmayınız.
                 </p>
                 <div style="background-color: white; padding: 10px; border-radius: 6px; border: 1px solid #FECACA; font-family: monospace; font-size: 1rem; margin-bottom: 10px; text-align: center;">
-                    <strong>Alıcı:</strong> ENGRARE MÜHENDİSLİK A.Ş.<br>
-                    <strong>IBAN:</strong> TR12 0006 4000 0012 3456 7890 01
+                    <strong>Alıcı:</strong> Kaya Sertel<br>
+                    <strong>IBAN:</strong> TR41 0006 4000 0011 4560 4302 15
                 </div>
                 <p style="font-size: 0.85rem; color: #7F1D1D; margin-top: 10px;">
                     <i class="fa-solid fa-circle-info" style="margin-right: 5px;"></i> Ödemenizi havale olarak yaptıysanız ve 1 iş günü beklediyseniz, lütfen <strong>destek@engrare.com</strong> adresine mail atınız.
@@ -2087,7 +2482,7 @@ window.openOrderDetail = function(orderId) {
     $('#order-modal-content').html(`
         <div style="margin-bottom: 15px; line-height: 1.5; display: flex; justify-content: space-between; align-items: flex-start;">
             <div>
-                <strong>Sipariş No:</strong> #${order.id.substring(0, 8).toUpperCase()}<br>
+                <strong>Sipariş No:</strong> #${orderNo}<br>
                 <strong>Tarih:</strong> ${dateStr}
             </div>
             <div>
@@ -2128,33 +2523,35 @@ function deleteCartLogo(path) {
 function loadUserAddresses(userId) {
     if (!userId) return;
     const addrRef = ref(db, `users/${userId}/addresses`);
-    
-    onValue(addrRef, (snapshot) => {
+
+    userDataUnsubscribers.push(onValue(addrRef, (snapshot) => {
         const data = snapshot.val();
         window.userAddresses = data || {};
         const $list = $('#addresses-list');
         $list.empty();
-        
+
         if (data) {
             const cards = [];
             Object.entries(data).forEach(([id, addr]) => {
-                const fullname = addr.fullname || 'İsimsiz';
+                if (!addr || typeof addr !== 'object') return;
+                // Ödeme sayfasından kaydedilen adresler ad/soyad ve "address" alanlarını kullanıyor
+                const fullname = addr.fullname || [addr.name, addr.surname].filter(Boolean).join(' ') || 'İsimsiz';
                 const details = addr.details || addr.address || 'Adres detayı belirtilmemiş';
-                const location = addr.district ? `${addr.district} / ${addr.city}` : (addr.city || '');
-                const phone = addr.phone ? `<br><i class="fa-solid fa-phone" style="font-size:0.75rem;"></i> ${addr.phone}` : '';
+                const location = addr.district ? `${addr.district} / ${addr.city || ''}` : (addr.city || '');
+                const phone = addr.phone ? `<br><i class="fa-solid fa-phone" style="font-size:0.75rem;"></i> ${escapeHtml(addr.phone)}` : '';
 
                 cards.push(`
                     <div class="address-card">
                         <div style="font-weight: 700; color: var(--primary); margin-bottom: 6px; font-size: 1.05rem;">
-                            <i class="fa-solid fa-location-dot" style="color: var(--accent);"></i> ${addr.title || 'Adres'}
+                            <i class="fa-solid fa-location-dot" style="color: var(--accent);"></i> ${escapeHtml(addr.title || 'Adres')}
                         </div>
-                        <div style="font-size: 0.9rem; color: var(--text-main); font-weight: 600; margin-bottom: 4px;">${fullname}</div>
+                        <div style="font-size: 0.9rem; color: var(--text-main); font-weight: 600; margin-bottom: 4px;">${escapeHtml(fullname)}</div>
                         <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
-                            ${details}<br><strong>${location}</strong>${phone}
+                            ${escapeHtml(details)}<br><strong>${escapeHtml(location)}</strong>${phone}
                         </div>
                         <div class="address-card-actions">
-                            <button class="btn-sm edit-addr-btn" data-id="${id}" style="padding: 6px 12px; font-size: 0.8rem;"><i class="fa-solid fa-pen-to-square"></i> Düzenle</button>
-                            <button class="btn-sm delete-addr-btn" data-id="${id}" style="padding: 6px 12px; font-size: 0.8rem; color: #EF4444; border-color: #FCA5A5;"><i class="fa-solid fa-trash"></i> Sil</button>
+                            <button class="btn-sm edit-addr-btn" data-id="${escapeHtml(id)}" style="padding: 6px 12px; font-size: 0.8rem;"><i class="fa-solid fa-pen-to-square"></i> Düzenle</button>
+                            <button class="btn-sm delete-addr-btn" data-id="${escapeHtml(id)}" style="padding: 6px 12px; font-size: 0.8rem; color: #EF4444; border-color: #FCA5A5;"><i class="fa-solid fa-trash"></i> Sil</button>
                         </div>
                     </div>
                 `);
@@ -2163,7 +2560,7 @@ function loadUserAddresses(userId) {
         } else {
             $list.html('<div style="text-align:center; padding:40px; color:var(--text-muted);">Kayıtlı adresiniz bulunmuyor.</div>');
         }
-    });
+    }));
 }
 
 // --- DYNAMIC IMAGE FILTERING ---
@@ -2181,10 +2578,10 @@ window.applyFilterToPreview = function(productId, textColorHex, customSrc) {
     if (!productId && !customSrc) return;
 
     const imgUrl = customSrc || `./content/products/${productId}/preview.png`;
-    // Özel obje görselleri (takım kalemlikleri) yeniden renklendirilmez
-    const recolor = customSrc ? null : (textColorHex || '#FBC02D');
+    const activeTextColor = textColorHex || (typeof $('#custom-text-color') !== 'undefined' ? $('#custom-text-color').val() : null) || '#FBC02D';
+    const recolor = activeTextColor ? window.hexToRgb(activeTextColor) : null;
 
-    getPreviewImage(imgUrl, recolor ? window.hexToRgb(recolor) : null, function(url, aspect, status) {
+    getPreviewImage(imgUrl, recolor, function(url, aspect, status) {
         if (status === 'error') { $('.preview-overlay-img').hide(); return; }
 
         $('.preview-overlay-img').attr('src', status === 'ok' ? url : imgUrl).show();
@@ -2258,13 +2655,14 @@ function renderColorCombinations(p) {
         p.colors.forEach((c, index) => {
             const color1 = c.color1;
             const color2 = c.color2;
-            const label1 = c.label1 || (p.isCustomObject ? 'Renk' : 'Yazı');
-            const label2 = c.label2 || (p.isCustomObject ? '' : 'Obje');
+            const hasColor2 = Boolean(color2 && color2 !== color1);
+            const label1 = c.label1 || (hasColor2 ? 'Yazı' : 'Renk');
+            const label2 = c.label2 || (hasColor2 ? 'Zemin' : '');
 
             let btnHtml = '';
             let tooltipHtml = '';
 
-            if (p.isCustomObject || !color2 || color1 === color2) {
+            if (!hasColor2) {
                 btnHtml = `<div class="diagonal-color-btn ${index === 0 ? 'active' : ''}" data-color1="${color1}" data-color2="${color1}" style="background: ${color1};">`;
                 tooltipHtml = `<div class="elegant-tooltip"><div class="tooltip-row"><div class="tooltip-swatch" style="background: ${color1};"></div><span>${label1}</span></div></div>`;
             } else {
@@ -2277,6 +2675,7 @@ function renderColorCombinations(p) {
             if (index === 0) {
                 $('#custom-text-color').val(color1);
                 $('#custom-obj-color').val(color2 || color1);
+                $('.preview-object-color-layer').css('background-color', color2 || color1);
             }
         });
     }
@@ -2293,13 +2692,21 @@ $(document).on('click', '.diagonal-color-btn', function() {
     // Update previews
     $('.preview-dynamic-text').css('color', c1);
     $('.preview-dynamic-logo').css('background-color', c1);
-    
+    if(window.updateSocialPreview) window.updateSocialPreview();
+    $('.preview-object-color-layer').css('background-color', c2);
     if (typeof currentProduct !== 'undefined' && currentProduct) {
+        // Transparan kısımlar arka plan rengine (c2) dönüşmeli
+        $('.preview-object-color-layer').css('background-color', c2 || c1);
+        
+        // Siyah kısımlar yazı rengine (c1) dönüşmeli
+        let customSrc = null;
         if (currentProduct.isCustomObject) {
-            $('.preview-object-color-layer').css('background-color', c1);
-        } else {
-            window.applyFilterToPreview(currentProduct.id, c1);
-            $('.preview-object-color-layer').css('background-color', c2);
+            const idx = $('#custom-object-input').val() || 0;
+            const obj = currentProduct.isCustomObject[idx] || currentProduct.isCustomObject[0];
+            if (obj) customSrc = obj.src;
+        }
+        if (window.applyFilterToPreview) {
+            window.applyFilterToPreview(currentProduct.id, c1, customSrc);
         }
     }
 });

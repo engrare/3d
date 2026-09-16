@@ -108,7 +108,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <input type="text" id="ship-address" class="input-box" placeholder="Adres" required>
+                    <input type="text" id="ship-address" class="input-box" placeholder="Adres" maxlength="300" required>
                 </div>
                 <div class="form-grid-2">
                     <div class="form-group">
@@ -221,7 +221,7 @@
                         <input type="text" id="new-addr-name" class="input-box mb-2" placeholder="Ad">
                         <input type="text" id="new-addr-surname" class="input-box mb-2" placeholder="Soyad">
                     </div>
-                    <input type="text" id="new-addr-full" class="input-box mb-2" placeholder="Tam Adres">
+                    <input type="text" id="new-addr-full" class="input-box mb-2" placeholder="Tam Adres" maxlength="300">
                     <div class="form-grid-2">
                         <select id="new-addr-city" class="input-box select-box mb-2">
                             <option value="">Şehir Seçiniz</option>
@@ -430,13 +430,13 @@
                         <!-- Alıcı -->
                         <div class="eic-row">
                             <div class="eic-label">Alıcı</div>
-                            <div class="eic-value">ENGRARE MÜHENDİSLİK A.Ş.</div>
+                            <div class="eic-value">Kaya Sertel</div>
                         </div>
                         <!-- IBAN -->
                         <div class="eic-row">
                             <div class="eic-label">IBAN</div>
                             <div class="eic-value-group">
-                                <div class="eic-value monospace" id="iban-text">TR12 0006 4000 0012 3456 7890 01</div>
+                                <div class="eic-value monospace" id="iban-text">TR41 0006 4000 0011 4560 4302 15</div>
                                 <button class="btn-copy" onclick="copyToClipboard('#iban-text')" title="Kopyala"><i class="fa-regular fa-copy"></i></button>
                             </div>
                         </div>
@@ -498,6 +498,6 @@
     </div>
 
     <div id="toast-container"></div>
-    <script type="module" src="myScript.js?v=9"></script>
+    <script type="module" src="myScript.js?v=10"></script>
 </body>
 </html>

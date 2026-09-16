@@ -17,6 +17,7 @@
 
     <!-- jQuery: defer -> HTML ayristirmasini bloklamaz, module script'ten once calisir -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js" defer></script>
 
     <!-- Google tag (gtag.js) - yukleyici <body> sonuna alindi, kuyruk burada baslar -->
     <script>
@@ -145,6 +146,23 @@
                                 <!-- Dynamic Logo (CSS Mask ile renklendiriliyor) -->
                                 <div id="preview-dynamic-logo" class="preview-dynamic-logo" style="display: none; width: 100%; height: 100%;"></div>
                             </div>
+                            <!-- Area for Social QR 1 (Perspective Mapped) -->
+                            <div id="preview-social-qr-area-1" class="preview-social-qr-area" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 3; display: none; transform-origin: 0 0;">
+                                <img id="preview-social-qr-img-1" src="" style="position:absolute; width:100%; height:100%; object-fit:fill;">
+                            </div>
+                            <!-- Area for Social Logo 1 (Perspective Mapped) -->
+                            <div id="preview-social-logo-area-1" class="preview-social-logo-area" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 3; display: none; transform-origin: 0 0;">
+                                <img id="preview-social-logo-img-1" src="" style="position:absolute; width:100%; height:100%; object-fit:contain;" onerror="this.style.visibility='hidden'" onload="this.style.visibility='visible'">
+                            </div>
+                            
+                            <!-- Area for Social QR 2 (Perspective Mapped) -->
+                            <div id="preview-social-qr-area-2" class="preview-social-qr-area" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 3; display: none; transform-origin: 0 0;">
+                                <img id="preview-social-qr-img-2" src="" style="position:absolute; width:100%; height:100%; object-fit:fill;">
+                            </div>
+                            <!-- Area for Social Logo 2 (Perspective Mapped) -->
+                            <div id="preview-social-logo-area-2" class="preview-social-logo-area" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 3; display: none; transform-origin: 0 0;">
+                                <img id="preview-social-logo-img-2" src="" style="position:absolute; width:100%; height:100%; object-fit:contain;" onerror="this.style.visibility='hidden'" onload="this.style.visibility='visible'">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -189,12 +207,59 @@
                                 <input type="file" id="custom-logo-input" accept=".png, .jpg, .jpeg, .svg" style="display: none;">
                             </div>
                         </div>
+                        <div id="customization-social-group" style="display: none; width: 100%; margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 12px; font-size: 1rem; font-weight: 700;">Sosyal Medya Seçimleri</label>
+                            <style>
+                                .social-icon-btn {
+                                    width: 40px; height: 40px; border-radius: 8px; border: 2px solid var(--border);
+                                    cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center;
+                                    overflow: hidden; background: #f8fafc;
+                                }
+                                .social-icon-btn.active {
+                                    border-color: var(--primary);
+                                    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+                                }
+                                .social-icon-btn img {
+                                    width: 24px; height: 24px; object-fit: contain; pointer-events: none;
+                                }
+                            </style>
+                            
+                            <!-- Social 1 -->
+                            <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-bottom: 15px;">
+                                <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 10px; color: var(--text-muted);">1. Sosyal Medya</div>
+                                <div style="display: flex; gap: 10px; margin-bottom: 12px;" class="social-icon-row" data-target="1">
+                                    <div class="social-icon-btn active" data-plat="instagram"><img src="./content/social/instagram.png" onerror="this.onerror=null;this.outerHTML='&lt;i class=&quot;fa-brands fa-instagram&quot; style=&quot;font-size:1.2rem;color:#475569;pointer-events:none&quot;&gt;&lt;/i&gt;'"></div>
+                                    <div class="social-icon-btn" data-plat="twitter"><img src="./content/social/twitter.png" onerror="this.onerror=null;this.outerHTML='&lt;i class=&quot;fa-brands fa-twitter&quot; style=&quot;font-size:1.2rem;color:#475569;pointer-events:none&quot;&gt;&lt;/i&gt;'"></div>
+                                    <div class="social-icon-btn" data-plat="facebook"><img src="./content/social/facebook.png" onerror="this.onerror=null;this.outerHTML='&lt;i class=&quot;fa-brands fa-facebook&quot; style=&quot;font-size:1.2rem;color:#475569;pointer-events:none&quot;&gt;&lt;/i&gt;'"></div>
+                                    <div class="social-icon-btn" data-plat="linkedin"><img src="./content/social/linkedin.png" onerror="this.onerror=null;this.outerHTML='&lt;i class=&quot;fa-brands fa-linkedin&quot; style=&quot;font-size:1.2rem;color:#475569;pointer-events:none&quot;&gt;&lt;/i&gt;'"></div>
+                                    <div class="social-icon-btn" data-plat="youtube"><img src="./content/social/youtube.png" onerror="this.onerror=null;this.outerHTML='&lt;i class=&quot;fa-brands fa-youtube&quot; style=&quot;font-size:1.2rem;color:#475569;pointer-events:none&quot;&gt;&lt;/i&gt;'"></div>
+                                    <div class="social-icon-btn" data-plat="tiktok"><img src="./content/social/tiktok.png" onerror="this.onerror=null;this.outerHTML='&lt;i class=&quot;fa-brands fa-tiktok&quot; style=&quot;font-size:1.2rem;color:#475569;pointer-events:none&quot;&gt;&lt;/i&gt;'"></div>
+                                </div>
+                                <input type="hidden" id="custom-social-platform-1" value="instagram">
+                                <input type="text" id="custom-social-link-1" class="input-box" style="height: 45px; padding: 0 10px; width: 100%; box-sizing: border-box;" placeholder="@kullaniciadi veya Link (1)">
+                            </div>
+                    
+                            <!-- Social 2 -->
+                            <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 15px;">
+                                <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 10px; color: var(--text-muted);">2. Sosyal Medya</div>
+                                <div style="display: flex; gap: 10px; margin-bottom: 12px;" class="social-icon-row" data-target="2">
+                                    <div class="social-icon-btn" data-plat="instagram"><img src="./content/social/instagram.png" onerror="this.onerror=null;this.outerHTML='&lt;i class=&quot;fa-brands fa-instagram&quot; style=&quot;font-size:1.2rem;color:#475569;pointer-events:none&quot;&gt;&lt;/i&gt;'"></div>
+                                    <div class="social-icon-btn active" data-plat="twitter"><img src="./content/social/twitter.png" onerror="this.onerror=null;this.outerHTML='&lt;i class=&quot;fa-brands fa-twitter&quot; style=&quot;font-size:1.2rem;color:#475569;pointer-events:none&quot;&gt;&lt;/i&gt;'"></div>
+                                    <div class="social-icon-btn" data-plat="facebook"><img src="./content/social/facebook.png" onerror="this.onerror=null;this.outerHTML='&lt;i class=&quot;fa-brands fa-facebook&quot; style=&quot;font-size:1.2rem;color:#475569;pointer-events:none&quot;&gt;&lt;/i&gt;'"></div>
+                                    <div class="social-icon-btn" data-plat="linkedin"><img src="./content/social/linkedin.png" onerror="this.onerror=null;this.outerHTML='&lt;i class=&quot;fa-brands fa-linkedin&quot; style=&quot;font-size:1.2rem;color:#475569;pointer-events:none&quot;&gt;&lt;/i&gt;'"></div>
+                                    <div class="social-icon-btn" data-plat="youtube"><img src="./content/social/youtube.png" onerror="this.onerror=null;this.outerHTML='&lt;i class=&quot;fa-brands fa-youtube&quot; style=&quot;font-size:1.2rem;color:#475569;pointer-events:none&quot;&gt;&lt;/i&gt;'"></div>
+                                    <div class="social-icon-btn" data-plat="tiktok"><img src="./content/social/tiktok.png" onerror="this.onerror=null;this.outerHTML='&lt;i class=&quot;fa-brands fa-tiktok&quot; style=&quot;font-size:1.2rem;color:#475569;pointer-events:none&quot;&gt;&lt;/i&gt;'"></div>
+                                </div>
+                                <input type="hidden" id="custom-social-platform-2" value="twitter">
+                                <input type="text" id="custom-social-link-2" class="input-box" style="height: 45px; padding: 0 10px; width: 100%; box-sizing: border-box;" placeholder="@kullaniciadi veya Link (2)">
+                            </div>
+                        </div>
                         <div style="display: flex; gap: 15px; margin-bottom: 25px; align-items: flex-end; flex-wrap: wrap;">
                             <div class="form-group" style="margin-bottom: 0; flex-shrink: 0;">
                                 <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; font-weight: 600;">Miktar</label>
                                 <div style="display:flex; align-items:center; background: #fff; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; height: 45px; width: 110px;">
                                     <button type="button" id="detail-qty-minus" style="flex:1; height: 100%; background: none; border: none; border-right: 1px solid var(--border); cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='#F1F5F9';" onmouseout="this.style.background='none';"><i class="fa-solid fa-minus"></i></button>
-                                    <input type="number" id="quantity-input" value="1" min="1" style="width: 50px; height: 100%; padding: 0; margin: 0; text-align: center; border: none; background: transparent; font-size: 1.1rem; font-weight: 700; color: var(--primary); outline: none;">
+                                    <input type="number" id="quantity-input" value="1" min="1" max="999" style="width: 50px; height: 100%; padding: 0; margin: 0; text-align: center; border: none; background: transparent; font-size: 1.1rem; font-weight: 700; color: var(--primary); outline: none;">
                                     <button type="button" id="detail-qty-plus" style="flex:1; height: 100%; background: none; border: none; border-left: 1px solid var(--border); cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='#F1F5F9';" onmouseout="this.style.background='none';"><i class="fa-solid fa-plus"></i></button>
                                 </div>
                             </div>
@@ -234,11 +299,11 @@
             <div class="summary-panel">
                 <div id="free-shipping-progress-container"></div>
                 <div class="price-row"><span>Ara Toplam</span><span id="val-subtotal">₺0.00</span></div>
-                <div class="price-row"><span>Kargo Ücreti</span><span id="shipping-display">₺50.00</span></div>
+                <div class="price-row"><span>Kargo Ücreti</span><span id="shipping-display">₺0.00</span></div>
                 <div style="height:1px; background:var(--border); margin: 18px 0;"></div>
                 <div class="price-row">
                     <span style="font-weight:700; font-size:1.15rem;">Toplam</span>
-                    <span id="val-total" style="font-weight:800; font-size:1.5rem; color:var(--primary);">₺50.00</span>
+                    <span id="val-total" style="font-weight:800; font-size:1.5rem; color:var(--primary);">₺0.00</span>
                 </div>
                 <button id="btn-checkout-start" class="btn primary" style="width: 100%; margin-top: 18px; height: 50px; font-size: 1.05rem; font-weight: 700; border-radius: 10px;">Ödemeye Geç</button>
                 
@@ -408,11 +473,11 @@
                 <input type="hidden" id="addr-id">
                 <div class="form-group">
                     <label>Adres Başlığı (Örn: Ev, İş)</label>
-                    <input type="text" id="addr-title" class="input-box" required>
+                    <input type="text" id="addr-title" class="input-box" maxlength="50" required>
                 </div>
                 <div class="form-group">
                     <label>Ad Soyad</label>
-                    <input type="text" id="addr-fullname" class="input-box" required>
+                    <input type="text" id="addr-fullname" class="input-box" maxlength="120" required>
                 </div>
                 <div class="form-group">
                     <label>Telefon Numarası</label>
@@ -508,12 +573,12 @@
                     </div>
                     <div style="flex: 1;">
                         <label>İlçe</label>
-                        <input type="text" id="addr-district" class="input-box" required>
+                        <input type="text" id="addr-district" class="input-box" maxlength="60" required>
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Açık Adres</label>
-                    <textarea id="addr-details" class="input-box" rows="3" required style="resize: vertical; font-family: inherit;"></textarea>
+                    <textarea id="addr-details" class="input-box" rows="3" maxlength="300" required style="resize: vertical; font-family: inherit;"></textarea>
                 </div>
                 <button type="submit" class="btn primary" style="width: 100%;">Kaydet</button>
             </form>
@@ -521,7 +586,7 @@
     </div>
 
     <div id="toast-container"></div>
-    <script type="module" src="myScript.js?v=61"></script>
+    <script type="module" src="myScript.js?v=64"></script>
 
     <!-- MOBILE BOTTOM NAV -->
     <div class="bottom-nav-bar" id="mobile-bottom-nav">

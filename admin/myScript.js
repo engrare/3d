@@ -20,6 +20,26 @@ const db = getDatabase(app);
 const functions = getFunctions(app, 'europe-west1');
 
 let globalAdminData = null;
+let adminDataUnsubscribe = null;
+
+/* Sipariş verisi müşteriden geldiği için (yazı, ad, adres...) HTML'e basılmadan
+   önce mutlaka kaçışlanmalı; aksi halde yönetici panelinde script çalıştırılabilir. */
+function esc(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function safeColor(value, fallback) {
+    return /^#[0-9a-fA-F]{3,8}$/.test(value) || /^[a-zA-Z]{3,20}$/.test(value) ? value : fallback;
+}
+
+function safeUrl(value) {
+    return (typeof value === 'string' && /^[A-Za-z0-9\-._~:/?#@!$&+,=%;]+$/.test(value)) ? value : '';
+}
 
 // Default Data Structure provided by the user (Fallback)
 const DEFAULT_ADMIN_DATA = {
@@ -112,15 +132,18 @@ $(document).ready(function() {
             $('#admin-role').text("Misafir");
             $('#admin-avatar').attr('src', "../content/default_user.png");
             $('#admin-logout-btn').hide();
+            if (adminDataUnsubscribe) { adminDataUnsubscribe(); adminDataUnsubscribe = null; }
         }
     });
 
     function loadDataIfAdmin() {
         if (!auth.currentUser) return;
-        
+
         // 1. Listen to Admin Data (Dashboard, Inventory, etc.)
+        // Her oturum değişiminde yeni dinleyici eklenip birikmesin
+        if (adminDataUnsubscribe) adminDataUnsubscribe();
         const adminRef = ref(db, 'admin');
-        onValue(adminRef, (snapshot) => {
+        adminDataUnsubscribe = onValue(adminRef, (snapshot) => {
             if (snapshot.exists()) {
                 const data = snapshot.val();
                 // We will merge orders later, so just pass other data for now
@@ -156,7 +179,11 @@ $(document).ready(function() {
             })
             .catch((error) => {
                 console.error("Order Load Error:", error);
-                showToast("Siparişler yüklenirken hata oluştu.", "error");
+                if (error.code === 'functions/permission-denied') {
+                    showToast("Bu hesabın yönetici yetkisi yok.", "error");
+                } else {
+                    showToast("Siparişler yüklenirken hata oluştu.", "error");
+                }
             });
         
         // Initial fleet refresh on load
@@ -319,11 +346,11 @@ $(document).ready(function() {
                     <div class="queue-item" draggable="true">
                         <div class="drag-handle"><i class="fa-solid fa-grip-vertical"></i></div>
                         <div class="queue-info">
-                            <strong>Job: ${job.job_id}</strong>
-                            <span>${job.filename} • Priority: ${job.priority}</span>
+                            <strong>Job: ${esc(job.job_id)}</strong>
+                            <span>${esc(job.filename)} • Priority: ${esc(job.priority)}</span>
                         </div>
                         <div class="queue-status">
-                            <span class="badge badge-info">${job.status}</span>
+                            <span class="badge badge-info">${esc(job.status)}</span>
                         </div>
                     </div>
                 `);
@@ -335,20 +362,22 @@ $(document).ready(function() {
         $stock.empty();
         if (data.inventory && data.inventory.filaments) {
             Object.values(data.inventory.filaments).forEach(fil => {
+                const color = safeColor(String(fil.color || '').toLowerCase(), '#cbd5e1');
+                const remaining = Number(fil.remaining_g) || 0;
                 $stock.append(`
                     <div class="stock-item">
                         <div class="stock-info">
-                            <div class="color-indicator" style="background: ${fil.color.toLowerCase()};"></div>
+                            <div class="color-indicator" style="background: ${color};"></div>
                             <div class="stock-text">
-                                <strong>${fil.type} ${fil.color}</strong>
-                                <span>${fil.brand}</span>
+                                <strong>${esc(fil.type)} ${esc(fil.color)}</strong>
+                                <span>${esc(fil.brand)}</span>
                             </div>
                         </div>
                         <div class="stock-progress">
                              <div class="progress-bar-container">
-                                <div class="progress-bar" style="width: ${(fil.remaining_g / 1000) * 100}%; background: ${fil.color.toLowerCase()};"></div>
+                                <div class="progress-bar" style="width: ${Math.max(0, Math.min(100, (remaining / 1000) * 100))}%; background: ${color};"></div>
                             </div>
-                            <span class="stock-val">${fil.remaining_g}g / 1000g</span>
+                            <span class="stock-val">${remaining}g / 1000g</span>
                         </div>
                     </div>
                 `);
@@ -365,8 +394,8 @@ $(document).ready(function() {
             const tax = data.finance.tax_tracking;
             $('#tax-current').text(`Mevcut Satış: ₺${tax.current_total}`);
             $('#tax-limit').text(`Limit: ₺${tax.limit}`);
-            const percent = (tax.current_total / tax.limit) * 100;
-            $('#tax-bar').css('width', percent + '%');
+            const percent = Number(tax.limit) > 0 ? (Number(tax.current_total) || 0) / Number(tax.limit) * 100 : 0;
+            $('#tax-bar').css('width', Math.min(100, percent) + '%');
             $('#tax-desc').html(`<i class="fa-solid fa-check-circle"></i> Muafiyet Kapsamındasınız (%${percent.toFixed(1)} Doldu)`);
         }
         
@@ -379,7 +408,7 @@ $(document).ready(function() {
                     <div class="file-card">
                         <div class="file-icon"><i class="fa-solid fa-cube"></i></div>
                         <div class="file-details">
-                            <strong>${file.name}</strong>
+                            <strong>${esc(file.name)}</strong>
                             <span>Ready</span>
                         </div>
                          <div class="file-actions">
@@ -410,6 +439,10 @@ $(document).ready(function() {
                 icon = 'fa-circle-exclamation';
                 badgeClass = 'badge-danger'; // Red/Warning style
                 status = 'Ödeme Bekliyor';
+            } else if (s.includes('payment_review')) {
+                icon = 'fa-magnifying-glass-dollar';
+                badgeClass = 'badge-warning';
+                status = 'Ödeme İnceleniyor (iyzico)';
             } else if (s.includes('ödendi') || s.includes('paid')) {
                 icon = 'fa-sack-dollar';
                 badgeClass = 'badge-success'; // Green
@@ -432,7 +465,7 @@ $(document).ready(function() {
                 status = 'İptal Edildi';
             }
             
-            return `<span class="badge ${badgeClass}"><i class="fa-solid ${icon}"></i> ${status}</span>`;
+            return `<span class="badge ${badgeClass}"><i class="fa-solid ${icon}"></i> ${esc(status)}</span>`;
         };
 
         // Sort orders: Priority shipping first, then ID ascending
@@ -468,29 +501,31 @@ $(document).ready(function() {
             }
             
             // Format Currency
-            const total = parseFloat(order.totalAmount || 0).toFixed(2);
-            const userIdDisplay = order.userId ? `<span title="${order.userId}">${order.userId.substring(0,8)}...</span>` : '-';
+            const total = (parseFloat(order.totalAmount) || 0).toFixed(2);
+            const userId = esc(order.userId || '');
+            const safeKey = esc(key);
+            const userIdDisplay = order.userId ? `<span title="${userId}">${esc(String(order.userId).substring(0,8))}...</span>` : '-';
 
             $orderTable.append(`
                 <tr>
-                    <td><input type="checkbox" class="order-checkbox" value="${key}" data-userid="${order.userId}"></td>
-                    <td><span style="font-family: monospace; font-weight: 600;">${key}</span></td>
+                    <td><input type="checkbox" class="order-checkbox" value="${safeKey}" data-userid="${userId}"></td>
+                    <td><span style="font-family: monospace; font-weight: 600;">${safeKey}</span></td>
                     <td>${getStatusBadge(order.status)}</td>
                     <td>₺${total}</td>
                     <td>${userIdDisplay}</td>
                     <td style="overflow: visible;">
                         <div class="action-dropdown">
-                            <button class="btn-sm secondary view-details-btn" data-id="${key}" style="margin-right: 5px;">
+                            <button class="btn-sm secondary view-details-btn" data-id="${safeKey}" style="margin-right: 5px;">
                                 <i class="fa-solid fa-eye"></i> Detay
                             </button>
-                            <button class="btn-icon action-trigger" data-id="${key}"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                            <button class="btn-icon action-trigger" data-id="${safeKey}"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                             <div class="dropdown-menu">
-                                <div class="dropdown-item" data-id="${key}" data-userid="${order.userId}" data-status="Ödeme Bekliyor" style="color: #EF4444;"><i class="fa-solid fa-circle-exclamation"></i> Ödeme Bekliyor</div>
-                                <div class="dropdown-item" data-id="${key}" data-userid="${order.userId}" data-status="Ödendi"><i class="fa-solid fa-money-bill"></i> Ödendi</div>
-                                <div class="dropdown-item" data-id="${key}" data-userid="${order.userId}" data-status="Hazırlanıyor"><i class="fa-solid fa-clock"></i> Hazırlanıyor</div>
-                                <div class="dropdown-item" data-id="${key}" data-userid="${order.userId}" data-status="Kargolandı"><i class="fa-solid fa-truck"></i> Kargolandı</div>
-                                <div class="dropdown-item" data-id="${key}" data-userid="${order.userId}" data-status="Teslim Edildi"><i class="fa-solid fa-check"></i> Teslim Edildi</div>
-                                <div class="dropdown-item" data-id="${key}" data-userid="${order.userId}" data-status="İptal" style="color: #EF4444;"><i class="fa-solid fa-ban"></i> İptal</div>
+                                <div class="dropdown-item" data-id="${safeKey}" data-userid="${userId}" data-status="Ödeme Bekliyor" style="color: #EF4444;"><i class="fa-solid fa-circle-exclamation"></i> Ödeme Bekliyor</div>
+                                <div class="dropdown-item" data-id="${safeKey}" data-userid="${userId}" data-status="Ödendi"><i class="fa-solid fa-money-bill"></i> Ödendi</div>
+                                <div class="dropdown-item" data-id="${safeKey}" data-userid="${userId}" data-status="Hazırlanıyor"><i class="fa-solid fa-clock"></i> Hazırlanıyor</div>
+                                <div class="dropdown-item" data-id="${safeKey}" data-userid="${userId}" data-status="Kargolandı"><i class="fa-solid fa-truck"></i> Kargolandı</div>
+                                <div class="dropdown-item" data-id="${safeKey}" data-userid="${userId}" data-status="Teslim Edildi"><i class="fa-solid fa-check"></i> Teslim Edildi</div>
+                                <div class="dropdown-item" data-id="${safeKey}" data-userid="${userId}" data-status="İptal" style="color: #EF4444;"><i class="fa-solid fa-ban"></i> İptal</div>
                             </div>
                         </div>
                     </td>
@@ -552,9 +587,10 @@ $(document).ready(function() {
     // --- MODAL LOGIC ---
     function openOrderDetailModal(order) {
         // Populate Info
-        $('#modal-order-id').text(order.id);
-        $('#modal-order-status').text(order.status).attr('class', 'badge').addClass(
-            order.status.includes('paid') || order.status.includes('Tamam') ? 'badge-success' : 'badge-warning'
+        const statusText = String(order.status || 'Bilinmiyor');
+        $('#modal-order-id').text(order.id || '');
+        $('#modal-order-status').text(statusText).attr('class', 'badge').addClass(
+            statusText === 'paid' || statusText.includes('Ödendi') || statusText.includes('Tamam') ? 'badge-success' : 'badge-warning'
         );
 
         // Customer
@@ -566,7 +602,7 @@ $(document).ready(function() {
 
         // Shipping
         $('#modal-shipping-address').text(
-            (ship.address || '') + ' ' + (ship.city || '') + ' ' + (ship.zip || '')
+            [ship.address, ship.district, ship.city, ship.zip].filter(Boolean).join(' ')
         );
         $('#modal-shipping-method').text(order.shippingMethod || 'Standart');
         $('#modal-payment-method').text(order.paymentMethod || 'Kredi Kartı');
@@ -577,26 +613,37 @@ $(document).ready(function() {
         
         if (order.items) {
             const itemsArray = Array.isArray(order.items) ? order.items : Object.values(order.items);
-            itemsArray.forEach(item => {
-                let img = item.image || item.photo || item.imageUrl || '../content/product2.jpeg';
-                if (typeof img === 'object' && img !== null) img = img.src || '../content/product2.jpeg';
+            itemsArray.filter(Boolean).forEach(item => {
+                let img = item.image || item.photo || item.imageUrl || '../content/engrare_logo_elegant.png';
+                if (typeof img === 'object' && img !== null) img = img.src || '../content/engrare_logo_elegant.png';
                 if (typeof img === 'string' && img.startsWith('./')) {
                     img = '.' + img; // converts ./content/ to ../content/
                 }
-                
+                img = safeUrl(img) || '../content/engrare_logo_elegant.png';
+
                 // Retroactive fix for old orders
                 let textToShow = item.customText || '';
-                if (!textToShow && item.desc && item.desc.includes('Yazı:')) {
+                if (!textToShow && typeof item.desc === 'string' && item.desc.includes('Yazı:')) {
                     textToShow = item.desc.replace('Yazı:', '').trim();
                 }
-                
+
                 const fontToShow = item.font || 'Inter';
-                const textColorToShow = item.textColor || '#ffffff'; // Default white
-                const objColorToShow = item.objColor || '#333333'; // Default black
-                
+                const textColorToShow = safeColor(item.textColor, '#ffffff'); // Default white
+                const objColorToShow = safeColor(item.objColor, '#333333'); // Default black
+
                 let detailsHtml = '';
-                if (textToShow) detailsHtml += `<span style="font-size: 0.8rem; color: var(--text-main);">Yazı: <strong style="font-family: '${fontToShow}';">${textToShow}</strong></span><br>`;
-                detailsHtml += `<span style="font-size: 0.75rem; color: var(--text-light);">Font: <strong>${fontToShow}</strong></span><br>`;
+                if (textToShow) detailsHtml += `<span style="font-size: 0.8rem; color: var(--text-main);">Yazı: <strong>${esc(textToShow)}</strong></span><br>`;
+                detailsHtml += `<span style="font-size: 0.75rem; color: var(--text-light);">Font: <strong>${esc(fontToShow)}</strong></span><br>`;
+                if (item.selectedObject) detailsHtml += `<span style="font-size: 0.75rem; color: var(--text-light);">Seçenek: <strong>${esc(item.selectedObject)}</strong></span><br>`;
+                [1, 2].forEach(i => {
+                    if (item[`socialPlatform${i}`]) {
+                        detailsHtml += `<span style="font-size: 0.75rem; color: var(--text-light);">${i}. Sosyal: <strong>${esc(item[`socialPlatform${i}`])}</strong> ${esc(item[`socialLink${i}`] || '')}</span><br>`;
+                    }
+                });
+                const logoUrl = safeUrl(item.logoUrl);
+                if (logoUrl && logoUrl.startsWith('https://')) {
+                    detailsHtml += `<span style="font-size: 0.75rem;"><a href="${logoUrl}" target="_blank" rel="noopener noreferrer">Müşteri logosunu aç</a></span><br>`;
+                }
                 
                 let colorsHtml = `<div style="display:flex; gap: 10px; margin-top: 4px;">
                     <div style="display:flex; align-items:center; gap: 4px; font-size: 0.7rem; color: var(--text-light);"><div style="width:14px; height:14px; border-radius:50%; background:${textColorToShow}; border:1px solid #ccc;" title="Yazı Rengi"></div>Yazı</div>
@@ -608,15 +655,15 @@ $(document).ready(function() {
                         <td style="display: flex; align-items: center; gap: 15px;">
                             <img src="${img}" style="width: 60px; height: 60px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border);">
                             <div>
-                                <strong style="font-size: 0.95rem;">${item.name || 'Ürün'}</strong>
+                                <strong style="font-size: 0.95rem;">${esc(item.name || 'Ürün')}</strong>
                                 <br>
                                 ${detailsHtml}
                                 ${colorsHtml}
                             </div>
                         </td>
-                        <td>₺${parseFloat(item.price || 0).toFixed(2)}</td>
-                        <td>${item.quantity || 1}</td>
-                        <td style="font-weight: 600;">₺${(parseFloat(item.price || 0) * (item.quantity || 1)).toFixed(2)}</td>
+                        <td>₺${(parseFloat(item.price) || 0).toFixed(2)}</td>
+                        <td>${esc(item.quantity || 1)}</td>
+                        <td style="font-weight: 600;">₺${((parseFloat(item.price) || 0) * (Number(item.quantity) || 1)).toFixed(2)}</td>
                     </tr>
                 `);
             });
@@ -729,7 +776,7 @@ function showToast(message, type = "info") {
     const $container = $('#toast-container');
     const id = Date.now();
     const icon = type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check';
-    const toastHtml = `<div id="toast-${id}" class="toast ${type}"><i class="fa-solid ${icon} toast-icon"></i><span class="toast-message">${message}</span></div>`;
+    const toastHtml = `<div id="toast-${id}" class="toast ${type}"><i class="fa-solid ${icon} toast-icon"></i><span class="toast-message">${esc(message)}</span></div>`;
     $container.append(toastHtml);
     setTimeout(() => { $(`#toast-${id}`).addClass('hiding').remove(); }, 4000);
 }
