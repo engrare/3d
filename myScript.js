@@ -87,6 +87,13 @@ function safeUrl(value) {
 }
 
 const MAX_QUANTITY = 999;
+const BULK_DISCOUNT_MIN_QTY = 10;
+const BULK_DISCOUNT_RATE = 0.15;
+
+function roundMoney(value) {
+    return Math.round(value * 100) / 100;
+}
+
 function clampQty(value) {
     const qty = parseInt(value, 10);
     if (isNaN(qty) || qty < 1) return 1;
@@ -95,6 +102,15 @@ function clampQty(value) {
 
 let cart = [];
 let currentProduct = null;
+
+// Yazı / zemin renk kombinasyonları (çapraz ikiye bölünmüş seçim balonları).
+// Sunucu (functions/index.js > COLOR_COMBINATIONS) yalnızca bu çiftleri kabul eder.
+const COLOR_COMBINATIONS = [
+    { color1: "#FBC02D", color2: "#222222", label1: "Yazı", label2: "Zemin" },
+    { color1: "#FFFFFF", color2: "#1976D2", label1: "Yazı", label2: "Zemin" },
+    { color1: "#222222", color2: "#FFFFFF", label1: "Yazı", label2: "Zemin" },
+    { color1: "#E91E63", color2: "#388E3C", label1: "Yazı", label2: "Zemin" }
+];
 
 // --- BASİTLEŞTİRİLMİŞ ÜRÜN DATASI ---
 const products = [
@@ -117,12 +133,7 @@ const products = [
         ],
         previewTextArea: { top: '13.6%', left: '10.4%', width: '78.2%', height: '34.6%' },
         previewLogoArea: { top: '0.0%', left: '7.2%', width: '85.7%', height: '100.0%' },
-		 colors: [
-            { color1: "#FBC02D", color2: "#222222", label1: "Yazı", label2: "Zemin" },
-            { color1: "#FFFFFF", color2: "#1976D2", label1: "Yazı", label2: "Zemin" },
-            { color1: "#222222", color2: "#FFFFFF", label1: "Yazı", label2: "Zemin" },
-            { color1: "#E91E63", color2: "#388E3C", label1: "Yazı", label2: "Zemin" }
-        ],
+        colors: COLOR_COMBINATIONS,
     },
     {
         id: 2,
@@ -139,12 +150,7 @@ const products = [
         ],
         previewTextArea: { top: '49.2%', left: '6.5%', width: '86.6%', height: '44.8%' },
         previewLogoArea: { top: '8.6%', left: '2.8%', width: '93.9%', height: '42.0%' },
-		 colors: [
-            { color1: "#FBC02F", color2: "#222222", label1: "Yazı", label2: "Zemin" },
-            { color1: "#FFFFFF", color2: "#1976D2", label1: "Yazı", label2: "Zemin" },
-            { color1: "#222222", color2: "#FFFFFF", label1: "Yazı", label2: "Zemin" },
-            { color1: "#E91E63", color2: "#388E3C", label1: "Yazı", label2: "Zemin" }
-        ],
+        colors: COLOR_COMBINATIONS,
     },
 	{
         id: 3,
@@ -154,7 +160,7 @@ const products = [
 		isCustomObject: [
             { 
                 objectName: "1 Kartvizit Bölmeli", 
-                src: "./content/products/5/preview-1-bolme.png",
+                src: "./content/products/5/preview-1-bolme.png?v=2",
                 previewSocialLogo1: { top_left_x: '42.0%', top_left_y: '38.0%', top_right_x: '48.0%', top_right_y: '34.0%', bottom_right_x: '48.0%', bottom_right_y: '42.0%', bottom_left_x: '42.0%', bottom_left_y: '46.0%' },
                 previewSocialQR1: { top_left_x: '42.0%', top_left_y: '50.0%', top_right_x: '55.0%', top_right_y: '40.0%', bottom_right_x: '55.0%', bottom_right_y: '60.0%', bottom_left_x: '42.0%', bottom_left_y: '70.0%' },
                 previewSocialLogo2: { top_left_x: '60.0%', top_left_y: '28.0%', top_right_x: '66.0%', top_right_y: '24.0%', bottom_right_x: '66.0%', bottom_right_y: '32.0%', bottom_left_x: '60.0%', bottom_left_y: '36.0%' },
@@ -162,7 +168,7 @@ const products = [
             },
             { 
                 objectName: "2 Kartvizit Bölmeli", 
-                src: "./content/products/5/preview-2-bolme.png",
+                src: "./content/products/5/preview-2-bolme.png?v=2",
                 previewSocialLogo1: { top_left_x: '44.0%', top_left_y: '36.0%', top_right_x: '50.0%', top_right_y: '32.0%', bottom_right_x: '50.0%', bottom_right_y: '40.0%', bottom_left_x: '44.0%', bottom_left_y: '44.0%' },
                 previewSocialQR1: { top_left_x: '44.0%', top_left_y: '48.0%', top_right_x: '57.0%', top_right_y: '38.0%', bottom_right_x: '57.0%', bottom_right_y: '58.0%', bottom_left_x: '44.0%', bottom_left_y: '68.0%' },
                 previewSocialLogo2: { top_left_x: '62.0%', top_left_y: '26.0%', top_right_x: '68.0%', top_right_y: '22.0%', bottom_right_x: '68.0%', bottom_right_y: '30.0%', bottom_left_x: '62.0%', bottom_left_y: '34.0%' },
@@ -170,7 +176,7 @@ const products = [
             },
             { 
                 objectName: "3 Kartvizit Bölmeli", 
-                src: "./content/products/5/preview-3-bolme.png",
+                src: "./content/products/5/preview-3-bolme.png?v=2",
                 previewSocialLogo1: { top_left_x: '46.0%', top_left_y: '34.0%', top_right_x: '52.0%', top_right_y: '30.0%', bottom_right_x: '52.0%', bottom_right_y: '38.0%', bottom_left_x: '46.0%', bottom_left_y: '42.0%' },
                 previewSocialQR1: { top_left_x: '46.0%', top_left_y: '46.0%', top_right_x: '59.0%', top_right_y: '36.0%', bottom_right_x: '59.0%', bottom_right_y: '56.0%', bottom_left_x: '46.0%', bottom_left_y: '66.0%' },
                 previewSocialLogo2: { top_left_x: '64.0%', top_left_y: '24.0%', top_right_x: '70.0%', top_right_y: '20.0%', bottom_right_x: '70.0%', bottom_right_y: '28.0%', bottom_left_x: '64.0%', bottom_left_y: '32.0%' },
@@ -178,15 +184,10 @@ const products = [
             }
         ],
 		isCustomQR:  [
-            { QR_Link: "1 Kartvizit Bölmeli", src: "./content/products/5/preview-1-bolme.png" },
-            { QR_Link: "2 Kartvizit Bölmeli", src: "./content/products/5/preview-2-bolme.png" }
+            { QR_Link: "1 Kartvizit Bölmeli", src: "./content/products/5/preview-1-bolme.png?v=2" },
+            { QR_Link: "2 Kartvizit Bölmeli", src: "./content/products/5/preview-2-bolme.png?v=2" }
         ],
-		 colors: [
-            { color1: "#FBC02D", color2: "#222222", label1: "Yazı", label2: "Zemin" },
-            { color1: "#FFFFFF", color2: "#1976D2", label1: "Yazı", label2: "Zemin" },
-            { color1: "#222222", color2: "#FFFFFF", label1: "Yazı", label2: "Zemin" },
-            { color1: "#E91E63", color2: "#388E3C", label1: "Yazı", label2: "Zemin" }
-        ],
+        colors: COLOR_COMBINATIONS,
         images: [
             { src: "./content/products/5/1.jpg" },
             { src: "./content/products/5/2.jpg" },
@@ -242,62 +243,6 @@ const products = [
 ];
 
 // --- DOM READY ---
-
-function cropTransparentSpace(dataUrl, callback) {
-    const img = new Image();
-    img.onload = function() {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        // Ensure reasonable resolution for vector formats
-        const w = img.width || 1024;
-        const h = img.height || 1024;
-        
-        canvas.width = w;
-        canvas.height = h;
-        ctx.drawImage(img, 0, 0, w, h);
-        
-        let imageData;
-        try {
-            imageData = ctx.getImageData(0, 0, w, h);
-        } catch(e) {
-            return callback(dataUrl); // fallback if CORS or tainted
-        }
-        
-        const data = imageData.data;
-        let minX = w, minY = h, maxX = 0, maxY = 0;
-        let hasPixels = false;
-        
-        for (let y = 0; y < h; y++) {
-            for (let x = 0; x < w; x++) {
-                const alpha = data[(y * w + x) * 4 + 3];
-                if (alpha > 5) {
-                    if (x < minX) minX = x;
-                    if (x > maxX) maxX = x;
-                    if (y < minY) minY = y;
-                    if (y > maxY) maxY = y;
-                    hasPixels = true;
-                }
-            }
-        }
-        
-        if (!hasPixels) return callback(dataUrl);
-        
-        const cropWidth = maxX - minX + 1;
-        const cropHeight = maxY - minY + 1;
-        
-        const cropCanvas = document.createElement('canvas');
-        cropCanvas.width = cropWidth;
-        cropCanvas.height = cropHeight;
-        cropCanvas.getContext('2d').drawImage(canvas, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
-        
-        callback(cropCanvas.toDataURL('image/png'));
-    };
-    img.onerror = function() {
-        callback(dataUrl);
-    };
-    img.src = dataUrl;
-}
 
 $(document).ready(function() {
     // Not: Alt menü tıklamaları aşağıdaki '.bottom-nav-item' işleyicisiyle yönetiliyor.
@@ -484,6 +429,7 @@ $(document).ready(function() {
     // Checkout Modal Devam
     $('#btn-checkout-start').click(async function() {
         if(cart.length === 0) return showToast("Sepetiniz boş.", "error");
+        if (!$('#checkout-legal-check').is(':checked')) { return showToast("Lütfen iade ve teslimat koşullarını kabul ediniz.", "error"); }
         window.location.href = "./payment";
     });
 
@@ -950,20 +896,22 @@ $(document).ready(function() {
         const file = e.target.files[0];
         if (!file) return;
 
-        const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'];
-        if (!allowedTypes.includes(file.type)) {
-            alert('Sadece PNG, JPG, JPEG veya SVG formatında logo yükleyebilirsiniz.');
+        if (file.type !== 'image/svg+xml') {
+            showToast('Logonuzu tek renkli SVG olarak yükleyebilirsiniz.', 'error');
+            $(this).val('');
+            return;
+        }
+        // Storage kuralı 5 MB üstünü reddediyor
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('Logo dosyası en fazla 5 MB olabilir.', 'error');
             $(this).val('');
             return;
         }
 
         const reader = new FileReader();
         reader.onload = function(event) {
-            cropTransparentSpace(event.target.result, function(croppedDataUrl) {
-                // Update the custom bubble
-                $('#custom-uploaded-img').attr('src', event.target.result); // Show original in bubble
-                $('#custom-uploaded-bubble').attr('data-src', croppedDataUrl).css('display', 'flex').click(); // trigger click to set as active
-            });
+            $('#custom-uploaded-img').attr('src', event.target.result);
+            $('#custom-uploaded-bubble').attr('data-src', event.target.result).css('display', 'flex').click();
         };
         reader.readAsDataURL(file);
     });
@@ -1590,6 +1538,8 @@ window.openProductDetail = function(id, pushHistory = true) {
         $('#custom-text-color').val(initialC1);
         $('#custom-obj-color').val(initialC2);
         $('.preview-object-color-layer').css('background-color', initialC2);
+        $('.preview-dynamic-text').css('color', initialC1);
+        $('.preview-dynamic-logo').css('background-color', initialC1);
 
         if (p.isCustomObject) {
             const objObj = p.isCustomObject[0] || {};
@@ -1765,6 +1715,8 @@ function loadCart() {
     $('#cart-badge').text(cart.length);
     $('#mobile-cart-badge').text(cart.length);
     renderCart();
+    // renderCart eski fiyat/renkleri normalize ediyor; ödeme sayfası da güncel veriyi okusun
+    if (cart.length > 0) saveCart();
 }
 
 /* Sepet ve sipariş detayındaki 2D kutunun en-boy oranı (iki yerde aynıydı) */
@@ -1832,6 +1784,7 @@ function renderCart() {
         $('#shipping-display').text("₺0.00");
         $('#val-total').text("₺0.00");
         $('#free-shipping-progress-container').empty();
+        $('#bulk-discount-row').remove();
         return;
     }
 
@@ -1841,6 +1794,11 @@ function renderCart() {
         const p = products.find(prod => prod.id === item.productId);
         // Fiyat her zaman güncel katalogdan; eski/değiştirilmiş sepet verisine güvenilmez
         if (p) { item.price = p.price; item.name = p.name; }
+        // Artık sunulmayan renk çiftleri ilk kombinasyona çekilir (sunucu da yalnızca bu çiftleri kabul ediyor)
+        if (p && p.colors && !p.colors.some(c => c.color1 === item.textColor && c.color2 === item.objColor)) {
+            item.textColor = p.colors[0].color1;
+            item.objColor = p.colors[0].color2;
+        }
         item.quantity = clampQty(item.quantity);
         sub += (Number(item.price) || 0) * item.quantity;
 
@@ -2017,7 +1975,20 @@ function renderCart() {
     }
     $('#shipping-display').text(shipping === 0 ? "Ücretsiz" : `₺${shipping.toFixed(2)}`);
     $('#val-subtotal').text(`₺${sub.toFixed(2)}`);
-    $('#val-total').text(`₺${(sub + shipping).toFixed(2)}`);
+
+    // B2B toplu alım indirimi: sepette toplam 10+ adet => ara toplamdan %15
+    // (functions/index.js > calculateTotals ile aynı kural)
+    const totalQty = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const discount = totalQty >= BULK_DISCOUNT_MIN_QTY ? roundMoney(roundMoney(sub) * BULK_DISCOUNT_RATE) : 0;
+    $('#bulk-discount-row').remove();
+    if (discount > 0) {
+        $('#val-subtotal').closest('.price-row').after(`
+            <div class="price-row" id="bulk-discount-row" style="color: #16a34a; font-weight: 600;">
+                <span>Toplu Alım İndirimi (%15)</span><span>-₺${discount.toFixed(2)}</span>
+            </div>
+        `);
+    }
+    $('#val-total').text(`₺${Math.max(0, sub + shipping - discount).toFixed(2)}`);
 }
 
 window.fitCartItemText = function(index) {

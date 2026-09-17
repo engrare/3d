@@ -186,7 +186,7 @@
                         </div>
                         <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
                             <div class="form-group" id="customization-logo-group" style="flex: 1; margin-bottom: 0; display: none;">
-                                <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; font-weight: 600;">Logo Seç Veya Yükle</label>
+                                <label style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 8px; font-size: 0.9rem; font-weight: 600;">Logo Seç Veya Yükle <span style="font-size: 0.72rem; font-weight: 500; text-transform: none; color: var(--text-muted); opacity: 0.85;">Tek renkli SVG</span></label>
                                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;" id="logo-bubbles-container">
                                     <div class="logo-bubble default-logo-bubble" data-src="./content/engrare_logo_elegant.svg" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; background: #fff; flex-shrink: 0; transition: border-color 0.2s;">
                                         <img src="./content/engrare_logo_elegant.svg" loading="lazy" decoding="async" style="width: 25px; height: 25px; object-fit: contain; pointer-events: none;">
@@ -200,11 +200,10 @@
                                     <div id="custom-uploaded-bubble" class="logo-bubble" style="display:none; width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; align-items: center; justify-content: center; background: #fff; overflow: hidden; flex-shrink: 0; transition: border-color 0.2s;">
                                         <img id="custom-uploaded-img" src="" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;">
                                     </div>
-                                    <div id="upload-logo-trigger" style="width: 45px; height: 45px; border-radius: 50%; border: 2px dashed var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; background: #F8FAFC; color: var(--text-muted); transition: 0.2s; flex-shrink: 0;" onmouseover="this.style.borderColor='var(--primary)'; this.style.color='var(--primary)';" onmouseout="this.style.borderColor='var(--border)'; this.style.color='var(--text-muted)';">
+                                    <div id="upload-logo-trigger" title="SVG logo yükle" style="width: 45px; height: 45px; border-radius: 50%; border: 2px dashed var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; background: #F8FAFC; color: var(--text-muted); transition: 0.2s; flex-shrink: 0;" onmouseover="this.style.borderColor='var(--primary)'; this.style.color='var(--primary)';" onmouseout="this.style.borderColor='var(--border)'; this.style.color='var(--text-muted)';">
                                         <i class="fa-solid fa-plus" style="pointer-events: none;"></i>
-                                    </div>
-                                </div>
-                                <input type="file" id="custom-logo-input" accept=".png, .jpg, .jpeg, .svg" style="display: none;">
+                                    </div>                                </div>
+                                <input type="file" id="custom-logo-input" accept=".svg" style="display: none;">
                             </div>
                         </div>
                         <div id="customization-social-group" style="display: none; width: 100%; margin-bottom: 20px;">
@@ -304,6 +303,10 @@
                 <div class="price-row">
                     <span style="font-weight:700; font-size:1.15rem;">Toplam</span>
                     <span id="val-total" style="font-weight:800; font-size:1.5rem; color:var(--primary);">₺0.00</span>
+                </div>
+                <div class="form-group" style="display:flex; align-items:flex-start; gap:10px; margin-top:15px; margin-bottom:15px;">
+                    <input type="checkbox" id="checkout-legal-check" style="margin-top:4px; width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer;" required>
+                    <label for="checkout-legal-check" style="font-size:0.85rem; color:#666; cursor:pointer; line-height:1.4; text-transform:none;">Kişiselleştirilmiş/isme özel ürünlerde yasal olarak cayma hakkı ve iade bulunmamaktadır. Üretim ve kargolama süresi 3-5 iş günüdür. <strong style="color:var(--primary);">Kabul ediyorum.</strong></label>
                 </div>
                 <button id="btn-checkout-start" class="btn primary" style="width: 100%; margin-top: 18px; height: 50px; font-size: 1.05rem; font-weight: 700; border-radius: 10px;">Ödemeye Geç</button>
                 
@@ -586,7 +589,7 @@
     </div>
 
     <div id="toast-container"></div>
-    <script type="module" src="myScript.js?v=64"></script>
+    <script type="module" src="myScript.js?v=67"></script>
 
     <!-- MOBILE BOTTOM NAV -->
     <div class="bottom-nav-bar" id="mobile-bottom-nav">

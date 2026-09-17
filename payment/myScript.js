@@ -72,6 +72,14 @@ function safeUrl(value) {
     return (typeof value === 'string' && /^[A-Za-z0-9\-._~:/?#@!$&+,=%;]+$/.test(value)) ? value : '';
 }
 
+// Ana sayfadaki (../myScript.js) COLOR_COMBINATIONS ile aynı olmalı
+const COLOR_COMBINATIONS = [
+    { color1: "#FBC02D", color2: "#222222", label1: "Yazı", label2: "Zemin" },
+    { color1: "#FFFFFF", color2: "#1976D2", label1: "Yazı", label2: "Zemin" },
+    { color1: "#222222", color2: "#FFFFFF", label1: "Yazı", label2: "Zemin" },
+    { color1: "#E91E63", color2: "#388E3C", label1: "Yazı", label2: "Zemin" }
+];
+
 const products = [
     {
         id: 1,
@@ -92,12 +100,7 @@ const products = [
         ],
         previewTextArea: { top: '13.6%', left: '10.4%', width: '78.2%', height: '34.6%' },
         previewLogoArea: { top: '0.0%', left: '7.2%', width: '85.7%', height: '100.0%' },
-        colors: [
-            { color1: "#FBC02D", color2: "#222222", label1: "Yazı", label2: "Zemin" },
-            { color1: "#FFFFFF", color2: "#1976D2", label1: "Yazı", label2: "Zemin" },
-            { color1: "#222222", color2: "#FFFFFF", label1: "Yazı", label2: "Zemin" },
-            { color1: "#E91E63", color2: "#388E3C", label1: "Yazı", label2: "Zemin" }
-        ]
+        colors: COLOR_COMBINATIONS
     },
     {
         id: 2,
@@ -114,12 +117,7 @@ const products = [
         ],
         previewTextArea: { top: '49.2%', left: '6.5%', width: '86.6%', height: '44.8%' },
         previewLogoArea: { top: '8.6%', left: '2.8%', width: '93.9%', height: '42.0%' },
-        colors: [
-            { color1: "#FBC02D", color2: "#222222", label1: "Yazı", label2: "Zemin" },
-            { color1: "#FFFFFF", color2: "#1976D2", label1: "Yazı", label2: "Zemin" },
-            { color1: "#222222", color2: "#FFFFFF", label1: "Yazı", label2: "Zemin" },
-            { color1: "#E91E63", color2: "#388E3C", label1: "Yazı", label2: "Zemin" }
-        ]
+        colors: COLOR_COMBINATIONS
     },
     {
         // Ana sayfadaki (../myScript.js) ürün 3 ile aynı olmalı
@@ -128,16 +126,11 @@ const products = [
         desc: "İhtiyacınıza göre şekillenen profesyonel kartvizitlik.",
         price: 180,
         isCustomObject: [
-            { objectName: "1 Kartvizit Bölmeli", src: "./content/products/5/preview-1-bolme.png" },
-            { objectName: "2 Kartvizit Bölmeli", src: "./content/products/5/preview-2-bolme.png" },
-            { objectName: "3 Kartvizit Bölmeli", src: "./content/products/5/preview-3-bolme.png" }
+            { objectName: "1 Kartvizit Bölmeli", src: "./content/products/5/preview-1-bolme.png?v=2" },
+            { objectName: "2 Kartvizit Bölmeli", src: "./content/products/5/preview-2-bolme.png?v=2" },
+            { objectName: "3 Kartvizit Bölmeli", src: "./content/products/5/preview-3-bolme.png?v=2" }
         ],
-        colors: [
-            { color1: "#FBC02D", color2: "#222222", label1: "Yazı", label2: "Zemin" },
-            { color1: "#FFFFFF", color2: "#1976D2", label1: "Yazı", label2: "Zemin" },
-            { color1: "#222222", color2: "#FFFFFF", label1: "Yazı", label2: "Zemin" },
-            { color1: "#E91E63", color2: "#388E3C", label1: "Yazı", label2: "Zemin" }
-        ],
+        colors: COLOR_COMBINATIONS,
         images: [
             { src: "./content/products/5/1.jpg" },
             { src: "./content/products/5/2.jpg" },
@@ -364,10 +357,16 @@ $(document).ready(function() {
                 $('#discount-input-container').hide();
                 $('#discount-applied-container').css('display', 'flex'); 
                 $('#applied-code-text').text(code);
-                $msg.text(`İndirim uygulandı: ${code}`).addClass('success');
-                                
                 updateTotals();
-                showToast("İndirim kodu uygulandı.", "success");
+
+                const cartSubtotal = roundMoney(cart.reduce((sum, i) => sum + i.price * (parseInt(i.quantity) || 1), 0));
+                if (calculateDiscount(cartSubtotal).isBulk) {
+                    // Kupon ve toplu alım indirimi birleşmez; sunucu da daha avantajlı olanı uygular
+                    $msg.text('Toplu alım indiriminiz (%15) bu koddan daha avantajlı olduğu için kod uygulanmadı.').addClass('success');
+                } else {
+                    $msg.text(`İndirim uygulandı: ${code}`).addClass('success');
+                    showToast("İndirim kodu uygulandı.", "success");
+                }
             } else {
                 appliedDiscount = null;
                 $msg.text(data.message || "Geçersiz kod.").addClass('error');
@@ -416,6 +415,11 @@ function loadCart() {
     cart.forEach(item => {
         const p = products.find(prod => prod.id === item.productId);
         if (p) { item.price = p.price; item.name = p.name; }
+        // Artık sunulmayan renk çiftleri ilk kombinasyona çekilir (sunucu da yalnızca bu çiftleri kabul ediyor)
+        if (p && p.colors && !p.colors.some(c => c.color1 === item.textColor && c.color2 === item.objColor)) {
+            item.textColor = p.colors[0].color1;
+            item.objColor = p.colors[0].color2;
+        }
     });
     $('#cart-badge').text(cart.length);
     renderCartSummary();
@@ -582,13 +586,40 @@ function renderPaymentItemPreview(index) {
     });
 }
 
+/* İndirim hesabı — functions/index.js > calculateTotals ile birebir aynı:
+   10+ adette ara toplamın %15'i (toplu alım); kuponla birleşmez,
+   hangisi daha avantajlıysa o uygulanır. */
+const BULK_DISCOUNT_MIN_QTY = 10;
+const BULK_DISCOUNT_RATE = 0.15;
+
+function roundMoney(value) {
+    return Math.round(value * 100) / 100;
+}
+
+function calculateDiscount(subtotal) {
+    const totalQty = cart.reduce((sum, i) => sum + (parseInt(i.quantity || i.configuration?.quantity || 1) || 1), 0);
+    let couponAmount = 0;
+    if (appliedDiscount) {
+        if (appliedDiscount.type === 'percent') {
+            couponAmount = subtotal * (appliedDiscount.value / 100);
+        } else if (appliedDiscount.type === 'fixed') {
+            couponAmount = appliedDiscount.value;
+        }
+        couponAmount = roundMoney(Math.min(couponAmount, subtotal));
+    }
+    const bulkAmount = totalQty >= BULK_DISCOUNT_MIN_QTY ? roundMoney(subtotal * BULK_DISCOUNT_RATE) : 0;
+    const useBulk = bulkAmount > 0 && bulkAmount >= couponAmount;
+    return { amount: useBulk ? bulkAmount : couponAmount, isBulk: useBulk };
+}
+
 function updateTotals() {
     let subtotal = 0;
     cart.forEach(i => {
         const qty = parseInt(i.quantity || i.configuration?.quantity || 1) || 1;
         subtotal += i.price * qty;
     });
-        
+    subtotal = roundMoney(subtotal);
+
     const isFreeShipping = subtotal >= 500;
     const baseShipping = isFreeShipping ? 0 : 50;
     const expressCost = isFreeShipping ? 70 : 120;
@@ -600,16 +631,9 @@ function updateTotals() {
     const selectedShipping = $('input[name="shipping-method"]:checked').val() || 'standard';
     const isExpress = selectedShipping === 'express';
     shippingCost = isExpress ? expressCost : baseShipping;
-        
-    let discountAmount = 0;
-    if (appliedDiscount) {
-        if (appliedDiscount.type === 'percent') {
-            discountAmount = subtotal * (appliedDiscount.value / 100);
-        } else if (appliedDiscount.type === 'fixed') {
-            discountAmount = appliedDiscount.value;
-        }
-        if (discountAmount > subtotal) discountAmount = subtotal;
-    }
+
+    const discount = calculateDiscount(subtotal);
+    const discountAmount = discount.amount;
 
     // Sipariş Özeti Satırları: Kargo ve Üretim Hızı Ayrımı
     $('#summ-subtotal').text(formatTL(subtotal));
@@ -623,6 +647,7 @@ function updateTotals() {
         
     if (discountAmount > 0) {
         $('#summ-discount-row').show();
+        $('#summ-discount-row > span').first().text(discount.isBulk ? 'Toplu Alım İndirimi (%15)' : 'İndirim');
         $('#summ-discount').text('-' + formatTL(discountAmount));
     } else {
         $('#summ-discount-row').hide();
@@ -757,17 +782,9 @@ async function runPayment() {
     let shippingInfo = {};
 
     // Toplam Tutar Matematik Hesabı
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * (parseInt(item.quantity || item.configuration?.quantity || 1) || 1)), 0);
-    let discountAmount = 0;
-    if (appliedDiscount) {
-         if (appliedDiscount.type === 'percent') {
-            discountAmount = subtotal * (appliedDiscount.value / 100);
-        } else if (appliedDiscount.type === 'fixed') {
-            discountAmount = appliedDiscount.value;
-        }
-        if (discountAmount > subtotal) discountAmount = subtotal;
-    }
-    const totalAmount = Math.max(0, subtotal + shippingCost - discountAmount);
+    const subtotal = roundMoney(cart.reduce((sum, item) => sum + (item.price * (parseInt(item.quantity || item.configuration?.quantity || 1) || 1)), 0));
+    const discountAmount = calculateDiscount(subtotal).amount;
+    const totalAmount = roundMoney(Math.max(0, subtotal + shippingCost - discountAmount));
 
     // 🛡️ ADRES DOĞRULAMA VE VERİ TOPLAMA BLOĞU (HTML ID'lerine göre tam eşitleme sağlandı)
     if (user.isAnonymous) {
