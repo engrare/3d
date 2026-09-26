@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ön Bilgilendirme Formu ve Mesafeli Satış Sözleşmesi - Engrare 3D</title>
+    <meta name="description" content="Engrare 3D Ön Bilgilendirme Formu ve Mesafeli Satış Sözleşmesi.">
+    <link rel="canonical" href="https://3d.engrare.com/mevzuat/sozlesme/">
+    <link rel="icon" type="image/png" href="https://www.engrare.com/files/photos/title_icon.png" sizes="48x48">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<link rel="stylesheet" href="../../myStyle.css?v=59">
+    <style>
+        .legal-content h1 { margin-bottom: 30px; font-size: 2.5rem; }
+        .legal-content h3 { margin-top: 40px; margin-bottom: 15px; font-size: 1.5rem; color: var(--primary); }
+        .legal-content p { margin-bottom: 15px; line-height: 1.8; }
+        .legal-content ul { margin-bottom: 20px; padding-left: 20px; }
+        .legal-content li { margin-bottom: 10px; color: var(--text-muted); }
+    </style>
+    <!-- Sayfaya ozel mobil alt menu stilleri (head'de: gec reflow olusturmaz) -->
+    <style>
+    /* Alt menü yüksekliği tek yerde: body alt boşluğu da bunu kullanıyor (önceden 86px menüye 70px boşluk kalıyor, içerik altta kesiliyordu) */
+    :root { --bottom-nav-h: 60px; }
+    .bottom-nav-bar { display: none; position: fixed; bottom: 0; left: 0; width: 100%; height: var(--bottom-nav-h); box-sizing: border-box; background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; justify-content: space-around; align-items: stretch; padding: 0; border-top: 1px solid var(--border); }
+    .bottom-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.72rem; font-weight: 600; cursor: pointer; text-decoration: none; gap: 3px; padding: 0; }
+    .bottom-nav-item i { font-size: 1.25rem; }
+    .bottom-nav-item.active { color: var(--primary); }
+    .cart-badge-mobile { position: absolute; top: -6px; right: -10px; background: #EF4444; color: #fff; font-size: 0.6rem; font-weight: 700; padding: 2px 5px; border-radius: 10px; }
+    @media (max-width: 768px) {
+        .bottom-nav-bar { display: flex; }
+        .mobile-menu-toggle { display: none !important; }
+        .nav-menu { display: none !important; }
+        body { padding-bottom: var(--bottom-nav-h); }
+    }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="brand-logo" style="cursor: pointer;"><a href="../../?products" style="text-decoration: none; color: inherit;"><img src="../../content/images/engrare_logo_elegant.png" height="65" width="101" fetchpriority="high" decoding="async" alt="Engrare" onerror="this.style.display='none'; this.parentElement.innerText='ENGRARE.'"></a></div>
+            
+
+            <!-- Mobile Menu Toggle Button -->
+            <div class="mobile-menu-toggle" id="mobile-menu-toggle" style="display: none; cursor: pointer; font-size: 1.5rem; color: var(--primary);">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+            
+            <div class="mobile-backdrop" id="mobile-backdrop"></div>
+            
+            <ul class="nav-menu" id="nav-menu">
+                <div class="mobile-menu-close" id="mobile-menu-close" style="display: none; align-self: flex-end; padding: 5px; cursor: pointer; font-size: 1.5rem; color: var(--text-main);">
+                    <i class="fa-solid fa-xmark"></i>
+                </div>
+                <li><a href="../../?products" style="text-decoration: none; color: inherit;">Ürünlerimiz</a></li>
+                <li  title="Sepet" style="display: flex; align-items: center; gap: 6px;"><a href="../../?checkout" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-cart-shopping" style="font-size: 1.2rem;"></i> Sepet <span id="cart-badge">0</span></a></li>
+                <li id="nav-login-btn"  href="../../?login" style="display: none; cursor: pointer; align-items: center; gap: 8px; font-weight: 600; padding: 10px 0;">
+                    <a href="../../?login" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;"><i class="fa-regular fa-user" style="font-size: 1.2rem;"></i> Giriş Yap</a>
+                </li>
+                
+                <li id="nav-user-profile"  href="../../?dashboard" style="display: none; cursor: pointer; align-items: center; gap: 8px; font-weight: 600; padding: 10px 0;">
+                    <a href="../../?dashboard" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-circle-user" style="font-size: 1.3rem;"></i> Profil</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <script type="module" src="../mevzuat_script.js?v=2"></script>
+
+    <div class="container narrow legal-content">
+        <!--email_off--><!-- Cloudflare adresleri gizlemesin: bu metin ödeme sayfasına ve sipariş PDF'ine olduğu gibi aktarılıyor -->
+        <h1>ÖN BİLGİLENDİRME FORMU VE MESAFELİ SATIŞ SÖZLEŞMESİ</h1>
+        <p>Bu sayfa, 6502 sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler Yönetmeliği uyarınca sipariş verilmeden önce Alıcı'ya sunulan iki ayrı metni içerir: <strong>A. Ön Bilgilendirme Formu</strong> ve <strong>B. Mesafeli Satış Sözleşmesi</strong>. Siparişe konu ürünlerin temel nitelikleri (ürün adı, adedi, kişiselleştirme ve renk seçimleri), tüm vergiler dahil toplam satış bedeli, kargo ve varsa öncelikli üretim ücreti ile teslimat adresi, ödeme sayfasındaki sipariş özetinde gösterilir ve her iki metnin ayrılmaz parçasıdır. Alıcı, ödeme sayfasındaki onay kutusunu işaretleyerek ön bilgileri edindiğini teyit eder ve sözleşmeyi kabul eder. Siparişten sonra her iki metin, sipariş bilgileri doldurulmuş olarak PDF halinde Alıcı'nın e-posta adresine gönderilir.</p>
+
+        <h3>A. ÖN BİLGİLENDİRME FORMU</h3>
+        <ul>
+            <li><strong>Satıcı:</strong> Kaya Sertel, Atakent Mah. Bosphorus City 52B Blok, Daire 5, Küçükçekmece / İstanbul, info@engrare.com, 0 (541) 298 98 03.</li>
+            <li><strong>Ürünün temel nitelikleri:</strong> Ürün, Alıcı'nın seçtiği model, renk ve kişiselleştirme bilgileriyle (yazı, logo, sosyal medya QR kodu) 3D yazıcıda kişiye özel olarak üretilir. Ürün adı, adedi ve seçimler ödeme sayfasındaki sipariş özetinde yer alır.</li>
+            <li><strong>Toplam fiyat ve ek masraflar:</strong> Ürün bedelleri, kargo ücreti (50 TL; 500 TL ve üzeri siparişlerde ücretsiz) ve seçilmişse öncelikli üretim ücreti (ara toplamın %15'i) dahil, tüm vergiler dahil toplam tutar ödeme düğmesinin hemen üstünde gösterilir. Satıcı esnaf muaflığı kapsamında olduğundan fiyatlara KDV uygulanmaz. Bunların dışında ek bir masraf yoktur.</li>
+            <li><strong>Ödeme:</strong> iyzico altyapısıyla kredi/banka kartı ya da havale/EFT. Havale/EFT ile verilen siparişlerde üretim, ödeme Satıcı hesabına geçtikten sonra başlar.</li>
+            <li><strong>Teslimat:</strong> Standart üretimde 3-5 iş günü, öncelikli üretimde 2-3 iş günü içinde kargoya verilir ve Alıcı'nın bildirdiği adrese kargo ile teslim edilir. Teslim süresi hiçbir durumda 30 günü aşmaz.</li>
+            <li><strong>Cayma hakkı:</strong> Ürünler Alıcı'nın istekleri ve kişisel ihtiyaçları doğrultusunda kişiye özel üretildiğinden, Mesafeli Sözleşmeler Yönetmeliği'nin 15. maddesi uyarınca <strong>cayma hakkı bulunmamaktadır</strong>. Ürünün ayıplı olması halinde Alıcı'nın 6502 sayılı Kanun'un 11. maddesindeki hakları saklıdır.</li>
+            <li><strong>Şikâyet ve itiraz:</strong> Talep ve şikâyetler info@engrare.com adresine iletilebilir. Uyuşmazlıklarda Ticaret Bakanlığınca ilan edilen parasal sınırlar dahilinde Tüketici Hakem Heyetlerine, sınırları aşan durumlarda Tüketici Mahkemelerine başvurulabilir.</li>
+        </ul>
+
+        <h3>B. MESAFELİ SATIŞ SÖZLEŞMESİ</h3>
+        <h3>MADDE 1 - TARAFLAR</h3>
+        <p><strong>SATICI:</strong><br>Kaya Sertel<br>Atakent Mah. Bosphorus City 52B Blok, Daire 5, Küçükçekmece / İstanbul<br>info@engrare.com<br>0 (541) 298 98 03</p>
+        <p><strong>ALICI:</strong><br>Müşteri (Sipariş verirken kullanılan bilgiler esas alınır.)</p>
+        <h3>MADDE 2 - KONU</h3>
+        <p>İşbu sözleşmenin konusu, Alıcı’nın Satıcı’ya ait 3d.engrare.com internet sitesinden siparişini verdiği ürünün satışı ve teslimi ile ilgili olarak 6502 sayılı Kanun hükümleri gereğince hak ve yükümlülüklerin saptanmasıdır.</p>
+        <h3>MADDE 3 - ÜRÜN VE FİYATLANDIRMA (Vergi Muafiyeti)</h3>
+        <p>Satıcı, 193 sayılı Gelir Vergisi Kanunu'nun 9/10. maddesi (evde imalat) kapsamında esnaf muaflığından yararlanmaktadır. Bu nedenle satış bedellerine <strong>KDV uygulanmaz; sitede gösterilen fiyatlar Alıcı'nın ödeyeceği nihai tutardır ve üzerine ayrıca vergi eklenmez.</strong> Esnaf muaflığı kapsamında fatura düzenlenmez; satışın belgesi olarak işbu sözleşme ile banka veya iyzico ödeme dekontu kullanılır.</p>
+        <h3>MADDE 4 - ÖDEME, KARGO VE TESLİMAT</h3>
+        <p>Ödeme, iyzico altyapısı üzerinden kredi/banka kartı ile ya da havale/EFT ile yapılır. Havale/EFT ile verilen siparişlerde üretim, ödeme Satıcı hesabına geçtikten sonra başlar. Kargo ücreti <strong>50 TL</strong>'dir; <strong>500 TL ve üzeri</strong> siparişlerde kargo ücretsizdir. Standart üretimde siparişiniz <strong>3-5 iş günü</strong> içinde kargoya verilir. Ödeme sayfasında isteğe bağlı olarak seçilebilen <strong>Öncelikli Üretim</strong> seçeneğinde bu süre <strong>2-3 iş günüdür</strong>; öncelikli üretim ücreti sipariş ara toplamının <strong>%15</strong>'idir. 10 adet ve üzeri siparişlerde ara toplama %15 toplu alım indirimi uygulanır; bu indirim indirim kodlarıyla birleşmez, Alıcı lehine olan uygulanır. Her durumda sipariş, Mesafeli Sözleşmeler Yönetmeliği uyarınca yasal azami süre olan <strong>30 günü</strong> aşmamak kaydıyla teslim edilir.</p>
+        <h3>MADDE 5 - CAYMA HAKKI</h3>
+        <p>Alıcı, mal satışına ilişkin mesafeli sözleşmelerde ürünün kendisine veya gösterdiği adresteki kişiye teslim tarihinden itibaren 14 (on dört) gün içinde, Satıcı’ya bildirmek şartıyla ve hiçbir gerekçe göstermeksizin sözleşmeden cayma hakkına sahiptir. Ancak Yönetmeliğin "Cayma Hakkının Kullanılamayacağı Haller" başlıklı maddesi gereği; <strong>Alıcı’nın talebiyle kişiye özel olarak üretilen (isim yazılı vb.) ürünlerde cayma hakkı kullanılamaz.</strong> Cayma hakkının bulunduğu durumlarda cayma bildirimi info@engrare.com adresine e-posta ile ya da Madde 1'deki adrese yazılı olarak yapılabilir. Ürünün ayıplı çıkması halinde Alıcı, 6502 sayılı Kanun'un 11. maddesindeki seçimlik haklarını (ücretsiz onarım, yenisiyle değişim, bedel indirimi veya sözleşmeden dönme) kullanabilir; bu durumda iade kargo bedeli Satıcı'ya aittir.</p>
+        <h3>MADDE 6 - KİŞİSELLEŞTİRME İÇERİĞİ VE FİKRİ HAKLAR</h3>
+        <p>Alıcı, sipariş sırasında ürüne basılmak üzere girdiği veya yüklediği yazı, logo, görsel ve bağlantıların ("İçerik") kendisine ait olduğunu ya da bunları kullanma hakkına sahip olduğunu; İçeriğin üçüncü kişilerin marka, telif, kişilik ve diğer haklarını ihlal etmediğini ve hukuka ve genel ahlaka aykırı olmadığını kabul ve taahhüt eder. Satıcı, bu şartlara aykırı olduğunu değerlendirdiği siparişleri üretime almadan iptal etme ve ödenen bedelin tamamını Alıcı'ya iade etme hakkına sahiptir. İçerikten doğan hukuki sorumluluk Alıcı'ya aittir; İçerik nedeniyle üçüncü kişilerin talepleri sonucunda Satıcı'nın uğrayacağı zararlar Alıcı'ya rücu edilebilir.</p>
+        <h3>MADDE 7 - YETKİLİ MAHKEME</h3>
+        <p>İşbu sözleşmeden doğan uyuşmazlıklarda, Ticaret Bakanlığınca ilan edilen parasal sınırlar dahilinde Tüketici Hakem Heyetleri, bu sınırları aşan durumlarda Alıcı’nın veya Satıcı’nın yerleşim yerindeki Tüketici Mahkemeleri yetkilidir.</p>
+        <!--/email_off-->
+    </div>
+
+    <footer class="main-footer">
+        <div class="container footer-grid">
+            <div class="footer-col">
+                <div class="brand-logo" style="color:white; margin-bottom: 15px;">ENGRARE.</div>
+                <p style="color: #94A3B8; font-size: 0.9rem;">Kişisel 3D baskı ve tasarım atölyesi.</p>
+            </div>
+            <div class="footer-col">
+                <h5>Kurumsal</h5>
+                <ul>
+                    <li><a href="../iletisim/" style="color: inherit; text-decoration: none;">İletişim</a></li>
+                    <li><a href="../gizlilik/" style="color: inherit; text-decoration: none;">Gizlilik Politikası</a></li>
+                    <li><a href="../teslimat/" style="color: inherit; text-decoration: none;">Teslimat ve İade</a></li>
+                    <li><a href="../sozlesme/" style="color: inherit; text-decoration: none;">Mesafeli Satış Sözleşmesi</a></li>
+                    <li><a href="../kvkk/" style="color: inherit; text-decoration: none;">KVKK Aydınlatma Metni</a></li>
+                    <li><a href="/?siparis" style="color: inherit; text-decoration: none;">Sipariş Sorgula</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h5>Güvenli Ödeme</h5>
+                <div class="payment-methods">
+                    <span class="card-badge">VISA</span>
+                    <span class="card-badge mastercard">MASTERCARD</span>
+                    <div class="iyzico-badge">iyzico</div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MOBILE BOTTOM NAV -->
+    <div class="bottom-nav-bar" id="mobile-bottom-nav">
+        <div class="bottom-nav-item" onclick="location.href='../../?products'">
+            <i class="fa-solid fa-box"></i>
+            <span>Ürünler</span>
+        </div>
+        <div class="bottom-nav-item" onclick="location.href='../../?checkout'">
+            <div style="position: relative;">
+                <i class="fa-solid fa-cart-shopping"></i>
+                <span class="cart-badge-mobile" id="mobile-cart-badge">0</span>
+            </div>
+            <span>Sepet</span>
+        </div>
+        <!-- Giriş yapılmamış: Giriş Yap -->
+        <div class="bottom-nav-item" id="mobile-nav-login" onclick="location.href='../../?login'">
+            <i class="fa-regular fa-user"></i>
+            <span>Giriş Yap</span>
+        </div>
+        <!-- Giriş yapılmış: Profil -->
+        <div class="bottom-nav-item" id="mobile-nav-profile" onclick="location.href='../../?dashboard'" style="display:none;">
+            <i class="fa-solid fa-circle-user"></i>
+            <span>Profil</span>
+        </div>
+    </div>
+</body>
+</html>

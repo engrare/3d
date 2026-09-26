@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engrare 3D - Yönetim Paneli</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./myStyle.css?v=6">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+                "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+                "firebase/database": "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js",
+                "firebase/functions": "https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-logo">ENGRARE.</div>
+                <div class="brand-subtitle">Admin Paneli</div>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item active" data-target="#dashboard-section">
+                    <i class="fa-solid fa-chart-pie"></i> <span>Panel Özeti</span>
+                </li>
+                <li class="nav-item" data-target="#orders-section">
+                    <i class="fa-solid fa-cart-shopping"></i> <span>Sipariş Yönetimi</span>
+                </li>
+                <li class="nav-item" data-target="#production-section">
+                    <i class="fa-solid fa-list-check"></i> <span>Üretim Kuyruğu</span>
+                </li>
+                <li class="nav-item" data-target="#fleet-section">
+                    <i class="fa-solid fa-server"></i> <span>Cihaz & Filo</span>
+                </li>
+                <li class="nav-item" data-target="#files-section">
+                    <i class="fa-solid fa-folder-open"></i> <span>Dosya Kütüphanesi</span>
+                </li>
+                <li class="nav-item" data-target="#stock-section">
+                    <i class="fa-solid fa-cubes-stacked"></i> <span>Stok & Malzeme</span>
+                </li>
+                <li class="nav-item" data-target="#finance-section">
+                    <i class="fa-solid fa-file-invoice-dollar"></i> <span>Finans & Vergi</span>
+                </li>
+                <li class="nav-item" data-target="#logistics-section">
+                    <i class="fa-solid fa-truck-fast"></i> <span>Lojistik</span>
+                </li>
+                <li class="nav-item" data-target="#pricing-section">
+                    <i class="fa-solid fa-calculator"></i> <span>Fiyatlandırma</span>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer" id="admin-login-trigger" style="cursor: pointer;">
+                <div class="user-profile">
+                    <img id="admin-avatar" src="../content/images/default_user.png" alt="Admin">
+                    <div class="user-info">
+                        <span class="name" id="admin-name">Giriş Yap</span>
+                        <span class="role" id="admin-role">Misafir</span>
+                    </div>
+                </div>
+                <button class="logout-btn" id="admin-logout-btn" style="display:none;"><i class="fa-solid fa-right-from-bracket"></i></button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            
+            <!-- 1. Dashboard (Overview) -->
+            <section id="dashboard-section" class="content-section active">
+                <div class="section-header">
+                    <h2>Panel Özeti</h2>
+                    <p class="section-desc">Günlük operasyonların ve canlı durumun özeti.</p>
+                </div>
+
+                <div class="dashboard-grid">
+                    <!-- Live Status -->
+                    <div class="card status-card">
+                        <div class="card-header">
+                            <h4>Canlı Baskı Durumu</h4>
+                            <span class="badge badge-success">Aktif</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="printer-info" id="live-status-info">
+                                <strong>Sistem Durumu</strong>
+                                <span id="live-status-msg">Yükleniyor...</span>
+                            </div>
+                            <div class="progress-wrapper" id="live-status-container" style="display:none;">
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar" style="width: 0%;"></div>
+                                </div>
+                                <div class="progress-stats">
+                                    <span>%0 Tamamlandı</span>
+                                    <span>Kalan: --</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Revenue Widget -->
+                    <div class="card revenue-card">
+                        <div class="card-header">
+                            <h4>Gelir Özeti</h4>
+                            <select class="small-select">
+                                <option>Bu Ay</option>
+                                <option>Bugün</option>
+                            </select>
+                        </div>
+                        <div class="revenue-stats">
+                            <div class="stat-item">
+                                <span class="label">Günlük</span>
+                                <span class="value" id="rev-daily">₺0.00</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="label">Aylık</span>
+                                <span class="value" id="rev-monthly">₺0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- E-posta gönderimleri (Resend ücretsiz kota: 100/gün, 3000/ay) -->
+                    <div class="card full-width">
+                        <div class="card-header">
+                            <h4>Gönderilen E-postalar</h4>
+                            <span class="mail-quota">Bugün <strong id="mail-today">0 / 100</strong> · Bu ay <strong id="mail-month">0 / 3000</strong></span>
+                        </div>
+                        <div class="mail-charts">
+                            <div><div class="mail-chart-title">Son 30 gün</div><div class="mail-bars" id="mail-daily-bars"></div><div class="mail-axis" id="mail-daily-axis"></div></div>
+                            <div><div class="mail-chart-title">Son 12 ay</div><div class="mail-bars" id="mail-monthly-bars"></div><div class="mail-axis" id="mail-monthly-axis"></div></div>
+                        </div>
+                    </div>
+
+                    <!-- Camera Feed -->
+                    <div class="card camera-card full-width">
+                        <div class="card-header">
+                            <h4>Canlı İzleme</h4>
+                            <span class="live-indicator"><i class="fa-solid fa-circle"></i> CANLI</span>
+                        </div>
+                        <div class="camera-placeholder">
+                            <i class="fa-solid fa-video-slash"></i>
+                            <span>Kamera Bağlantısı Bekleniyor...</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Order Management -->
+            <section id="orders-section" class="content-section">
+                <div class="section-header">
+                    <h2>Sipariş Yönetimi</h2>
+                    <p class="section-desc">Gelen siparişleri görüntüleyin ve yönetin.</p>
+                </div>
+
+                <!-- Action Bar -->
+                <div class="orders-actions">
+                    <div class="bulk-actions">
+                        <select id="bulk-status-select" class="select-box" style="width: auto;">
+                            <option value="">Toplu Durum Seç</option>
+                            <option value="Ödendi">Ödendi</option>
+                            <option value="Hazırlanıyor">Hazırlanıyor</option>
+                            <option value="Kargolandı">Kargolandı</option>
+                            <option value="Teslim Edildi">Teslim Edildi</option>
+                            <option value="İptal">İptal</option>
+                        </select>
+                        <button id="btn-bulk-update" class="btn primary">Güncelle</button>
+                    </div>
+
+                    <div class="orders-filter-bar">
+                        <div class="sort-box">
+                            <i class="fa-solid fa-arrow-up-wide-short"></i>
+                            <select id="order-sort-select" class="select-box" aria-label="Sipariş sıralama tipi">
+                                <option value="priority-desc">Üretime Göre (Öncelikli Üstte)</option>
+                                <option value="priority-asc">Üretime Göre (Standart Üstte)</option>
+                                <option value="id-asc">Sipariş ID (Düşük → Yüksek)</option>
+                                <option value="id-desc">Sipariş ID (Yüksek → Düşük)</option>
+                                <option value="status-asc">Duruma Göre (Üretim Sırası)</option>
+                                <option value="status-desc">Duruma Göre (Ters Sıra)</option>
+                                <option value="price-desc">Tutar (Yüksek → Düşük)</option>
+                                <option value="price-asc">Tutar (Düşük → Yüksek)</option>
+                            </select>
+                        </div>
+
+                        <div class="search-box">
+                            <i class="fa-solid fa-search"></i>
+                            <input type="text" id="order-search-input" class="input-box" placeholder="Sipariş No, Ad Soyad, Öncelikli ara...">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card table-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;"><input type="checkbox" id="select-all-orders"></th>
+                                <th class="sortable-th" data-sort-col="id">Sipariş ID <i class="fa-solid fa-sort"></i></th>
+                                <th class="sortable-th" data-sort-col="priority">Üretim <i class="fa-solid fa-sort"></i></th>
+                                <th class="sortable-th" data-sort-col="status">Durum <i class="fa-solid fa-sort"></i></th>
+                                <th class="sortable-th" data-sort-col="price">Tutar <i class="fa-solid fa-sort"></i></th>
+                                <th>Müşteri</th>
+                                <th>İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-table-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 3. Production Queue -->
+            <section id="production-section" class="content-section">
+                <div class="section-header">
+                    <h2>Üretim Kuyruğu</h2>
+                    <p class="section-desc">Baskı sırasını sürükleyip bırakarak düzenleyin.</p>
+                </div>
+
+                <div class="queue-container" id="production-queue">
+                   <!-- Populated by JS -->
+                </div>
+            </section>
+
+            <!-- 4. Device & Fleet Management -->
+            <section id="fleet-section" class="content-section">
+                <div class="section-header">
+                    <h2>Cihaz & Filo</h2>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <p class="section-desc" style="margin: 0;">Yazıcılarınızın durumunu yönetin.</p>
+                        <button id="btn-refresh-fleet" class="btn-sm secondary" style="border-radius: 20px; padding: 6px 16px;">
+                            <i class="fa-solid fa-rotate"></i> Yenile
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid-3" id="device-grid">
+                    <!-- Populated by Cloud Function -->
+                    <div style="grid-column: 1/-1; text-align: center; color: #94A3B8; padding: 40px;">
+                        <i class="fa-solid fa-server" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                        <p>Cihaz durumu yükleniyor veya veri yok.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. File Library -->
+            <section id="files-section" class="content-section">
+                <div class="section-header">
+                    <h2>Dosya Kütüphanesi</h2>
+                    <button class="btn primary"><i class="fa-solid fa-cloud-arrow-up"></i> Yeni Dosya Yükle</button>
+                </div>
+
+                <div class="file-grid" id="file-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </section>
+
+            <!-- 6. Stock & Materials -->
+            <section id="stock-section" class="content-section">
+                <div class="section-header">
+                    <h2>Stok & Malzeme</h2>
+                    <p class="section-desc">Filament envanter takibi.</p>
+                </div>
+
+                <div class="stock-list" id="stock-list-container">
+                     <!-- Populated by JS -->
+                </div>
+            </section>
+
+            <!-- 7. Finance & Tax -->
+            <section id="finance-section" class="content-section">
+                <div class="section-header">
+                    <h2>Finans & Vergi</h2>
+                    <p class="section-desc">Esnaf muafiyeti limit takibi ve giderler.</p>
+                </div>
+
+                <div class="card tax-card">
+                    <h4>Vergi Muafiyet Limiti (2026)</h4>
+                    <div class="tax-progress-wrapper">
+                         <div class="tax-labels">
+                            <span id="tax-current">Mevcut Satış: ₺0</span>
+                            <span id="tax-limit">Limit: ₺0</span>
+                        </div>
+                        <div class="progress-bar-container large">
+                            <div class="progress-bar gradient" id="tax-bar" style="width: 0%;"></div>
+                        </div>
+                        <div class="tax-status" id="tax-desc">
+                            <i class="fa-solid fa-check-circle"></i> Yükleniyor...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card expense-card" style="margin-top: 30px;">
+                    <div class="card-header">
+                        <h4>Gider Listesi</h4>
+                        <button class="btn-sm primary">+ Gider Ekle</button>
+                    </div>
+                    <ul class="expense-list" id="expense-list">
+                       <!-- Populated by JS -->
+                    </ul>
+                </div>
+            </section>
+
+             <!-- 8. Logistics -->
+             <section id="logistics-section" class="content-section">
+                <div class="section-header">
+                    <h2>Lojistik</h2>
+                    <p class="section-desc">Kargo ve gönderi işlemleri.</p>
+                </div>
+
+                <div class="card logistics-card">
+                    <div class="form-group">
+                        <label>Sipariş Seçin</label>
+                        <select class="select-box">
+                            <option>#ORD-2451 - Ahmet Yılmaz</option>
+                            <option>#ORD-2450 - Ayşe Demir</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Kargo Firması</label>
+                            <select class="select-box">
+                                <option>Yurtiçi Kargo</option>
+                                <option>Aras Kargo</option>
+                                <option>MNG Kargo</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Takip Numarası</label>
+                            <input type="text" class="input-box" placeholder="Takip No Giriniz">
+                        </div>
+                    </div>
+
+                    <div class="logistics-actions">
+                        <button class="btn primary"><i class="fa-solid fa-barcode"></i> Barkod/Etiket Oluştur</button>
+                        <button class="btn secondary">Takip Numarasını Kaydet</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 9. Pricing Calculator -->
+            <section id="pricing-section" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Fiyatlandırma</h2>
+                        <p class="section-desc">Baskı süresine (saat) ve üretim parametrelerine göre maliyet ve satış fiyatı hesaplayıcı.</p>
+                    </div>
+                    <div class="pricing-header-actions">
+                        <button type="button" id="btn-reset-pricing-params" class="btn secondary">
+                            <i class="fa-solid fa-rotate-left"></i> Varsayılana Dön
+                        </button>
+                        <button type="button" id="btn-save-pricing-params" class="btn primary">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Firebase'e Kaydet
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pricing-layout">
+                    <!-- Sol Kolon: Baskı Süresi & Sonuçlar -->
+                    <div class="pricing-col">
+                        <div class="card pricing-card">
+                            <div class="card-header" style="margin-bottom: 16px;">
+                                <h4><i class="fa-solid fa-clock" style="color: var(--accent); margin-right: 6px;"></i> Baskı Süresi & Hesaplama</h4>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="pricing-t-input">Baskı Süresi <code>t</code> (Saat)</label>
+                                <div class="pricing-input-wrap">
+                                    <input type="number" id="pricing-t-input" class="input-box pricing-calc-trigger" min="0" step="0.01" value="1" placeholder="Örn: 1.5" autocomplete="off">
+                                    <span class="pricing-input-unit">saat</span>
+                                </div>
+                            </div>
+
+                            <div class="pricing-results" style="margin-top: 22px;">
+                                <div class="pricing-result-box">
+                                    <span class="pricing-result-label">Ham Maliyet <small>(Fire Dahil)</small></span>
+                                    <span class="pricing-result-value" id="pricing-cost-output">₺0.00</span>
+                                    <span class="pricing-raw-note" id="pricing-cost-breakdown">Malzeme: ₺0.00 · Makine: ₺0.00 · Ambalaj: ₺0.00</span>
+                                </div>
+                                <div class="pricing-result-box highlight">
+                                    <span class="pricing-result-label">Satış Fiyatı <small>(10'luğa yuvarlanmış)</small></span>
+                                    <span class="pricing-result-value" id="pricing-sale-output">₺0</span>
+                                    <span class="pricing-raw-note" id="pricing-raw-sale-note">Yuvarlama öncesi: ₺0.00</span>
+                                </div>
+                            </div>
+
+                            <!-- Ara Hesaplama Dökümü -->
+                            <div class="pricing-step-summary">
+                                <div class="pricing-step-row">
+                                    <span>0. Harcanan Filament <code>w = max(0, t - t_hazirlik/60) × G_saat</code></span>
+                                    <strong id="step-gramaj">0.00 g</strong>
+                                </div>
+                                <div class="pricing-step-row">
+                                    <span>1. Malzeme Maliyeti <code>w × (F_kg / 1000)</code></span>
+                                    <strong id="step-malzeme">₺0.00</strong>
+                                </div>
+                                <div class="pricing-step-row">
+                                    <span>2. Makine Maliyeti <code>t × (P_makine × E_kwh + A_saat)</code></span>
+                                    <strong id="step-makine">₺0.00</strong>
+                                </div>
+                                <div class="pricing-step-row">
+                                    <span>3. Ham Maliyet <code>(Malzeme + Makine + M_ambalaj) × (1 + r_fire)</code></span>
+                                    <strong id="step-ham">₺0.00</strong>
+                                </div>
+                                <div class="pricing-step-row">
+                                    <span>4. Kârlı Hedef Tutar <code>Ham Maliyet × k_kar</code></span>
+                                    <strong id="step-hedef">₺0.00</strong>
+                                </div>
+                                <div class="pricing-step-row">
+                                    <span>5. Devlet Vergisi Dahil (iyzico Yatan) <code>Hedef Tutar / (1 - v_devlet)</code></span>
+                                    <strong id="step-vergi">₺0.00</strong>
+                                </div>
+                                <div class="pricing-step-row">
+                                    <span>6. Nihai Satış Fiyatı <code>(iyzico Yatan + c_sabit) / (1 - c_oran)</code></span>
+                                    <strong id="step-satis">₺0.00</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sağ Kolon: Formül Sabitleri (Firebase'e Kaydedilebilir) -->
+                    <div class="pricing-col">
+                        <div class="card pricing-card">
+                            <div class="card-header" style="margin-bottom: 16px;">
+                                <h4><i class="fa-solid fa-gear" style="color: var(--accent); margin-right: 6px;"></i> Formül Parametreleri (Sabitler)</h4>
+                                <span class="badge badge-info" id="pricing-sync-badge">Varsayılan</span>
+                            </div>
+
+                            <div class="pricing-params-grid">
+                                <div class="form-group">
+                                    <label for="param-G_saat">Saatlik Filament <code>G_saat</code> <small>(1 saatte harcanan)</small></label>
+                                    <div class="pricing-input-wrap">
+                                        <input type="number" id="param-G_saat" class="input-box pricing-calc-trigger" step="1" min="0" value="35">
+                                        <span class="pricing-input-unit">g/saat</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="param-t_hazirlik">Hazırlık Süresi <code>t_hazirlik</code> <small>(ilk dk düşülür)</small></label>
+                                    <div class="pricing-input-wrap">
+                                        <input type="number" id="param-t_hazirlik" class="input-box pricing-calc-trigger" step="1" min="0" value="10">
+                                        <span class="pricing-input-unit">dk</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="param-F_kg">Filament kg Fiyatı <code>F_kg</code> <small>(PETG için 700)</small></label>
+                                    <div class="pricing-input-wrap">
+                                        <input type="number" id="param-F_kg" class="input-box pricing-calc-trigger" step="1" min="0" value="500">
+                                        <span class="pricing-input-unit">TL/kg</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="param-P_makine">Güç Tüketimi <code>P_makine</code> <small>(~150W)</small></label>
+                                    <div class="pricing-input-wrap">
+                                        <input type="number" id="param-P_makine" class="input-box pricing-calc-trigger" step="0.01" min="0" value="0.15">
+                                        <span class="pricing-input-unit">kW</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="param-E_kwh">Elektrik Birim Fiyatı <code>E_kwh</code></label>
+                                    <div class="pricing-input-wrap">
+                                        <input type="number" id="param-E_kwh" class="input-box pricing-calc-trigger" step="0.01" min="0" value="3.24">
+                                        <span class="pricing-input-unit">TL/kWh</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="param-A_saat">Saatlik Amortisman <code>A_saat</code></label>
+                                    <div class="pricing-input-wrap">
+                                        <input type="number" id="param-A_saat" class="input-box pricing-calc-trigger" step="0.1" min="0" value="8.0">
+                                        <span class="pricing-input-unit">TL/saat</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="param-M_ambalaj">Ambalaj Maliyeti <code>M_ambalaj</code></label>
+                                    <div class="pricing-input-wrap">
+                                        <input type="number" id="param-M_ambalaj" class="input-box pricing-calc-trigger" step="0.5" min="0" value="15.0">
+                                        <span class="pricing-input-unit">TL</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="param-r_fire">Fire Oranı <code>r_fire</code> <small>(%10 = 0.10)</small></label>
+                                    <div class="pricing-input-wrap">
+                                        <input type="number" id="param-r_fire" class="input-box pricing-calc-trigger" step="0.01" min="0" value="0.10">
+                                        <span class="pricing-input-unit">oran</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="param-k_kar">Kâr Çarpanı <code>k_kar</code></label>
+                                    <div class="pricing-input-wrap">
+                                        <input type="number" id="param-k_kar" class="input-box pricing-calc-trigger" step="0.05" min="0" value="1.8">
+                                        <span class="pricing-input-unit">çarpan</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="param-c_oran">iyzico Komisyon Oranı <code>c_oran</code> <small>(%4.49 = 0.0449)</small></label>
+                                    <div class="pricing-input-wrap">
+                                        <input type="number" id="param-c_oran" class="input-box pricing-calc-trigger" step="0.0001" min="0" max="0.99" value="0.0449">
+                                        <span class="pricing-input-unit">oran</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="param-c_sabit">iyzico Sabit Ücret <code>c_sabit</code></label>
+                                    <div class="pricing-input-wrap">
+                                        <input type="number" id="param-c_sabit" class="input-box pricing-calc-trigger" step="0.05" min="0" value="0.25">
+                                        <span class="pricing-input-unit">TL</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="param-v_devlet">Devlet Vergisi <code>v_devlet</code> <small>(%4 = 0.04)</small></label>
+                                    <div class="pricing-input-wrap">
+                                        <input type="number" id="param-v_devlet" class="input-box pricing-calc-trigger" step="0.01" min="0" max="0.99" value="0.04">
+                                        <span class="pricing-input-unit">oran</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-close">&times;</div>
+            <h3 style="margin-bottom: 20px; color: var(--primary);">Yönetici Girişi</h3>
+            <form id="admin-login-form">
+                <div class="form-group">
+                    <label>E-posta</label>
+                    <input type="email" id="login-email" class="input-box" required>
+                </div>
+                <div class="form-group">
+                    <label>Şifre</label>
+                    <input type="password" id="login-password" class="input-box" required>
+                </div>
+                <button type="submit" class="btn primary" style="width: 100%;">Giriş Yap</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bambu Lab 2FA Modal -->
+    <div id="bambu-2fa-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 380px; text-align: center;">
+            <div class="modal-close" id="close-2fa-modal">&times;</div>
+            <div style="font-size: 3rem; margin-bottom: 15px;">🔐</div>
+            <h3 style="margin-bottom: 10px; color: var(--primary);">Güvenlik Doğrulaması</h3>
+            <p style="margin-bottom: 15px; color: var(--text-muted); font-size: 0.9rem;">
+                Bambu Lab hesabınız için e-postanıza gönderilen doğrulama kodunu giriniz.
+            </p>
+            
+            <form id="bambu-2fa-form" style="display: flex; flex-direction: column; gap: 15px;">
+                <div class="form-group" style="margin: 0;">
+                    <!-- EXPLICIT INPUT FIELD -->
+                    <input type="text" id="bambu-2fa-code" class="input-box" 
+                           placeholder="Kodu Buraya Girin (örn. 123456)" 
+                           style="text-align: center; font-size: 1.4rem; letter-spacing: 3px; font-weight: 700; padding: 12px; border: 2px solid var(--primary); border-radius: 8px; width: 100%; display: block;" 
+                           required autocomplete="off">
+                </div>
+                
+                <div style="font-size: 0.85rem;">
+                    <a href="#" id="resend-2fa-code" style="color: var(--accent); text-decoration: none;">
+                        Kodu Tekrar Gönder <span id="resend-timer"></span>
+                    </a>
+                </div>
+                
+                <button type="submit" class="btn primary" style="width: 100%; padding: 12px; font-size: 1rem;">DOĞRULA</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Order Detail Modal -->
+    <div id="order-detail-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 800px; width: 90%;">
+            <div class="modal-close" id="close-order-modal">&times;</div>
+            
+            <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px;">
+                <div>
+                    <h3 style="color: var(--primary); display: flex; align-items: center; gap: 10px; margin: 0;">
+                        <i class="fa-solid fa-clipboard-list"></i> Sipariş Detayı <span id="modal-order-id" style="color: var(--text-muted); font-size: 1rem; font-weight: 400;">#ORD-000</span>
+                    </h3>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-regular fa-calendar-days"></i> <span id="modal-order-date">-</span>
+                    </div>
+                </div>
+                <span id="modal-order-status" class="badge badge-muted">Yükleniyor...</span>
+            </div>
+
+            <div class="modal-body">
+                <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+                    <!-- Customer Info -->
+                    <div class="info-group">
+                        <h4 style="font-size: 0.95rem; color: var(--text-light); text-transform: uppercase; margin-bottom: 10px;">Müşteri Bilgileri</h4>
+                        <div style="background: #F8FAFC; padding: 15px; border-radius: 8px; font-size: 0.9rem;">
+                            <p><strong style="width: 80px; display: inline-block;">Ad Soyad:</strong> <span id="modal-customer-name">-</span></p>
+                            <p><strong style="width: 80px; display: inline-block;">Email:</strong> <span id="modal-customer-email">-</span></p>
+                            <p><strong style="width: 80px; display: inline-block;">Tel:</strong> <span id="modal-customer-phone">-</span></p>
+                            <p><strong style="width: 80px; display: inline-block;">User ID:</strong> <span id="modal-customer-id">-</span></p>
+                        </div>
+                    </div>
+
+                    <!-- Shipping Info -->
+                    <div class="info-group">
+                        <h4 style="font-size: 0.95rem; color: var(--text-light); text-transform: uppercase; margin-bottom: 10px;">Teslimat & Ödeme</h4>
+                        <div style="background: #F8FAFC; padding: 15px; border-radius: 8px; font-size: 0.9rem;">
+                            <p><strong style="width: 80px; display: inline-block;">Tarih:</strong> <span id="modal-order-datetime">-</span></p>
+                            <p><strong style="width: 80px; display: inline-block;">Adres:</strong> <span id="modal-shipping-address">-</span></p>
+                            <p><strong style="width: 80px; display: inline-block;">Yöntem:</strong> <span id="modal-shipping-method">-</span></p>
+                            <p><strong style="width: 80px; display: inline-block;">Ödeme:</strong> <span id="modal-payment-method">-</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Items Table -->
+                <h4 style="font-size: 0.95rem; color: var(--text-light); text-transform: uppercase; margin-bottom: 10px;">Sipariş İçeriği</h4>
+                <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+                    <table class="data-table" style="margin: 0;">
+                        <thead>
+                            <tr style="background: #F1F5F9;">
+                                <th>Ürün</th>
+                                <th>Birim Fiyat</th>
+                                <th>Adet</th>
+                                <th>Toplam</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-items-body">
+                            <!-- Items populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Totals -->
+                <div style="display: flex; justify-content: flex-end;">
+                    <div style="width: 250px; font-size: 0.95rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: var(--text-muted);">Ara Toplam:</span>
+                            <span id="modal-subtotal">₺0.00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: var(--text-muted);">Kargo:</span>
+                            <span id="modal-shipping-cost">₺0.00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; color: #10B981;">
+                            <span>İndirim:</span>
+                            <span id="modal-discount">-₺0.00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 2px solid var(--border); font-weight: 800; font-size: 1.1rem; color: var(--primary);">
+                            <span>GENEL TOPLAM:</span>
+                            <span id="modal-total">₺0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+    <script type="module" src="myScript.js?v=18"></script>
+</body>
+</html>

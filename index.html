@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engrare 3D | Kişiye Özel 3D Baskı Numaratör, İsimlik ve QR Stand</title>
+    <meta name="description" content="İsminiz, logonuz veya sosyal medya QR kodunuzla kişiye özel 3D baskı ürünler: araç içi telefon numaratörü, kapı isimliği, QR kartvizit standı. Türkiye'nin her yerine kargo.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Engrare 3D">
+    <meta property="og:locale" content="tr_TR">
+    <meta property="og:url" content="https://3d.engrare.com/">
+    <meta property="og:title" content="Engrare 3D | Kişiye Özel 3D Baskı Ürünler">
+    <meta property="og:description" content="Numaratör, isimlik ve QR standı: isminiz, logonuz veya QR kodunuzla, sizin için basılır.">
+    <meta property="og:image" content="https://3d.engrare.com/content/images/og.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" type="image/png" href="https://www.engrare.com/files/photos/title_icon.png" sizes="48x48">
+    <!-- Kritik kaynaklar icin baglanti on-isitmasi (DNS + TLS gecikmesini kaldirir) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://code.jquery.com">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://engrar3d-default-rtdb.europe-west1.firebasedatabase.app">
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- jQuery: defer -> HTML ayristirmasini bloklamaz, module script'ten once calisir -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js" defer></script>
+
+    <!-- Google Analytics yalnizca cerez onayiyla yuklenir (KVKK Cerez Rehberi); onay bandi <body> sonunda -->
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      function loadAnalytics() {
+        if (window.__gaLoaded) return;
+        window.__gaLoaded = true;
+        gtag('js', new Date());
+        gtag('config', 'G-NLSV32JMM2');
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-NLSV32JMM2';
+        document.head.appendChild(s);
+      }
+    </script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+                "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+                "firebase/database": "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js",
+                "firebase/storage": "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js",
+                "firebase/functions": "https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js",
+                "firebase/app-check": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app-check.js"
+            }
+        }
+    </script>
+    <!-- Ana betikle paralel insin, seri istek zinciri olusmasin -->
+    <link rel="modulepreload" href="./preview-engine.js?v=105">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./myStyle.css?v=62">
+    <!-- Sayfaya ozel mobil alt menu stilleri (head'de: gec reflow olusturmaz) -->
+    <style>
+    /* Alt menü yüksekliği tek yerde: body alt boşluğu da bunu kullanıyor (önceden 86px menüye 70px boşluk kalıyor, içerik altta kesiliyordu) */
+    :root { --bottom-nav-h: 60px; }
+    .bottom-nav-bar { display: none; position: fixed; bottom: 0; left: 0; width: 100%; height: var(--bottom-nav-h); box-sizing: border-box; background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; justify-content: space-around; align-items: stretch; padding: 0; border-top: 1px solid var(--border); }
+    .bottom-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.72rem; font-weight: 600; cursor: pointer; text-decoration: none; gap: 3px; padding: 0; }
+    .bottom-nav-item i { font-size: 1.25rem; }
+    .bottom-nav-item.active { color: var(--primary); }
+    .cart-badge-mobile { position: absolute; top: -6px; right: -10px; background: #EF4444; color: #fff; font-size: 0.6rem; font-weight: 700; padding: 2px 5px; border-radius: 10px; }
+    @media (max-width: 768px) {
+        .bottom-nav-bar { display: flex; }
+        .mobile-menu-toggle { display: none !important; }
+        .nav-menu { display: none !important; }
+        body { padding-bottom: var(--bottom-nav-h); }
+    }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="brand-logo nav-trigger" data-target="#products-page" style="cursor: pointer;"><img src="./content/images/engrare_logo_elegant.png" height="65" width="101" fetchpriority="high" decoding="async" alt="Engrare" onerror="this.style.display='none'; this.parentElement.innerText='ENGRARE.'"></div>
+            
+
+            <button type="button" class="nav-lookup-pill" onclick="window.openOrderLookup && window.openOrderLookup()" title="Sipariş Sorgula">
+                <i class="fa-solid fa-magnifying-glass"></i> Sipariş Takibi
+            </button>
+
+            <!-- Mobile Menu Toggle Button -->
+            <div class="mobile-menu-toggle" id="mobile-menu-toggle" style="display: none; cursor: pointer; font-size: 1.5rem; color: var(--primary);">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+            
+            <div class="mobile-backdrop" id="mobile-backdrop"></div>
+            
+            <ul class="nav-menu" id="nav-menu">
+                <div class="mobile-menu-close" id="mobile-menu-close" style="display: none; align-self: flex-end; padding: 5px; cursor: pointer; font-size: 1.5rem; color: var(--text-main);">
+                    <i class="fa-solid fa-xmark"></i>
+                </div>
+                <li data-target="#products-page" class="active">Ürünlerimiz</li>
+                <li data-target="#checkout-page" title="Sepet" style="display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-cart-shopping" style="font-size: 1.2rem;"></i> Sepet <span id="cart-badge">0</span></li>
+                <li id="nav-lookup-btn" onclick="window.openOrderLookup && window.openOrderLookup()" style="display: flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-magnifying-glass" style="font-size: 0.95rem;"></i> Sipariş Takibi
+                </li>
+                <li id="nav-login-btn" class="nav-trigger" data-target="#login-page" style="display: none; cursor: pointer; align-items: center; gap: 8px; font-weight: 600; padding: 10px 0;">
+                    <i class="fa-regular fa-user" style="font-size: 1.2rem;"></i> Giriş Yap
+                </li>
+                
+                <li id="nav-user-profile" class="nav-trigger" data-target="#dashboard-page" style="display: none; cursor: pointer; align-items: center; gap: 8px; font-weight: 600; padding: 10px 0;">
+                    <i class="fa-solid fa-circle-user" style="font-size: 1.3rem;"></i> Profil
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- PRODUCTS PAGE -->
+    <section id="products-page" class="page active">
+        <div class="products-header">
+            <h1>Kişiye Özel Tasarımlar</h1>
+            <p>Seçtiğiniz ürünün üzerine dilediğiniz metni yazdırın, siparişinizi verin.</p>
+        </div>
+        <div class="container" style="padding-top: 20px;">
+            <div class="grid-3" id="products-grid-container"></div>
+        </div>
+    </section>
+
+    <!-- PRODUCT DETAIL PAGE -->
+    <section id="product-detail-page" class="page">
+        <div class="container">
+            <div class="product-detail-layout">
+                <div class="product-images">
+                    <!-- MOBİL: Ürün Başlık & Açıklama (Görselin Üstünde) -->
+                    <div class="mobile-product-header" id="mobile-product-header">
+                        <h1 id="mobile-detail-title" class="mobile-detail-title"></h1>
+                        <p id="mobile-detail-desc" class="mobile-detail-desc"></p>
+                    </div>
+
+                    <div style="position: relative;">
+                        <div id="detail-main-carousel" style="position: relative; width: 100%; aspect-ratio: 16/9; overflow-x: auto; overflow-y: hidden; border-radius: 16px; border: 1px solid var(--border); display: flex; scroll-snap-type: x mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; transition: transform 0.2s ease-out;">
+                            <!-- Images injected here -->
+                        </div>
+                        <button id="carousel-prev" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); width: 45px; height: 45px; border-radius: 50%; background: rgba(255,255,255,0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 4px 12px rgba(0,0,0,0.1); color: var(--primary); font-size: 1.2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; z-index: 10;" onmouseover="this.style.background='rgba(255,255,255,0.95)'; this.style.transform='translateY(-50%) scale(1.05)';" onmouseout="this.style.background='rgba(255,255,255,0.7)'; this.style.transform='translateY(-50%) scale(1)';" aria-label="Önceki görsel">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <button id="carousel-next" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); width: 45px; height: 45px; border-radius: 50%; background: rgba(255,255,255,0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 4px 12px rgba(0,0,0,0.1); color: var(--primary); font-size: 1.2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; z-index: 10;" onmouseover="this.style.background='rgba(255,255,255,0.95)'; this.style.transform='translateY(-50%) scale(1.05)';" onmouseout="this.style.background='rgba(255,255,255,0.7)'; this.style.transform='translateY(-50%) scale(1)';" aria-label="Sonraki görsel">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div id="detail-thumbnails" style="display: flex; gap: 10px; margin-top: 15px; overflow-x: auto; padding-bottom: 5px;"></div>
+                    
+                    <!-- 2D Önizleme Alanı -->
+                    <div class="advanced-2d-preview-container" id="advanced-2d-preview-container" style="display: none;">
+                        <h3 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary);">2 Boyutlu Ürün Önizleme</h3>
+                        
+                        <!-- Preview Box -->
+                        <div id="advanced-2d-preview-box" class="advanced-2d-preview-box" style="position: relative; width: 100%; max-width: 480px; max-height: 220px; aspect-ratio: 16/9; margin: 0 auto; overflow: hidden; border-radius: 12px; border: 1px solid var(--border); background: #ffffff;">
+                            <!-- Object Color Layer -->
+                            <div id="preview-object-color-layer" class="preview-object-color-layer" style="position: absolute; top:0; left:0; width: 100%; height: 100%; background-color: #222222; z-index: 1;"></div>
+                            
+                            <!-- User's PNG Image -->
+                            <img id="preview-overlay-img" class="preview-overlay-img" src="" style="position: absolute; top:0; left:0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 2; display: none;" onerror="this.style.display='none'" onload="this.style.display='block'" alt="">
+                            
+                            <!-- Printable Area for Text (Dashed Box) -->
+                            <div id="preview-printable-area" class="preview-printable-area" style="position: absolute; top: 15%; left: 10%; width: 80%; height: 70%; border: 2px dashed rgba(0, 0, 0, 0.5); z-index: 3; display: flex; align-items: center; justify-content: center; overflow: hidden; transition: border 0.2s;">
+                                <!-- Dynamic Text -->
+                                <span id="preview-dynamic-text" class="preview-dynamic-text" style="color: #FBC02D; font-size: 24px; font-family: 'AGENCYB', sans-serif; text-align: center; width: auto; word-break: break-word; display: inline-block; line-height: 1; transition: color 0.2s;">ENGRARE</span>
+                            </div>
+                            
+                            <!-- Printable Area for Logo (Dashed Box) -->
+                            <div id="preview-logo-area" class="preview-logo-area" style="position: absolute; top: 15%; left: 10%; width: 80%; height: 70%; border: 2px dashed rgba(0, 0, 0, 0.5); z-index: 3; display: none; align-items: center; justify-content: center; overflow: hidden; transition: border 0.2s;">
+                                <!-- Dynamic Logo (CSS Mask ile renklendiriliyor) -->
+                                <div id="preview-dynamic-logo" class="preview-dynamic-logo" style="display: none; width: 100%; height: 100%;"></div>
+                            </div>
+                            <!-- Area for Social QR 1 (Perspective Mapped) -->
+                            <div id="preview-social-qr-area-1" class="preview-social-qr-area" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 3; display: none; transform-origin: 0 0;">
+                                <img id="preview-social-qr-img-1" src="" style="position:absolute; width:100%; height:100%; object-fit:fill;" alt="">
+                            </div>
+                            <!-- Area for Social Logo 1 (Perspective Mapped) -->
+                            <div id="preview-social-logo-area-1" class="preview-social-logo-area" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 3; display: none; transform-origin: 0 0;">
+                                <img id="preview-social-logo-img-1" src="" style="position:absolute; width:100%; height:100%; object-fit:contain;" onerror="this.style.visibility='hidden'" onload="this.style.visibility='visible'" alt="">
+                            </div>
+                            
+                            <!-- Area for Social QR 2 (Perspective Mapped) -->
+                            <div id="preview-social-qr-area-2" class="preview-social-qr-area" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 3; display: none; transform-origin: 0 0;">
+                                <img id="preview-social-qr-img-2" src="" style="position:absolute; width:100%; height:100%; object-fit:fill;" alt="">
+                            </div>
+                            <!-- Area for Social Logo 2 (Perspective Mapped) -->
+                            <div id="preview-social-logo-area-2" class="preview-social-logo-area" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 3; display: none; transform-origin: 0 0;">
+                                <img id="preview-social-logo-img-2" src="" style="position:absolute; width:100%; height:100%; object-fit:contain;" onerror="this.style.visibility='hidden'" onload="this.style.visibility='visible'" alt="">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="product-info">
+                    <!-- MASAÜSTÜ: Ürün Başlık & Açıklama -->
+                    <div class="desktop-product-header">
+                        <h2 id="detail-title">Ürün Adı</h2>
+                        <p id="detail-desc">Açıklama</p>
+                    </div>
+
+                    <div class="customization-box">
+                        <div class="form-group" id="customization-text-group">
+                            <label id="custom-text-label">Ürün Üzerine Yazılacak Metin</label>
+                            <input type="text" id="custom-text-input" class="input-box" placeholder="Örn: ENGRARE">
+                        </div>
+                        <div class="form-group" id="customization-object-group" style="display: none; margin-bottom: 20px;">
+                            <label>Stand Tipi</label>
+                            <input type="hidden" id="custom-object-input" value="0">
+                            <div id="custom-object-tabs" class="seg-control"></div>
+                        </div>
+                        <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                            <div class="form-group" id="customization-logo-group" style="flex: 1; margin-bottom: 0; display: none;">
+                                <label style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px;">Logo Seç Veya Yükle </label>
+                                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;" id="logo-bubbles-container">
+                                    <div class="logo-bubble default-logo-bubble" data-src="./content/images/engrare_logo_elegant.svg" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; background: #fff; flex-shrink: 0; transition: border-color 0.2s;">
+                                        <img alt="Engrare logosu" src="./content/images/engrare_logo_elegant.svg" loading="lazy" decoding="async" style="width: 25px; height: 25px; object-fit: contain; pointer-events: none;">
+                                    </div>
+                                    <div class="logo-bubble default-logo-bubble" data-src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cGF0aCBkPSJNNDcuNiAzMDAuNEwyMjguMyA0NjkuMWM3LjUgNyAxNy40IDEwLjkgMjcuNyAxMC45czIwLjItMy45IDI3LjctMTAuOUw0NjQuNCAzMDAuNGMzMC40LTI4LjMgNDcuNi02OCA0Ny42LTEwOS41di01LjhjMC02OS45LTUwLjUtMTI5LjUtMTE5LjQtMTQxQzM0NyAzNi41IDMwMC42IDUxLjQgMjY4IDg0TDI1NiA5NiAyNDQgODRjLTMyLjYtMzIuNi03OS00Ny41LTEyNC42LTM5LjlDNTAuNSA1NS42IDAgMTE1LjIgMCAxODUuMXY1LjhjMCA0MS41IDE3LjIgODEuMiA0Ny42IDEwOS41eiIgZmlsbD0iIzAwMCIvPjwvc3ZnPg==" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; background: #fff; flex-shrink: 0; transition: border-color 0.2s;">
+                                        <i class="fa-solid fa-heart" style="font-size: 1.2rem; color: #555; pointer-events: none;"></i>
+                                    </div>
+                                    <div class="logo-bubble default-logo-bubble" data-src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1NzYgNTEyIj48cGF0aCBkPSJNMzE2LjkgMThDMzExLjYgNyAzMDAuNCAwIDI4OC4xIDBzLTIzLjQgNy0yOC44IDE4TDE5NSAxNTAuMyA1MS40IDE3MS41Yy0xMiAxLjgtMjIgMTAuMi0yNS43IDIxLjdzLS43IDI0LjIgNy45IDMyLjdMMTM3LjggMzI5IDExMy4yIDQ3NC43Yy0yIDEyIDMgMjQuMiAxMi45IDMxLjNzMjMgOCAzMy44IDIuM2wxMjguMy02OC41IDEyOC4zIDY4LjVjMTAuOCA1LjcgMjMuOSA0LjkgMzMuOC0yLjNzMTQuOS0xOS4zIDEyLjktMzEuM0w0MzguNSAzMjkgNTQyLjcgMjI1LjljOC42LTguNSAxMS43LTIxLjIgNy45LTMyLjdzLTEzLjctMTkuOS0yNS43LTIxLjdMMzgxLjIgMTUwLjMgMzE2LjkgMTh6IiBmaWxsPSIjMDAwIi8+PC9zdmc+" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; background: #fff; flex-shrink: 0; transition: border-color 0.2s;">
+                                        <i class="fa-solid fa-star" style="font-size: 1.2rem; color: #555; pointer-events: none;"></i>
+                                    </div>
+                                    <div id="custom-uploaded-bubble" class="logo-bubble" style="display:none; width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; align-items: center; justify-content: center; background: #fff; overflow: hidden; flex-shrink: 0; transition: border-color 0.2s;">
+                                        <img id="custom-uploaded-img" src="" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" alt="">
+                                    </div>
+                                    <div id="upload-logo-trigger" title="SVG logo yükle" style="width: 45px; height: 45px; border-radius: 50%; border: 2px dashed var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; background: #F8FAFC; color: var(--text-muted); transition: 0.2s; flex-shrink: 0;" onmouseover="this.style.borderColor='var(--primary)'; this.style.color='var(--primary)';" onmouseout="this.style.borderColor='var(--border)'; this.style.color='var(--text-muted)';">
+                                        <i class="fa-solid fa-plus" style="pointer-events: none;"></i>
+                                    </div>                                </div>
+                                <input type="file" id="custom-logo-input" accept=".svg" style="display: none;" aria-label="Logo dosyası yükle (SVG)">
+
+
+                            </div>
+                        </div>
+                        <div class="form-group" id="customization-social-group" style="display: none; margin-bottom: 20px;">
+                            <label>Sosyal Medya QR</label>
+                            <style>
+                                /* Stand tipi: tek satırlık parçalı seçici */
+                                .seg-control {
+                                    display: flex; padding: 3px; gap: 3px; background: #fff;
+                                    border: 1px solid var(--border); border-radius: 10px;
+                                }
+                                .custom-object-tab {
+                                    flex: 1; padding: 9px 6px; border: none; border-radius: 7px; background: none;
+                                    font: inherit; font-size: 0.85rem; font-weight: 600; color: var(--text-muted);
+                                    cursor: pointer; transition: 0.2s; white-space: nowrap;
+                                }
+                                .custom-object-tab.active { background: var(--primary); color: #fff; }
+
+                                /* Sosyal medya: kutusuz, her QR için tek satır ikon + giriş */
+                                .social-slot + .social-slot { margin-top: 14px; }
+                                .social-slot-title { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+                                .social-icon-row { display: flex; gap: 6px; margin-bottom: 8px; overflow-x: auto; scrollbar-width: none; }
+                                .social-icon-btn {
+                                    flex: 0 0 42px; height: 42px; border-radius: 8px; border: 1.5px solid transparent;
+                                    cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center;
+                                    background: #fff; opacity: 0.75;
+                                }
+                                .social-icon-btn:hover { opacity: 0.9; }
+                                .social-icon-btn.active { opacity: 1; border-color: var(--primary); }
+                                .social-icon-btn img { width: 30px; height: 30px; object-fit: contain; pointer-events: none; }
+                                /* 16px altı iOS'ta odaklanınca sayfayı yakınlaştırıyor */
+                                .social-link-input { height: 42px; padding: 0 10px; box-sizing: border-box; font-size: 1rem; }
+
+                                /* Telefonda sol / sağ QR yan yana, araları çizgili; yerleri zaten belli, başlık yok.
+                                   İkonlar sütuna göre küçülür, 360px telefonda da tek satır kalır. */
+                                @media (max-width: 768px) {
+                                    .social-slots { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+                                    .social-slot:first-child { padding-right: 8px; }
+                                    .social-slot + .social-slot { margin-top: 0; padding-left: 8px; border-left: 1px solid var(--border); }
+                                    .social-slot-title { display: none; }
+                                    .social-icon-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+                                    .social-icon-btn { height: auto; aspect-ratio: 1; }
+                                    .social-icon-btn img { width: 78%; height: 78%; }
+                                }
+                            </style>
+
+                            <div class="social-slots">
+                            <!-- Sol QR -->
+                            <div class="social-slot">
+                                <div class="social-slot-title">Sol</div>
+                                <div class="social-icon-row" data-target="1">
+                                    <div class="social-icon-btn active" data-plat="instagram"><img src="./content/social/instagram.png" onerror="this.onerror=null;this.outerHTML='&lt;i class=&quot;fa-brands fa-instagram&quot; style=&quot;font-size:1.2rem;color:#475569;pointer-events:none&quot;&gt;&lt;/i&gt;'" alt="Instagram"></div>
+                                    <div class="social-icon-btn" data-plat="linkedin"><img src="./content/social/linkedin.png" onerror="this.onerror=null;this.outerHTML='&lt;i class=&quot;fa-brands fa-linkedin&quot; style=&quot;font-size:1.2rem;color:#475569;pointer-events:none&quot;&gt;&lt;/i&gt;'" alt="LinkedIn"></div>
+                                    <div class="social-icon-btn" data-plat="telegram"><img src="./content/social/telegram.png" onerror="this.onerror=null;this.outerHTML='&lt;i class=&quot;fa-brands fa-telegram&quot; style=&quot;font-size:1.2rem;color:#475569;pointer-events:none&quot;&gt;&lt;/i&gt;'" alt="Telegram"></div>
+                                    <div class="social-icon-btn" data-plat="web"><img src="./content/social/web.png" onerror="this.onerror=null;this.outerHTML='&lt;i class=&quot;fa-solid fa-globe&quot; style=&quot;font-size:1.2rem;color:#475569;pointer-events:none&quot;&gt;&lt;/i&gt;'" alt="Web sitesi"></div>
+                                </div>
+                                <input type="hidden" id="custom-social-platform-1" value="instagram">
+                                <input type="text" id="custom-social-link-1" class="input-box social-link-input" placeholder="@kullanıcı adı" aria-label="Sol QR: kullanıcı adı veya link">
+                            </div>
+
+                            <!-- Sağ QR -->
+                            <div class="social-slot">
+                                <div class="social-slot-title">Sağ</div>
+                                <div class="social-icon-row" data-target="2">
+                                    <div class="social-icon-btn" data-plat="instagram"><img src="./content/social/instagram.png" onerror="this.onerror=null;this.outerHTML='&lt;i class=&quot;fa-brands fa-instagram&quot; style=&quot;font-size:1.2rem;color:#475569;pointer-events:none&quot;&gt;&lt;/i&gt;'" alt="Instagram"></div>
+                                    <div class="social-icon-btn" data-plat="linkedin"><img src="./content/social/linkedin.png" onerror="this.onerror=null;this.outerHTML='&lt;i class=&quot;fa-brands fa-linkedin&quot; style=&quot;font-size:1.2rem;color:#475569;pointer-events:none&quot;&gt;&lt;/i&gt;'" alt="LinkedIn"></div>
+                                    <div class="social-icon-btn" data-plat="telegram"><img src="./content/social/telegram.png" onerror="this.onerror=null;this.outerHTML='&lt;i class=&quot;fa-brands fa-telegram&quot; style=&quot;font-size:1.2rem;color:#475569;pointer-events:none&quot;&gt;&lt;/i&gt;'" alt="Telegram"></div>
+                                    <div class="social-icon-btn active" data-plat="web"><img src="./content/social/web.png" onerror="this.onerror=null;this.outerHTML='&lt;i class=&quot;fa-solid fa-globe&quot; style=&quot;font-size:1.2rem;color:#475569;pointer-events:none&quot;&gt;&lt;/i&gt;'" alt="Web sitesi"></div>
+                                </div>
+                                <input type="hidden" id="custom-social-platform-2" value="web">
+                                <input type="text" id="custom-social-link-2" class="input-box social-link-input" placeholder="site adresi" aria-label="Sağ QR: kullanıcı adı veya link">
+                            </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-bottom: 25px; align-items: flex-end; flex-wrap: wrap;">
+                            <div class="form-group" style="margin-bottom: 0; flex-shrink: 0;">
+                                <label>Miktar</label>
+                                <div style="display:flex; align-items:center; background: #fff; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; height: 45px; width: 104px;">
+                                    <button type="button" id="detail-qty-minus" style="flex:1; height: 100%; background: none; border: none; border-right: 1px solid var(--border); cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='#F1F5F9';" onmouseout="this.style.background='none';" aria-label="Adedi azalt"><i class="fa-solid fa-minus"></i></button>
+                                    <input type="number" id="quantity-input" value="1" min="1" max="999" style="width: 50px; height: 100%; padding: 0; margin: 0; text-align: center; border: none; background: transparent; font-size: 1.1rem; font-weight: 700; color: var(--primary); outline: none;" aria-label="Adet">
+                                    <button type="button" id="detail-qty-plus" style="flex:1; height: 100%; background: none; border: none; border-left: 1px solid var(--border); cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='#F1F5F9';" onmouseout="this.style.background='none';" aria-label="Adedi artır"><i class="fa-solid fa-plus"></i></button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group" style="margin-bottom: 0; flex-shrink: 0;">
+                                <label>Renk Seçimi</label>
+                                <div style="display: flex; gap: 10px; height: 45px; align-items: center; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 0 8px;">
+                                    <div id="color-combinations-container">
+                                        <!-- Dinamik olarak js tarafından doldurulacak -->
+                                    </div>
+                                    <input type="hidden" id="custom-text-color" value="#FBC02D">
+                                    <input type="hidden" id="custom-obj-color" value="#222222">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Fiyat ve Sepete Ekle Butonu Yan Yana -->
+                        <div class="detail-action-row">
+                            <div class="detail-price-box">
+                                <span class="detail-price-label">Fiyat</span>
+                                <div class="detail-price" id="detail-price">₺0.00</div>
+                            </div>
+                            <button id="add-to-cart" class="btn primary detail-add-cart-btn">
+                                <i class="fa-solid fa-cart-shopping"></i> Sepete Ekle
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CHECKOUT PAGE -->
+    <section id="checkout-page" class="page">
+        <div class="container narrow">
+            <h2 class="cart-page-title" style="text-align: left; margin-top: 10px; margin-bottom: 25px; font-size: 1.8rem; font-weight: 800; color: var(--primary);">Sepetim</h2>
+            <div class="cart-list" id="cart-items-area"></div>
+            <div class="summary-panel">
+                <div id="free-shipping-progress-container"></div>
+                <div class="price-row"><span>Ara Toplam</span><span id="val-subtotal">₺0.00</span></div>
+                <div class="price-row"><span>Kargo Ücreti</span><span id="shipping-display">₺0.00</span></div>
+                <div style="height:1px; background:var(--border); margin: 18px 0;"></div>
+                <div class="price-row">
+                    <span style="font-weight:700; font-size:1.15rem;">Toplam</span>
+                    <span id="val-total" style="font-weight:800; font-size:1.5rem; color:var(--primary);">₺0.00</span>
+                </div>
+                <!-- Bilgi notu (onay ödeme sayfasında, ön bilgilendirme kutusuyla alınır) -->
+                <p style="font-size:0.85rem; color:#666; line-height:1.4; margin:15px 0;">Kişiye özel üretilen ürünlerde cayma hakkı bulunmaz. Üretim ve kargoya veriliş süresi 3-5 iş günüdür.</p>
+                <button id="btn-checkout-start" class="btn primary" style="width: 100%; margin-top: 18px; height: 50px; font-size: 1.05rem; font-weight: 700; border-radius: 10px;">Ödemeye Geç</button>
+                
+                <!-- Güven Rozetleri -->
+                <div class="cart-trust-badges">
+                    <span class="trust-badge-item"><i class="fa-solid fa-shield-halved"></i> 256-Bit SSL</span>
+                    <span class="trust-badge-dot">•</span>
+                    <span class="trust-badge-item"><i class="fa-solid fa-lock"></i> 3D Secure</span>
+                    <span class="trust-badge-dot">•</span>
+                    <span class="trust-badge-item"><i class="fa-solid fa-credit-card"></i> Güvenli Ödeme</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- LOGIN PAGE -->
+    <section id="login-page" class="page">
+        <div class="login-container">
+            <div class="login-card">
+                <div id="view-signin">
+                    <div class="login-header">
+                        <h2>Tekrar Hoş Geldiniz</h2>
+                    </div>
+                    <form class="login-form">
+                        <div class="form-group"><input type="email" id="signin-email" class="login-input" placeholder="E-posta Adresi" aria-label="E-posta adresi"></div>
+                        <div class="form-group" style="position: relative;">
+                            <input type="password" id="signin-password" class="login-input" placeholder="Şifre" style="padding-right: 40px;" aria-label="Şifre">
+                            <i class="fa-solid fa-eye toggle-password" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #64748b;"></i>
+                        </div>
+                        <button type="button" id="btn-signin" class="btn primary" style="width: 100%;">Giriş Yap</button>
+                    </form>
+                    <div class="login-links" style="display: flex; justify-content: space-between;">
+                        <span class="link-text" onclick="$('#view-signin').hide(); $('#view-signup').fadeIn();">Hesap Oluştur</span>
+                        <span class="link-text" onclick="$('#view-signin').hide(); $('#view-forgot-password').fadeIn();">Şifremi Unuttum</span>
+                    </div>
+                    <div class="lookup-entry">
+                        <span class="link-text" onclick="$('#view-signin').hide(); $('#view-order-lookup').fadeIn();"><i class="fa-solid fa-magnifying-glass"></i> Sipariş Sorgula</span>
+                    </div>
+                </div>
+                <!-- Sipariş sorgulama (misafir dahil): sipariş no + e-posta -->
+                <div id="view-order-lookup" style="display: none;">
+                    <div class="login-header">
+                        <h2>Sipariş Sorgula</h2>
+                        <p class="lookup-hint">Sipariş numaranızı ve siparişte kullandığınız e-posta adresini girin.</p>
+                    </div>
+                    <form class="login-form" id="order-lookup-form">
+                        <div class="form-group"><input type="text" id="lookup-order-id" class="login-input" placeholder="Sipariş No" inputmode="numeric" maxlength="30" required aria-label="Sipariş numarası"></div>
+                        <div class="form-group"><input type="email" id="lookup-email" class="login-input" placeholder="E-posta Adresi" maxlength="120" required aria-label="E-posta adresi"></div>
+                        <button type="submit" id="btn-order-lookup" class="btn primary" style="width: 100%;">Sorgula</button>
+                    </form>
+                    <div id="order-lookup-result" aria-live="polite"></div>
+                    <div class="login-links" style="justify-content: center;">
+                        <span class="link-text" onclick="$('#view-order-lookup').hide(); $('#view-signin').fadeIn();">Giriş Ekranına Dön</span>
+                    </div>
+                </div>
+                <div id="view-signup" style="display: none;">
+                    <div class="login-header"><h2>Hesap Oluştur</h2></div>
+                    <form class="login-form">
+                        <div class="form-group"><input type="text" id="signup-fullname" class="login-input" placeholder="Tam Ad (Ad Soyad)" required aria-label="Ad soyad"></div>
+                        <div class="form-group"><input type="email" id="signup-email" class="login-input" placeholder="E-posta Adresi" required aria-label="E-posta adresi"></div>
+                        <div class="form-group" style="position: relative;">
+                            <input type="password" id="signup-password" class="login-input" placeholder="Şifre" required style="padding-right: 40px;" aria-label="Şifre">
+                            <i class="fa-solid fa-eye toggle-password" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #64748b;"></i>
+                        </div>
+                        <div class="form-group" style="position: relative;">
+                            <input type="password" id="signup-password-confirm" class="login-input" placeholder="Şifre Tekrar" required style="padding-right: 40px;" aria-label="Şifre tekrar">
+                            <i class="fa-solid fa-eye toggle-password" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #64748b;"></i>
+                        </div>
+                        <div class="form-group" style="display:flex; align-items:flex-start; gap:10px;">
+                            <input type="checkbox" id="signup-kvkk" style="margin-top:4px;" required>
+                            <label for="signup-kvkk" style="font-size:0.85rem; color:#666; cursor:pointer; line-height:1.4;">
+                                <a href="mevzuat/kvkk/" target="_blank" style="color:#0F172A; text-decoration:underline;">KVKK Aydınlatma Metni</a>'ni okudum.
+                            </label>
+                        </div>
+                        <button type="button" id="btn-signup" class="btn primary" style="width: 100%;">Kaydol</button>
+                    </form>
+                    <div class="login-links" style="justify-content: center;">
+                        <span class="link-text" onclick="$('#view-signup').hide(); $('#view-signin').fadeIn();">Giriş Yapın</span>
+                    </div>
+                </div>
+                <div id="view-forgot-password" style="display: none;">
+                    <div class="login-header"><h2>Şifre Sıfırlama</h2></div>
+                    <form class="login-form">
+                        <div class="form-group"><input type="email" id="forgot-email" class="login-input" placeholder="E-posta Adresi" required aria-label="E-posta adresi"></div>
+                        <button type="button" id="btn-forgot-password" class="btn primary" style="width: 100%;">Bağlantı Gönder</button>
+                    </form>
+                    <div class="login-links" style="justify-content: center;">
+                        <span class="link-text" onclick="$('#view-forgot-password').hide(); $('#view-signin').fadeIn();">Giriş Ekranına Dön</span>
+                    </div>
+                </div>
+                <div id="view-reset-password" style="display: none;">
+                    <div class="login-header"><h2>Yeni Şifre Belirle</h2></div>
+                    <form class="login-form">
+                        <div class="form-group" style="position: relative;">
+                            <input type="password" id="reset-password" class="login-input" placeholder="Yeni Şifre" autocomplete="new-password" style="padding-right: 40px;" aria-label="Yeni şifre">
+                            <i class="fa-solid fa-eye toggle-password" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #64748b;"></i>
+                        </div>
+                        <div class="form-group" style="position: relative;">
+                            <input type="password" id="reset-password-confirm" class="login-input" placeholder="Yeni Şifre Tekrar" autocomplete="new-password" style="padding-right: 40px;" aria-label="Yeni şifre tekrar">
+                            <i class="fa-solid fa-eye toggle-password" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #64748b;"></i>
+                        </div>
+                        <button type="button" id="btn-reset-password" class="btn primary" style="width: 100%;">Şifreyi Kaydet</button>
+                    </form>
+                    <div class="login-links" style="justify-content: center;">
+                        <span class="link-text" onclick="$('#view-reset-password').hide(); $('#view-signin').fadeIn();">Giriş Ekranına Dön</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DASHBOARD PAGE -->
+    <section id="dashboard-page" class="page">
+        <div class="container">
+            <h2 style="margin-bottom: 30px;">Profilim</h2>
+            <div class="dashboard-layout">
+                <div class="dash-sidebar">
+                    <div class="user-brief">
+                        <div style="font-weight: 700;" id="dash-user-name">Kullanıcı</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);" id="dash-user-email"></div>
+                    </div>
+                    <ul class="dash-menu">
+                        <li class="active" data-tab="orders">Siparişlerim</li>
+                        <li data-tab="addresses">Adreslerim</li>
+                    </ul>
+                    <button id="action-logout" class="dash-logout-btn">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        <span>Çıkış Yap</span>
+                    </button>
+                </div>
+                <div class="dash-content">
+                    <div id="tab-orders" class="dash-tab active">
+                        <h3>Sipariş Geçmişi</h3>
+                        <div id="orders-list">Siparişler yükleniyor...</div>
+                    </div>
+                    <div id="tab-addresses" class="dash-tab" style="display:none">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3>Kayıtlı Adreslerim</h3>
+                            <button class="btn-sm primary" id="btn-add-address">+ Yeni Adres</button>
+                        </div>
+                        <div id="addresses-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="main-footer">
+        <div class="container footer-grid">
+            <div class="footer-col">
+                <div class="brand-logo" style="color:white; margin-bottom: 15px;">ENGRARE</div>
+                <p style="color: #94A3B8; font-size: 0.9rem;">Kişisel 3D baskı ve tasarım atölyesi.</p>
+            </div>
+            <div class="footer-col">
+                <h5>Kurumsal</h5>
+                <ul>
+                    <li><a href="mevzuat/iletisim/" style="color: inherit; text-decoration: none;">İletişim</a></li>
+                    <li><a href="mevzuat/gizlilik/" style="color: inherit; text-decoration: none;">Gizlilik Politikası</a></li>
+                    <li><a href="mevzuat/teslimat/" style="color: inherit; text-decoration: none;">Teslimat ve İade</a></li>
+                    <li><a href="mevzuat/sozlesme/" style="color: inherit; text-decoration: none;">Mesafeli Satış Sözleşmesi</a></li>
+                    <li><a href="mevzuat/kvkk/" style="color: inherit; text-decoration: none;">KVKK Aydınlatma Metni</a></li>
+                    <li><a href="/?siparis" style="color: inherit; text-decoration: none;">Sipariş Sorgula</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h5>Güvenli Ödeme</h5>
+                <div class="payment-methods">
+                    <span class="card-badge">VISA</span>
+                    <span class="card-badge mastercard">MASTERCARD</span>
+                    <div class="iyzico-badge">iyzico</div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODALS -->
+    <div id="auth-decision-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 400px; flex-direction: column; text-align: center; padding: 40px;">
+            <div class="modal-close" role="button" aria-label="Kapat">&times;</div>
+            <h3 style="margin-bottom: 10px;">Devam Etmek İçin</h3>
+            <button id="modal-btn-login" class="btn primary" style="width: 100%; margin-bottom: 15px;">Giriş Yap / Üye Ol</button>
+            <button id="modal-btn-guest" class="btn secondary" style="width: 100%;">Üye Olmadan Devam Et</button>
+        </div>
+    </div>
+
+    <!-- SİPARİŞ DETAY MODALI -->
+    <div id="order-detail-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px; flex-direction: column; padding: 30px;">
+            <div class="modal-close" role="button" aria-label="Kapat">&times;</div>
+            <h3 style="margin-bottom: 15px; color: var(--primary);">Sipariş Detayı</h3>
+            <div id="order-modal-content" style="text-align: left;">
+                <!-- İçerik JavaScript ile doldurulacak -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ADRES MODALI -->
+    <div id="address-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px; flex-direction: column; padding: 30px;">
+            <div class="modal-close" role="button" aria-label="Kapat">&times;</div>
+            <h3 id="address-modal-title" style="margin-bottom: 15px; color: var(--primary);">Yeni Adres Ekle</h3>
+            <form id="address-form" style="text-align: left; width: 100%;">
+                <input type="hidden" id="addr-id">
+                <div class="form-group">
+                    <label>Adres Başlığı (Örn: Ev, İş)</label>
+                    <input type="text" id="addr-title" class="input-box" maxlength="50" required>
+                </div>
+                <div class="form-group">
+                    <label>Ad Soyad</label>
+                    <input type="text" id="addr-fullname" class="input-box" maxlength="120" required>
+                </div>
+                <div class="form-group">
+                    <label>Telefon Numarası</label>
+                    <input type="tel" id="addr-phone" class="input-box" placeholder="05XX XXX XX XX" maxlength="14" required>
+                </div>
+                <div class="form-group" style="display: flex; gap: 15px;">
+                    <div style="flex: 1;">
+                        <label>İl</label>
+                        <select id="addr-city" class="input-box select-box" required>
+                            <option value="">Şehir Seçiniz</option>
+                            <option value="Adana">Adana</option>
+                            <option value="Adıyaman">Adıyaman</option>
+                            <option value="Afyonkarahisar">Afyonkarahisar</option>
+                            <option value="Ağrı">Ağrı</option>
+                            <option value="Aksaray">Aksaray</option>
+                            <option value="Amasya">Amasya</option>
+                            <option value="Ankara">Ankara</option>
+                            <option value="Antalya">Antalya</option>
+                            <option value="Ardahan">Ardahan</option>
+                            <option value="Artvin">Artvin</option>
+                            <option value="Aydın">Aydın</option>
+                            <option value="Balıkesir">Balıkesir</option>
+                            <option value="Bartın">Bartın</option>
+                            <option value="Batman">Batman</option>
+                            <option value="Bayburt">Bayburt</option>
+                            <option value="Bilecik">Bilecik</option>
+                            <option value="Bingöl">Bingöl</option>
+                            <option value="Bitlis">Bitlis</option>
+                            <option value="Bolu">Bolu</option>
+                            <option value="Burdur">Burdur</option>
+                            <option value="Bursa">Bursa</option>
+                            <option value="Çanakkale">Çanakkale</option>
+                            <option value="Çankırı">Çankırı</option>
+                            <option value="Çorum">Çorum</option>
+                            <option value="Denizli">Denizli</option>
+                            <option value="Diyarbakır">Diyarbakır</option>
+                            <option value="Düzce">Düzce</option>
+                            <option value="Edirne">Edirne</option>
+                            <option value="Elazığ">Elazığ</option>
+                            <option value="Erzincan">Erzincan</option>
+                            <option value="Erzurum">Erzurum</option>
+                            <option value="Eskişehir">Eskişehir</option>
+                            <option value="Gaziantep">Gaziantep</option>
+                            <option value="Giresun">Giresun</option>
+                            <option value="Gümüşhane">Gümüşhane</option>
+                            <option value="Hakkari">Hakkari</option>
+                            <option value="Hatay">Hatay</option>
+                            <option value="Iğdır">Iğdır</option>
+                            <option value="Isparta">Isparta</option>
+                            <option value="İstanbul">İstanbul</option>
+                            <option value="İzmir">İzmir</option>
+                            <option value="Kahramanmaraş">Kahramanmaraş</option>
+                            <option value="Karabük">Karabük</option>
+                            <option value="Karaman">Karaman</option>
+                            <option value="Kars">Kars</option>
+                            <option value="Kastamonu">Kastamonu</option>
+                            <option value="Kayseri">Kayseri</option>
+                            <option value="Kilis">Kilis</option>
+                            <option value="Kırıkkale">Kırıkkale</option>
+                            <option value="Kırklareli">Kırklareli</option>
+                            <option value="Kırşehir">Kırşehir</option>
+                            <option value="Kocaeli">Kocaeli</option>
+                            <option value="Konya">Konya</option>
+                            <option value="Kütahya">Kütahya</option>
+                            <option value="Malatya">Malatya</option>
+                            <option value="Manisa">Manisa</option>
+                            <option value="Mardin">Mardin</option>
+                            <option value="Mersin">Mersin</option>
+                            <option value="Muğla">Muğla</option>
+                            <option value="Muş">Muş</option>
+                            <option value="Nevşehir">Nevşehir</option>
+                            <option value="Niğde">Niğde</option>
+                            <option value="Ordu">Ordu</option>
+                            <option value="Osmaniye">Osmaniye</option>
+                            <option value="Rize">Rize</option>
+                            <option value="Sakarya">Sakarya</option>
+                            <option value="Samsun">Samsun</option>
+                            <option value="Şanlıurfa">Şanlıurfa</option>
+                            <option value="Siirt">Siirt</option>
+                            <option value="Sinop">Sinop</option>
+                            <option value="Sivas">Sivas</option>
+                            <option value="Şırnak">Şırnak</option>
+                            <option value="Tekirdağ">Tekirdağ</option>
+                            <option value="Tokat">Tokat</option>
+                            <option value="Trabzon">Trabzon</option>
+                            <option value="Tunceli">Tunceli</option>
+                            <option value="Uşak">Uşak</option>
+                            <option value="Van">Van</option>
+                            <option value="Yalova">Yalova</option>
+                            <option value="Yozgat">Yozgat</option>
+                            <option value="Zonguldak">Zonguldak</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>İlçe</label>
+                        <input type="text" id="addr-district" class="input-box" maxlength="60" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Açık Adres</label>
+                    <textarea id="addr-details" class="input-box" rows="3" maxlength="300" required style="resize: vertical; font-family: inherit;"></textarea>
+                </div>
+                <button type="submit" class="btn primary" style="width: 100%;">Kaydet</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+    <script type="module" src="myScript.js?v=141"></script>
+
+    <!-- MOBILE BOTTOM NAV -->
+    <div class="bottom-nav-bar" id="mobile-bottom-nav">
+        <div class="bottom-nav-item active" data-target="#products-page">
+            <i class="fa-solid fa-box"></i>
+            <span>Ürünler</span>
+        </div>
+        <div class="bottom-nav-item" data-target="#checkout-page">
+            <div style="position: relative;">
+                <i class="fa-solid fa-cart-shopping"></i>
+                <span class="cart-badge-mobile" id="mobile-cart-badge">0</span>
+            </div>
+            <span>Sepet</span>
+        </div>
+        <!-- Giriş yapılmamış: Giriş Yap -->
+        <div class="bottom-nav-item" id="mobile-nav-login" data-target="#login-page">
+            <i class="fa-regular fa-user"></i>
+            <span>Giriş Yap</span>
+        </div>
+        <!-- Giriş yapılmış: Profil -->
+        <div class="bottom-nav-item" id="mobile-nav-profile" data-target="#dashboard-page" style="display:none;">
+            <i class="fa-solid fa-circle-user"></i>
+            <span>Profil</span>
+        </div>
+    </div>
+    
+
+    <!-- CEREZ ONAY BANDI: analitik yalnizca "Kabul et" ile yuklenir; tercih ?cerez ile yeniden acilir -->
+    <div id="cookie-banner" class="cookie-banner" role="dialog" aria-label="Çerez tercihi" hidden>
+        <p>Deneyiminizi geliştirmek için çerez kullanıyoruz. <a href="mevzuat/gizlilik/">Çerez Politikası</a></p>
+        <div class="cookie-actions">
+            <button type="button" class="cookie-reject" data-cerez="0">Reddet</button>
+            <button type="button" class="cookie-accept" data-cerez="1">Kabul et</button>
+        </div>
+    </div>
+    <script>
+    (function () {
+        var KEY = 'engrare_cerez', banner = document.getElementById('cookie-banner'), choice = null;
+        try { choice = localStorage.getItem(KEY); } catch (e) {}
+        if (choice === '1') loadAnalytics();
+        if (choice === null || /[?&]cerez/.test(location.search)) banner.hidden = false;
+        banner.addEventListener('click', function (e) {
+            var c = e.target.getAttribute('data-cerez');
+            if (c === null) return;
+            try { localStorage.setItem(KEY, c); } catch (err) {}
+            banner.hidden = true;
+            if (c === '1') return loadAnalytics();
+            // Rıza geri alındı: daha önce kurulan Analytics çerezlerini sil
+            var domain = location.hostname.split('.').slice(-2).join('.');
+            document.cookie.split(';').forEach(function (kv) {
+                var name = kv.split('=')[0].trim();
+                if (/^_ga/.test(name)) {
+                    document.cookie = name + '=; Max-Age=0; path=/';
+                    document.cookie = name + '=; Max-Age=0; path=/; domain=.' + domain;
+                }
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

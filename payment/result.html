@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ödeme Sonucu | ENGRARE 3D</title>
+    <!-- jQuery CDN -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-main: #0B0F19;
+            --bg-card: #151D30;
+            --text-main: #F3F4F6;
+            --text-muted: #9CA3AF;
+            --color-primary: #3B82F6;
+            --color-primary-hover: #2563EB;
+            --color-success: #10B981;
+            --color-error: #EF4444;
+            --border-light: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* Klasik ENGRARE Estetiği */
+        .result-container {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 520px;
+            padding: 40px 30px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            position: relative;
+            animation: fadeIn 0.5s ease-out forwards;
+            overflow: hidden;
+        }
+
+        /* Başarılı ödemede üstte soldan sağa ilerleyen yeşil sayaç çubuğu */
+        .result-progress-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 4px;
+            background: #10B981;
+            border-radius: 4px 4px 0 0;
+            transition: width 6s linear;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Durum İkonları */
+        .status-icon-wrapper {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .status-icon-wrapper svg {
+            width: 44px;
+            height: 44px;
+        }
+
+        /* Yükleniyor Animasyonu */
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(59, 130, 246, 0.1);
+            border-top: 4px solid var(--color-primary);
+            border-radius: 50%;
+            margin: 0 auto 24px auto;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .status-desc {
+            font-size: 15px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        /* Detay Kutusu */
+        .info-box {
+            background-color: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 32px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-label {
+            color: var(--text-muted);
+        }
+
+        .info-value {
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        /* Aksiyon Butonları */
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 10px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background-color: var(--color-primary);
+            color: #FFFFFF;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--color-primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-light);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: var(--text-muted);
+        }
+
+        /* Durum Sınıfları */
+        .state-loading .status-title { color: var(--color-primary); }
+        
+        .state-success .status-icon-wrapper { background-color: rgba(16, 185, 129, 0.1); color: var(--color-success); }
+        .state-success .status-title { color: var(--color-success); }
+        
+        .state-error .status-icon-wrapper { background-color: rgba(239, 68, 68, 0.1); color: var(--color-error); }
+        .state-error .status-title { color: var(--color-error); }
+
+        .keep-open-warning {
+            margin: -12px 0 10px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: #FEF3C7;
+            border: 1px solid #FCD34D;
+            color: #92400E;
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.5;
+        }
+        .keep-open-warning span { display: block; font-weight: 500; font-size: 14px; margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="result-container" id="main-card">
+        <!-- Yükleniyor Durumu (Varsayılan Açılış) -->
+        <div id="status-loading" class="state-loading">
+            <div class="spinner"></div>
+            <h2 class="status-title">Ödemeniz İşleniyor</h2>
+            <p class="status-desc">Bankanızdan gelen onay kontrol ediliyor. Bu işlem birkaç saniye sürer.</p>
+            <div class="keep-open-warning">
+                ⚠️ Lütfen bu sayfayı kapatmayın ve geri tuşuna basmayın.
+                <span>İşlem bitince otomatik olarak ana sayfaya yönlendirileceksiniz.</span>
+            </div>
+        </div>
+
+        <!-- Başarılı Durum (Gizli) -->
+        <div id="status-success" class="state-success" style="display: none;">
+            <div class="status-icon-wrapper">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            <h2 class="status-title">Ödeme Başarılı!</h2>
+            <p class="status-desc">Harika! Sipariş ödemeniz iyzico tarafından başarıyla onaylandı ve 3D imalat sırasına eklendi.</p>
+            
+            <div class="info-box">
+                <div class="info-row">
+                    <span class="info-label">Sipariş No:</span>
+                    <span class="info-value" id="success-order-id">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Durum:</span>
+                    <span class="info-value" style="color: var(--color-success);">Ödendi / İmalat Sırada</span>
+                </div>
+            </div>
+            <p class="status-desc" style="font-size: 13px; margin: -14px 0 14px; color: var(--text-muted);">Sipariş durumunuzu dilediğiniz zaman <strong>Sipariş Takibi</strong> ekranından sipariş numaranız ve e-posta adresinizle sorgulayabilirsiniz.</p>
+            <p class="status-desc" style="margin: 12px 0 0;">Ana sayfaya yönlendiriliyorsunuz...</p>
+        </div>
+
+        <!-- Hatalı Durum (Gizli) -->
+        <div id="status-error" class="state-error" style="display: none;">
+            <div class="status-icon-wrapper">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </div>
+            <h2 class="status-title">Ödeme Başarısız</h2>
+            <p class="status-desc" id="error-message-text">Banka kartı bakiyesi yetersiz veya işlem 3D Secure onayından geçemedi.</p>
+        </div>
+
+        <!-- Alttaki Sabit Gezinme Butonları (Doğrulama tamamlanana kadar gizli) -->
+        <div class="btn-group" id="action-buttons" style="display: none;">
+            <a href="/" class="btn btn-primary">Anasayfaya Dön</a>
+            <a href="/?siparis=" class="btn btn-secondary" id="btn-track-order" style="display: none;">Siparişimi Sorgula</a>
+            <a href="/?dashboard" class="btn btn-secondary" id="btn-orders-redirect" style="display: none;">Siparişlerime Göz At</a>
+        </div>
+    </div>
+
+    <!-- Firebase JS SDK ES Modülleri Entegrasyonu -->
+    <script type="module">
+        // Firebase Konfigürasyonu
+        const firebaseConfig = {
+            apiKey: "AIzaSyBM7oB0EkTjGJiOHdo67ByXA6qxVcvPS8Y",
+            authDomain: "engrar3d.firebaseapp.com",
+            databaseURL: "https://engrar3d-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "engrar3d",
+            storageBucket: "engrar3d.firebasestorage.app",
+            messagingSenderId: "68298863793",
+            appId: "1:68298863793:web:ba7ec7ded3424b4c779e90",
+            measurementId: "G-NLSV32JMM2"
+        };
+
+
+        let isPaymentComplete = false;
+
+        // Ödeme tamamlanana kadar sayfadan çıkışta uyarı ver
+        const handleBeforeUnload = (e) => {
+            if (!isPaymentComplete) {
+                e.preventDefault();
+                e.returnValue = 'Kaydedilmemiş veriler var. Ödeme doğrulama işlemi devam ediyor, ayrılmak istediğinizden emin misiniz?';
+                return e.returnValue;
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        $(document).ready(() => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const errorParam = urlParams.get('error');
+            const orderId = urlParams.get('orderId');
+
+            if (errorParam) {
+                showErrorState("İşlem kullanıcı veya banka tarafından iptal edildi.");
+                return;
+            }
+
+            // Sipariş iyzico dönüşünde sunucuda kaydedildi: doğrulamaya (ve Firebase SDK'ya) gerek yok
+            if (orderId) {
+                showSuccessState(orderId);
+                return;
+            }
+
+            if (!token) {
+                showErrorState("Geçersiz işlem oturumu. Token doğrulama parametresi bulunamadı.");
+                return;
+            }
+
+            verifyWithServer(token).catch((error) => {
+                console.error("Doğrulama Hatası:", error);
+                showErrorState("Ödeme doğrulanamadı. Lütfen sayfayı yenileyin.");
+            });
+        });
+
+        // Sunucu dönüşte ödemeyi kesinleştiremediyse (ödenmedi / iyzico'ya ulaşılamadı) burada tekrar sorulur
+        async function verifyWithServer(token) {
+            const V = 'https://www.gstatic.com/firebasejs/10.10.0/';
+            const [{ initializeApp }, { getAuth, onAuthStateChanged }, { getFunctions, httpsCallable }, { initializeAppCheck, ReCaptchaEnterpriseProvider }] =
+                await Promise.all(['firebase-app', 'firebase-auth', 'firebase-functions', 'firebase-app-check'].map(m => import(`${V}${m}.js`)));
+            const app = initializeApp(firebaseConfig);
+            initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider('6LdZF8wtAAAAAGjU6iUcHZyLuErVbN4N7KK6vPx9'), isTokenAutoRefreshEnabled: true });
+            const auth = getAuth(app);
+            const functions = getFunctions(app, 'europe-west1');
+
+            // onAuthStateChanged birden fazla kez tetiklenebilir; doğrulama yalnızca bir kez yapılmalı
+            let verificationStarted = false;
+            onAuthStateChanged(auth, async (user) => {
+                if (user && !user.isAnonymous) {
+                    $('#btn-orders-redirect').show();
+                }
+                if (verificationStarted) return;
+                verificationStarted = true;
+
+                try {
+                    const iyzicoVerifyPayment = httpsCallable(functions, 'iyzicoVerifyPayment');
+                    const response = await iyzicoVerifyPayment({ token: token });
+                    const result = response.data || {};
+
+                    if (result.status === 'success') {
+                        showSuccessState(result.orderId);
+                    } else if (result.status === 'partial_success') {
+                        // Para çekildi ama sipariş kaydı yazılamadı: kullanıcıya "başarısız" denmemeli
+                        showErrorState("Ödemeniz alındı ancak siparişiniz kaydedilirken bir sorun oluştu. Lütfen bu sayfayı yenileyin; sorun devam ederse info@engrare.com adresine yazın.");
+                        $('#status-error .status-title').text('Ödeme Alındı');
+                    } else {
+                        showErrorState(result.errorMessage || "Ödeme banka tarafından onaylanmadı.");
+                    }
+                } catch (error) {
+                    console.error("Doğrulama Hatası:", error);
+                    showErrorState(error.message || "Güvenli sunucu el sıkışması esnasında sistem hatası oluştu.");
+                }
+            });
+        }
+
+        function showSuccessState(orderId) {
+            isPaymentComplete = true;
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            localStorage.removeItem('engrare_cart');
+            $('#status-loading').hide();
+            $('#success-order-id').text('#' + orderId);
+            $('#btn-track-order').attr('href', '/?siparis=' + encodeURIComponent(orderId)).show();
+            $('#status-success').fadeIn();
+            $('#action-buttons').fadeIn();
+            // Üstte soldan sağa ilerleyen yeşil sayaç çubuğu
+            const bar = document.createElement('div');
+            bar.className = 'result-progress-bar';
+            document.getElementById('main-card').prepend(bar);
+            // Bir frame bekle ki tarayıcı ilk boyutu render etsin, sonra animasyonu başlat
+            requestAnimationFrame(() => { requestAnimationFrame(() => { bar.style.width = '100%'; }); });
+            setTimeout(() => { window.location.href = '/'; }, 6000);
+        }
+
+        function showErrorState(message) {
+            isPaymentComplete = true;
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            $('#status-loading').hide();
+            $('#error-message-text').text(message);
+            $('#status-error').fadeIn();
+            $('#action-buttons').fadeIn();
+        }
+    </script>
+</body>
+</html>

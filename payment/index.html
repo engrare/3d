@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engrare Ödeme</title>
+    <link rel="icon" type="image/png" href="https://www.engrare.com/files/photos/title_icon.png" sizes="48x48">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://code.jquery.com">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
+    <!-- QR standı önizlemesindeki QR kodları (ana sayfayla aynı kütüphane) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Using shared style plus specific overrides -->
+    <link rel="stylesheet" href="../myStyle.css?v=62">
+    <link rel="stylesheet" href="myStyle.css?v=12">
+
+    <script type="importmap">
+        {
+            "imports": {
+                "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+                "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+                "firebase/database": "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js",
+                "firebase/functions": "https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js",
+                "firebase/app-check": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app-check.js"
+            }
+        }
+    </script>
+    <link rel="modulepreload" href="../preview-engine.js?v=105">
+    <link rel="modulepreload" href="../products.js?v=1">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="brand-logo" onclick="window.location.href='../index.html'" style="cursor: pointer;"><img src="../content/images/engrare_logo_elegant.png" height="65px" alt="Engrare" onerror="this.style.display='none'; this.parentElement.innerText='ENGRARE.'"></div>
+            
+            <!-- Mobile Menu Toggle Button -->
+            <div class="mobile-menu-toggle" id="mobile-menu-toggle" style="display: none !important; cursor: pointer; font-size: 1.5rem; color: var(--primary);">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+            
+            <div class="mobile-backdrop" id="mobile-backdrop"></div>
+            
+            <ul class="nav-menu" id="nav-menu">
+                <div class="mobile-menu-close" id="mobile-menu-close" style="display: none; align-self: flex-end; padding: 5px; cursor: pointer; font-size: 1.5rem; color: var(--text-main);">
+                    <i class="fa-solid fa-xmark"></i>
+                </div>
+                <li onclick="window.location.href='../index.html'">Ürünlerimiz</li>
+                <li class="active" title="Sepet" style="display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-cart-shopping" style="font-size: 1.2rem;"></i> Sepet <span id="cart-badge">0</span></li>
+                <li id="nav-login-btn" onclick="window.location.href='../index.html?login'" style="display: none; cursor: pointer; align-items: center; gap: 8px; font-weight: 600; padding: 10px 0;">
+                    <i class="fa-regular fa-user" style="font-size: 1.2rem;"></i> Giriş Yap
+                </li>
+                
+                <li id="nav-user-profile" onclick="window.location.href='../index.html?dashboard'" style="display: none; cursor: pointer; align-items: center; gap: 8px; font-weight: 600; padding: 10px 0;">
+                    <i class="fa-solid fa-circle-user" style="font-size: 1.3rem;"></i> Profil
+                </li>
+                
+                <li id="nav-logout-container" style="display: none; align-items: center;">
+                    <button id="action-logout" class="btn-sm secondary" style="cursor: pointer;">Çıkış Yap</button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="checkout-wrapper">
+        <!-- LEFT: FORM -->
+        <div class="checkout-form-section">
+            <div class="checkout-header" style="margin-bottom: 20px;">
+                <div class="breadcrumb">
+                    <a href="../?checkout">Sepet</a> <i class="fa-solid fa-chevron-right"></i> <span>Ödeme</span>
+                </div>
+            </div>
+
+            <!-- LOGGED IN USER HEADER -->
+            <div id="user-profile-header" style="display:none; align-items:center; gap:15px; margin-bottom:30px; padding:15px; background:#F8FAFC; border-radius:12px; border:1px solid var(--border);">
+                <img id="checkout-user-img" src="../content/images/default_user.png" style="width:50px; height:50px; border-radius:50%; object-fit:cover;" alt="Profil fotoğrafı">
+                <div>
+                    <div id="checkout-user-name" style="font-weight:700; color:var(--primary);">Kullanıcı Adı</div>
+                    <div id="checkout-user-email" style="font-size:0.85rem; color:var(--text-muted);"></div>
+                </div>
+            </div>
+
+            <!-- GUEST CONTACT FORM (Visible if Guest) -->
+            <div id="guest-contact-section" style="display:none;">
+                <h3 class="step-title">İletişim Bilgileri</h3>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label>E-Posta</label>
+                        <input type="email" id="contact-email" class="input-box" placeholder="ornek@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Telefon</label>
+                        <input type="tel" id="contact-phone" class="input-box" placeholder="05XX XXX XX XX" maxlength="14" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GUEST ADDRESS FORM (Visible if Guest) -->
+            <div id="guest-address-section" style="display:none;">
+                <h3 class="step-title">Teslimat Adresi</h3>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label>Ad</label>
+                        <input type="text" id="ship-name" class="input-box" placeholder="Adınız" required aria-label="Ad">
+                    </div>
+                    <div class="form-group">
+                        <label>Soyad</label>
+                        <input type="text" id="ship-surname" class="input-box" placeholder="Soyadınız" required aria-label="Soyad">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Açık Adres</label>
+                    <input type="text" id="ship-address" class="input-box" placeholder="Mahalle, Sokak, Bina ve Daire No" maxlength="300" required aria-label="Açık Adres">
+                </div>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label>Şehir</label>
+                        <select id="ship-city" class="input-box select-box" required aria-label="Şehir">
+                            <option value="">Şehir Seçiniz</option>
+                            <option value="Adana">Adana</option>
+                            <option value="Adıyaman">Adıyaman</option>
+                            <option value="Afyonkarahisar">Afyonkarahisar</option>
+                            <option value="Ağrı">Ağrı</option>
+                            <option value="Aksaray">Aksaray</option>
+                            <option value="Amasya">Amasya</option>
+                            <option value="Ankara">Ankara</option>
+                            <option value="Antalya">Antalya</option>
+                            <option value="Ardahan">Ardahan</option>
+                            <option value="Artvin">Artvin</option>
+                            <option value="Aydın">Aydın</option>
+                            <option value="Balıkesir">Balıkesir</option>
+                            <option value="Bartın">Bartın</option>
+                            <option value="Batman">Batman</option>
+                            <option value="Bayburt">Bayburt</option>
+                            <option value="Bilecik">Bilecik</option>
+                            <option value="Bingöl">Bingöl</option>
+                            <option value="Bitlis">Bitlis</option>
+                            <option value="Bolu">Bolu</option>
+                            <option value="Burdur">Burdur</option>
+                            <option value="Bursa">Bursa</option>
+                            <option value="Çanakkale">Çanakkale</option>
+                            <option value="Çankırı">Çankırı</option>
+                            <option value="Çorum">Çorum</option>
+                            <option value="Denizli">Denizli</option>
+                            <option value="Diyarbakır">Diyarbakır</option>
+                            <option value="Düzce">Düzce</option>
+                            <option value="Edirne">Edirne</option>
+                            <option value="Elazığ">Elazığ</option>
+                            <option value="Erzincan">Erzincan</option>
+                            <option value="Erzurum">Erzurum</option>
+                            <option value="Eskişehir">Eskişehir</option>
+                            <option value="Gaziantep">Gaziantep</option>
+                            <option value="Giresun">Giresun</option>
+                            <option value="Gümüşhane">Gümüşhane</option>
+                            <option value="Hakkari">Hakkari</option>
+                            <option value="Hatay">Hatay</option>
+                            <option value="Iğdır">Iğdır</option>
+                            <option value="Isparta">Isparta</option>
+                            <option value="İstanbul">İstanbul</option>
+                            <option value="İzmir">İzmir</option>
+                            <option value="Kahramanmaraş">Kahramanmaraş</option>
+                            <option value="Karabük">Karabük</option>
+                            <option value="Karaman">Karaman</option>
+                            <option value="Kars">Kars</option>
+                            <option value="Kastamonu">Kastamonu</option>
+                            <option value="Kayseri">Kayseri</option>
+                            <option value="Kilis">Kilis</option>
+                            <option value="Kırıkkale">Kırıkkale</option>
+                            <option value="Kırklareli">Kırklareli</option>
+                            <option value="Kırşehir">Kırşehir</option>
+                            <option value="Kocaeli">Kocaeli</option>
+                            <option value="Konya">Konya</option>
+                            <option value="Kütahya">Kütahya</option>
+                            <option value="Malatya">Malatya</option>
+                            <option value="Manisa">Manisa</option>
+                            <option value="Mardin">Mardin</option>
+                            <option value="Mersin">Mersin</option>
+                            <option value="Muğla">Muğla</option>
+                            <option value="Muş">Muş</option>
+                            <option value="Nevşehir">Nevşehir</option>
+                            <option value="Niğde">Niğde</option>
+                            <option value="Ordu">Ordu</option>
+                            <option value="Osmaniye">Osmaniye</option>
+                            <option value="Rize">Rize</option>
+                            <option value="Sakarya">Sakarya</option>
+                            <option value="Samsun">Samsun</option>
+                            <option value="Şanlıurfa">Şanlıurfa</option>
+                            <option value="Siirt">Siirt</option>
+                            <option value="Sinop">Sinop</option>
+                            <option value="Sivas">Sivas</option>
+                            <option value="Şırnak">Şırnak</option>
+                            <option value="Tekirdağ">Tekirdağ</option>
+                            <option value="Tokat">Tokat</option>
+                            <option value="Trabzon">Trabzon</option>
+                            <option value="Tunceli">Tunceli</option>
+                            <option value="Uşak">Uşak</option>
+                            <option value="Van">Van</option>
+                            <option value="Yalova">Yalova</option>
+                            <option value="Yozgat">Yozgat</option>
+                            <option value="Zonguldak">Zonguldak</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>İlçe</label>
+                        <input type="text" id="ship-district" class="input-box" placeholder="İlçe" required aria-label="İlçe">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SAVED ADDRESS (Visible if User) -->
+            <div id="user-address-section" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3 class="step-title">Teslimat Adresi</h3>
+                    <button id="btn-add-address" class="btn-sm secondary" style="font-size:0.75rem;">+ Yeni Ekle</button>
+                </div>
+                <div id="saved-addresses-container" class="shipping-options" style="margin-bottom: 15px;">
+                    <!-- Adresler buraya gelecek -->
+                </div>
+                
+                <!-- Hidden New/Edit Address Form -->
+                <div id="new-address-form" style="display:none; margin-top: 15px; background: #FFFFFF; padding: 20px; border-radius: 16px; border: 1px solid #E2E8F0; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                    <input type="hidden" id="edit-addr-id" value="">
+                    <input type="text" id="new-addr-title" class="input-box mb-2" placeholder="Adres Başlığı (Örn: Ev / İş)" aria-label="Adres başlığı">
+                    <div class="form-grid-2">
+                        <input type="text" id="new-addr-name" class="input-box mb-2" placeholder="Ad" aria-label="Ad">
+                        <input type="text" id="new-addr-surname" class="input-box mb-2" placeholder="Soyad" aria-label="Soyad">
+                    </div>
+                    <input type="text" id="new-addr-full" class="input-box mb-2" placeholder="Tam Adres" maxlength="300" aria-label="Tam adres">
+                    <div class="form-grid-2">
+                        <select id="new-addr-city" class="input-box select-box mb-2" aria-label="Şehir">
+                            <option value="">Şehir Seçiniz</option>
+                            <option value="Adana">Adana</option>
+                            <option value="Adıyaman">Adıyaman</option>
+                            <option value="Afyonkarahisar">Afyonkarahisar</option>
+                            <option value="Ağrı">Ağrı</option>
+                            <option value="Aksaray">Aksaray</option>
+                            <option value="Amasya">Amasya</option>
+                            <option value="Ankara">Ankara</option>
+                            <option value="Antalya">Antalya</option>
+                            <option value="Ardahan">Ardahan</option>
+                            <option value="Artvin">Artvin</option>
+                            <option value="Aydın">Aydın</option>
+                            <option value="Balıkesir">Balıkesir</option>
+                            <option value="Bartın">Bartın</option>
+                            <option value="Batman">Batman</option>
+                            <option value="Bayburt">Bayburt</option>
+                            <option value="Bilecik">Bilecik</option>
+                            <option value="Bingöl">Bingöl</option>
+                            <option value="Bitlis">Bitlis</option>
+                            <option value="Bolu">Bolu</option>
+                            <option value="Burdur">Burdur</option>
+                            <option value="Bursa">Bursa</option>
+                            <option value="Çanakkale">Çanakkale</option>
+                            <option value="Çankırı">Çankırı</option>
+                            <option value="Çorum">Çorum</option>
+                            <option value="Denizli">Denizli</option>
+                            <option value="Diyarbakır">Diyarbakır</option>
+                            <option value="Düzce">Düzce</option>
+                            <option value="Edirne">Edirne</option>
+                            <option value="Elazığ">Elazığ</option>
+                            <option value="Erzincan">Erzincan</option>
+                            <option value="Erzurum">Erzurum</option>
+                            <option value="Eskişehir">Eskişehir</option>
+                            <option value="Gaziantep">Gaziantep</option>
+                            <option value="Giresun">Giresun</option>
+                            <option value="Gümüşhane">Gümüşhane</option>
+                            <option value="Hakkari">Hakkari</option>
+                            <option value="Hatay">Hatay</option>
+                            <option value="Iğdır">Iğdır</option>
+                            <option value="Isparta">Isparta</option>
+                            <option value="İstanbul">İstanbul</option>
+                            <option value="İzmir">İzmir</option>
+                            <option value="Kahramanmaraş">Kahramanmaraş</option>
+                            <option value="Karabük">Karabük</option>
+                            <option value="Karaman">Karaman</option>
+                            <option value="Kars">Kars</option>
+                            <option value="Kastamonu">Kastamonu</option>
+                            <option value="Kayseri">Kayseri</option>
+                            <option value="Kilis">Kilis</option>
+                            <option value="Kırıkkale">Kırıkkale</option>
+                            <option value="Kırklareli">Kırklareli</option>
+                            <option value="Kırşehir">Kırşehir</option>
+                            <option value="Kocaeli">Kocaeli</option>
+                            <option value="Konya">Konya</option>
+                            <option value="Kütahya">Kütahya</option>
+                            <option value="Malatya">Malatya</option>
+                            <option value="Manisa">Manisa</option>
+                            <option value="Mardin">Mardin</option>
+                            <option value="Mersin">Mersin</option>
+                            <option value="Muğla">Muğla</option>
+                            <option value="Muş">Muş</option>
+                            <option value="Nevşehir">Nevşehir</option>
+                            <option value="Niğde">Niğde</option>
+                            <option value="Ordu">Ordu</option>
+                            <option value="Osmaniye">Osmaniye</option>
+                            <option value="Rize">Rize</option>
+                            <option value="Sakarya">Sakarya</option>
+                            <option value="Samsun">Samsun</option>
+                            <option value="Şanlıurfa">Şanlıurfa</option>
+                            <option value="Siirt">Siirt</option>
+                            <option value="Sinop">Sinop</option>
+                            <option value="Sivas">Sivas</option>
+                            <option value="Şırnak">Şırnak</option>
+                            <option value="Tekirdağ">Tekirdağ</option>
+                            <option value="Tokat">Tokat</option>
+                            <option value="Trabzon">Trabzon</option>
+                            <option value="Tunceli">Tunceli</option>
+                            <option value="Uşak">Uşak</option>
+                            <option value="Van">Van</option>
+                            <option value="Yalova">Yalova</option>
+                            <option value="Yozgat">Yozgat</option>
+                            <option value="Zonguldak">Zonguldak</option>
+                        </select>
+                        <input type="text" id="new-addr-district" class="input-box mb-2" placeholder="İlçe" aria-label="İlçe">
+                    </div>
+                    <input type="tel" id="new-addr-phone" class="input-box mb-2" placeholder="Telefon (05XX...)" maxlength="14" aria-label="Telefon">
+                    <button id="btn-save-address" class="btn primary full-width mt-2">Kaydet ve Kullan</button>
+                </div>
+            </div>
+
+            <h3 class="step-title">Hazırlama Seçenekleri</h3>
+            <div class="shipping-options">
+                <label class="delivery-option active">
+                    <input type="radio" name="shipping-method" value="standard" checked style="display:none;">
+                    <div class="del-top-row">
+                        <div class="del-icon-wrapper"><i class="fa-solid fa-box"></i></div>
+                        <i class="fa-solid fa-circle-check check-icon"></i>
+                    </div>
+                    <div class="del-body">
+                        <span class="del-title">Standart Üretim</span>
+                        <span class="del-desc">3-5 iş günü içinde kargoda</span>
+                    </div>
+                    <div class="del-footer">
+                        <span class="del-price" id="standard-shipping-price">Ek ücret yok</span>
+                    </div>
+                </label>
+                <label class="delivery-option">
+                    <input type="radio" name="shipping-method" value="express" style="display:none;">
+                    <div class="del-top-row">
+                        <div class="del-icon-wrapper"><i class="fa-solid fa-bolt"></i></div>
+                        <i class="fa-solid fa-circle-check check-icon"></i>
+                    </div>
+                    <div class="del-body">
+                        <span class="del-title">Öncelikli Üretim <span style="font-weight: 600; opacity: 0.7;">(%15)</span></span>
+                        <span class="del-desc">2-3 iş günü içinde kargoda</span>
+                    </div>
+                    <div class="del-footer">
+                        <span class="del-price" id="express-shipping-price">+%15</span>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Telefonda 3. adım; masaüstünde özet sağ sütuna taşınır (myScript.js handleSummaryPosition) -->
+            <h3 class="step-title" id="summary-step-title">Sipariş Özeti &amp; İndirim Kodu</h3>
+            <div id="mobile-summary-placeholder">
+            <div class="checkout-summary">
+                <h3 class="summary-desktop-title" style="padding-bottom: 20px; border-bottom: 1px solid var(--border);">Sipariş Özeti</h3>
+                <div id="order-items-list" class="summary-list">
+                    <!-- Items injected here -->
+                </div>
+
+                <!-- Discount Section -->
+                <div class="discount-section">
+                    <div class="discount-input-group">
+                        <input type="text" id="discount-code-input" class="input-box" placeholder="İndirim Kodu" aria-label="İndirim kodu">
+                        <button id="btn-apply-discount" class="btn-sm secondary">Uygula</button>
+                    </div>
+                    <div id="discount-message"></div>
+                </div>
+
+                <div class="summary-totals">
+                    <div class="price-row"><span>Ara Toplam</span><span id="summ-subtotal">₺0.00</span></div>
+                    <div class="price-row"><span>Kargo Ücreti</span><span id="summ-shipping">₺50.00</span></div>
+                    <div class="price-row" id="summ-production-row" style="display:none;">
+                        <span>Öncelikli Üretim (%15)</span><span id="summ-production-speed" style="font-weight: 600; color: var(--accent);"></span>
+                    </div>
+                    <div class="price-row" id="summ-discount-row" style="display:none; color: var(--accent);">
+                        <span>İndirim</span><span id="summ-discount">-₺0.00</span>
+                    </div>
+                    <div class="price-row total">
+                        <span>Toplam</span>
+                        <span id="summ-total">₺50.00</span>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <h3 class="step-title">Ödeme Yöntemi ve Onay</h3>
+            <div class="payment-tabs">
+                <div class="pay-tab active" data-method="iyzico">
+                    <div class="pay-tab-header">
+                        <div class="pay-tab-icon"><i class="fa-solid fa-credit-card"></i></div>
+                        <i class="fa-solid fa-circle-check pay-check-icon"></i>
+                    </div>
+                    <div class="pay-tab-body">
+                        <span class="pay-tab-title">Banka / Kredi Kartı</span>
+                        <div class="card-brands-row">
+                            <span class="troy-pill">VISA</span>
+                            <span class="troy-pill">MASTERCARD</span>
+                            <span class="troy-pill">TROY</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="pay-tab" data-method="iban">
+                    <div class="pay-tab-header">
+                        <div class="pay-tab-icon"><i class="fa-solid fa-money-bill-transfer"></i></div>
+                        <i class="fa-solid fa-circle-check pay-check-icon"></i>
+                    </div>
+                    <div class="pay-tab-body">
+                        <span class="pay-tab-title">Havale / FAST</span>
+                        <span class="pay-tab-sub">Anında Onay</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Iyzico Card Panel -->
+            <div id="pay-iyzico" class="payment-content">
+                <div class="payment-card-info-box">
+                    <div class="pci-header">
+                        <i class="fa-solid fa-shield-halved pci-shield"></i>
+                        <span>3D Secure & 256-Bit SSL Koruması</span>
+                    </div>
+                    <p class="pci-text">Siparişinizi tamamladığınızda güvenli kart ödeme sayfasına (Iyzico) yönlendirileceksiniz.</p>
+                </div>
+            </div>
+
+            <!-- IBAN Panel -->
+            <div id="pay-iban" class="payment-content" style="display:none;">
+                <div class="payment-card-info-box">
+                    <div class="pci-header">
+                        <i class="fa-solid fa-building-columns pci-shield"></i>
+                        <span>Havale / EFT / FAST Bilgisi</span>
+                    </div>
+                    <p class="pci-text">Siparişi tamamla butonuna tıkladıktan sonra IBAN bilgileri ve sipariş referans kodunuz ekranda görüntülenecektir.</p>
+                </div>
+            </div>
+
+            <!-- Ön bilgilendirme onayı: ödeme yükümlülüğünden hemen önce (Mesafeli Sözleşmeler Yön. m.6-7) -->
+            <label class="preinfo-check">
+                <input type="checkbox" id="preinfo-check">
+                <span><a href="../mevzuat/sozlesme/" target="_blank">Ön Bilgilendirme Formu</a>'nu ve <a href="../mevzuat/sozlesme/" target="_blank">Mesafeli Satış Sözleşmesi</a>'ni okudum, onaylıyorum.</span>
+            </label>
+
+            <button id="btn-complete-order" class="btn-checkout">
+                <span class="btn-checkout-left"><i class="fa-solid fa-lock"></i> Güvenle Öde</span>
+                <span class="btn-checkout-price" id="final-price-btn">₺0.00</span>
+            </button>
+
+            <div class="checkout-legal-notice">
+                Kişisel verileriniz <a href="../mevzuat/kvkk/" target="_blank">KVKK Aydınlatma Metni</a> kapsamında işlenir.
+            </div>
+
+            <div id="payment-success-container" class="payment-success-container" style="display:none; text-align: center;">
+                <div class="success-icon-wrapper">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+                <h2 style="font-size: 2rem; color: var(--primary); margin-bottom: 10px;">Siparişiniz Alındı!</h2>
+                <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 30px;">Bizi tercih ettiğiniz için teşekkür ederiz.</p>
+                
+                <div class="elegant-iban-card">
+                    <div class="eic-header">
+                        <i class="fa-solid fa-building-columns"></i> Havale / EFT Bilgileri
+                    </div>
+                    <div class="eic-body">
+                        <!-- Order ID -->
+                        <div class="eic-row">
+                            <div class="eic-label">Sipariş Numaranız</div>
+                            <div class="eic-value-group">
+                                <div id="success-order-id" class="eic-value highlight">...</div>
+                                <button class="btn-copy" aria-label="Kopyala" onclick="copyToClipboard('#success-order-id')" title="Kopyala"><i class="fa-regular fa-copy"></i></button>
+                            </div>
+                        </div>
+                        <!-- Tutar: sunucunun hesapladığı değer -->
+                        <div class="eic-row">
+                            <div class="eic-label">Gönderilecek Tutar</div>
+                            <div id="success-amount" class="eic-value highlight">...</div>
+                        </div>
+                        <!-- Alıcı -->
+                        <div class="eic-row">
+                            <div class="eic-label">Alıcı</div>
+                            <div class="eic-value">Kaya Sertel</div>
+                        </div>
+                        <!-- IBAN -->
+                        <div class="eic-row">
+                            <div class="eic-label">IBAN</div>
+                            <div class="eic-value-group">
+                                <div class="eic-value monospace" id="iban-text">TR41 0006 4000 0011 4560 4302 15</div>
+                                <button class="btn-copy" aria-label="Kopyala" onclick="copyToClipboard('#iban-text')" title="Kopyala"><i class="fa-regular fa-copy"></i></button>
+                            </div>
+                        </div>
+                        <!-- Açıklama -->
+                        <div class="eic-row" style="border-bottom: none;">
+                            <div class="eic-label">Açıklama Kısmına Yazılacak</div>
+                            <div class="eic-value-group">
+                                <div class="eic-value">Sipariş No: <span id="success-order-ref">...</span></div>
+                                <button class="btn-copy" aria-label="Kopyala" onclick="copyToClipboard('#success-order-ref')" title="Kopyala"><i class="fa-regular fa-copy"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="elegant-warning-box">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span>Lütfen ödeme yaparken açıklama kısmına <strong>Sadece Sipariş Numaranızı</strong> yazınız. Siparişiniz, ödemeniz onaylandıktan sonra üretime alınacaktır.</span>
+                </div>
+                
+                <div style="margin-top: 40px;">
+                    <a href="../" class="btn primary" style="padding: 16px 40px; font-size: 1.1rem; text-decoration: none; border-radius: 30px;">
+                        <i class="fa-solid fa-house" style="margin-right: 8px;"></i> Ana Sayfaya Dön
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="toast-container"></div>
+    <script type="module" src="myScript.js?v=26"></script>
+</body>
+</html>
+

@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /payment/
+
+Sitemap: https://3d.engrare.com/sitemap.xml
