@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KVKK Aydınlatma Metni - Engrare 3D</title>
+    <meta name="description" content="Engrare 3D KVKK aydınlatma metni: kişisel verilerinizin işlenmesi, aktarılması ve haklarınız.">
+    <link rel="canonical" href="https://3d.engrare.com/mevzuat/kvkk/">
+    <link rel="icon" type="image/png" href="https://www.engrare.com/files/photos/title_icon.png" sizes="48x48">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<link rel="stylesheet" href="../../myStyle.css?v=59">
+    <style>
+        .legal-content h1 { margin-bottom: 30px; font-size: 2.5rem; }
+        .legal-content h3 { margin-top: 40px; margin-bottom: 15px; font-size: 1.5rem; color: var(--primary); }
+        .legal-content p { margin-bottom: 15px; line-height: 1.8; }
+        .legal-content ul { margin-bottom: 20px; padding-left: 20px; }
+        .legal-content li { margin-bottom: 10px; color: var(--text-muted); }
+    </style>
+    <!-- Sayfaya ozel mobil alt menu stilleri (head'de: gec reflow olusturmaz) -->
+    <style>
+    /* Alt menü yüksekliği tek yerde: body alt boşluğu da bunu kullanıyor (önceden 86px menüye 70px boşluk kalıyor, içerik altta kesiliyordu) */
+    :root { --bottom-nav-h: 60px; }
+    .bottom-nav-bar { display: none; position: fixed; bottom: 0; left: 0; width: 100%; height: var(--bottom-nav-h); box-sizing: border-box; background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; justify-content: space-around; align-items: stretch; padding: 0; border-top: 1px solid var(--border); }
+    .bottom-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.72rem; font-weight: 600; cursor: pointer; text-decoration: none; gap: 3px; padding: 0; }
+    .bottom-nav-item i { font-size: 1.25rem; }
+    .bottom-nav-item.active { color: var(--primary); }
+    .cart-badge-mobile { position: absolute; top: -6px; right: -10px; background: #EF4444; color: #fff; font-size: 0.6rem; font-weight: 700; padding: 2px 5px; border-radius: 10px; }
+    @media (max-width: 768px) {
+        .bottom-nav-bar { display: flex; }
+        .mobile-menu-toggle { display: none !important; }
+        .nav-menu { display: none !important; }
+        body { padding-bottom: var(--bottom-nav-h); }
+    }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="brand-logo" style="cursor: pointer;"><a href="../../?products" style="text-decoration: none; color: inherit;"><img src="../../content/images/engrare_logo_elegant.png" height="65" width="101" fetchpriority="high" decoding="async" alt="Engrare" onerror="this.style.display='none'; this.parentElement.innerText='ENGRARE.'"></a></div>
+            
+
+            <!-- Mobile Menu Toggle Button -->
+            <div class="mobile-menu-toggle" id="mobile-menu-toggle" style="display: none; cursor: pointer; font-size: 1.5rem; color: var(--primary);">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+            
+            <div class="mobile-backdrop" id="mobile-backdrop"></div>
+            
+            <ul class="nav-menu" id="nav-menu">
+                <div class="mobile-menu-close" id="mobile-menu-close" style="display: none; align-self: flex-end; padding: 5px; cursor: pointer; font-size: 1.5rem; color: var(--text-main);">
+                    <i class="fa-solid fa-xmark"></i>
+                </div>
+                <li><a href="../../?products" style="text-decoration: none; color: inherit;">Ürünlerimiz</a></li>
+                <li  title="Sepet" style="display: flex; align-items: center; gap: 6px;"><a href="../../?checkout" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-cart-shopping" style="font-size: 1.2rem;"></i> Sepet <span id="cart-badge">0</span></a></li>
+                <li id="nav-login-btn"  href="../../?login" style="display: none; cursor: pointer; align-items: center; gap: 8px; font-weight: 600; padding: 10px 0;">
+                    <a href="../../?login" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;"><i class="fa-regular fa-user" style="font-size: 1.2rem;"></i> Giriş Yap</a>
+                </li>
+                
+                <li id="nav-user-profile"  href="../../?dashboard" style="display: none; cursor: pointer; align-items: center; gap: 8px; font-weight: 600; padding: 10px 0;">
+                    <a href="../../?dashboard" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-circle-user" style="font-size: 1.3rem;"></i> Profil</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container narrow legal-content">
+        <h1>KİŞİSEL VERİLERİN KORUNMASI AYDINLATMA METNİ</h1>
+        <p>İşbu aydınlatma metni, 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") ve Aydınlatma Yükümlülüğünün Yerine Getirilmesinde Uyulacak Usul ve Esaslar Hakkında Tebliğ uyarınca, 3d.engrare.com internet sitesini ("Site") ziyaret eden, üye olan, sipariş veren veya bizimle iletişime geçen gerçek kişileri ("İlgili Kişi"), kişisel verilerinin hangi amaçlarla, hangi hukuki sebeplere dayanılarak, kimlere ve nereye aktarılarak işlendiği ve KVKK kapsamındaki hakları konusunda bilgilendirmek amacıyla hazırlanmıştır.</p>
+
+        <h3>1. Veri Sorumlusu</h3>
+        <p>Kişisel verileriniz, veri sorumlusu sıfatıyla <strong>Kaya Sertel</strong> ("Veri Sorumlusu" veya "Satıcı") tarafından işlenmektedir.<br>
+        Adres: Atakent Mah. Bosphorus City 52B Blok, Daire 5, Küçükçekmece / İstanbul<br>
+        E-posta: info@engrare.com<br>
+        Telefon: 0 (541) 298 98 03</p>
+
+        <h3>2. İşlenen Kişisel Veri Kategorileri</h3>
+        <ul>
+            <li><strong>Kimlik bilgileri:</strong> ad, soyad.</li>
+            <li><strong>İletişim bilgileri:</strong> e-posta adresi, telefon numarası, teslimat adresi, şehir, posta kodu.</li>
+            <li><strong>Müşteri işlem bilgileri:</strong> sipariş numarası, sipariş edilen ürünler, adet, renk ve kişiselleştirme seçimleri (ürüne yazdırılan metin, yüklenen logo, QR koduna dönüştürülen sosyal medya kullanıcı adı veya bağlantısı), sipariş tutarı, kargo ve üretim seçenekleri, sipariş ve ödeme durumu, sipariş öncesi ön bilgilendirme ve sözleşme onayının zamanı.</li>
+            <li><strong>Finansal bilgiler:</strong> ödeme yöntemi, ödeme kuruluşu tarafından iletilen işlem numarası ve ödeme sonucu, havale/EFT açıklaması. Kart numarası, son kullanma tarihi ve güvenlik kodu gibi kart bilgileriniz Satıcı tarafından hiçbir şekilde görülmez, işlenmez ve saklanmaz; bu bilgiler doğrudan lisanslı ödeme kuruluşu iyzico tarafından alınır.</li>
+            <li><strong>Üyelik bilgileri:</strong> e-posta adresi, ad soyad, profil bilgileri, kayıtlı adresler, oturum açma kayıtları. Şifreniz tek yönlü olarak şifrelenmiş biçimde kimlik doğrulama hizmet sağlayıcısında tutulur; Satıcı şifrenizi göremez.</li>
+            <li><strong>İşlem güvenliği bilgileri:</strong> IP adresi, tarayıcı ve cihaz bilgileri, oturum ve güvenlik doğrulama (bot koruması) kayıtları, sistem erişim kayıtları.</li>
+            <li><strong>Pazarlama ve analiz bilgileri:</strong> yalnızca çerez tercihlerinizde onay vermeniz halinde; Site içindeki gezinme ve etkileşim verileri (ziyaret edilen sayfalar, süre, cihaz türü, yaklaşık konum).</li>
+        </ul>
+
+        <h3>3. Kişisel Verilerin Toplanma Yöntemi</h3>
+        <p>Kişisel verileriniz; Site üzerindeki üyelik, giriş, sepet, ödeme, adres, sipariş sorgulama ve iletişim formları, ödeme kuruluşundan gelen ödeme sonucu bildirimleri, e-posta yazışmaları ve (onay vermeniz halinde) çerezler ve benzeri teknolojiler aracılığıyla, tamamen veya kısmen otomatik yollarla elektronik ortamda toplanmaktadır.</p>
+
+        <h3>4. İşleme Amaçları ve Hukuki Sebepler</h3>
+        <ul>
+            <li>Siparişin alınması, kişiye özel ürünün üretilmesi, ödemenin alınması ve doğrulanması, ürünün kargoya verilmesi ve teslimi, siparişe ilişkin bilgilendirme e-postalarının gönderilmesi, sipariş sorgulama hizmetinin sunulması: <strong>bir sözleşmenin kurulması veya ifasıyla doğrudan ilgili olması</strong> (KVKK m.5/2-c).</li>
+            <li>Üyelik hesabının oluşturulması ve yönetilmesi, kayıtlı adreslerin ve sipariş geçmişinin gösterilmesi: <strong>sözleşmenin kurulması veya ifası</strong> (KVKK m.5/2-c).</li>
+            <li>Mesafeli sözleşmeler mevzuatı kapsamında ön bilgilendirme ve sözleşme onayı kayıtlarının tutulması, vergi mevzuatı kapsamında kayıt ve belge düzeni, yetkili kurumların taleplerinin karşılanması: <strong>veri sorumlusunun hukuki yükümlülüğünü yerine getirebilmesi</strong> (KVKK m.5/2-ç).</li>
+            <li>Talep, şikâyet ve iade süreçlerinin yönetimi, olası uyuşmazlıklarda delil olarak kullanılması: <strong>bir hakkın tesisi, kullanılması veya korunması</strong> (KVKK m.5/2-e).</li>
+            <li>Sitenin, ödeme ve sipariş sistemlerinin güvenliğinin sağlanması, kötüye kullanımın, sahte işlemlerin ve otomatik (bot) saldırıların önlenmesi, hizmetin kesintisiz ve hızlı sunulması: <strong>temel hak ve özgürlüklerinize zarar vermemek kaydıyla veri sorumlusunun meşru menfaati</strong> (KVKK m.5/2-f).</li>
+            <li>Site kullanımının istatistiksel olarak analiz edilmesi ve Sitenin geliştirilmesi: <strong>açık rızanız</strong> (KVKK m.5/1). Bu amaçla işleme yalnızca çerez bandında "Kabul et" seçeneğini işaretlemeniz halinde yapılır; rızanızı dilediğiniz zaman geri alabilirsiniz.</li>
+        </ul>
+
+        <h3>5. Kişisel Verilerin Aktarılması</h3>
+        <p>Kişisel verileriniz, yukarıdaki amaçlarla sınırlı ve ölçülü olarak aşağıdaki alıcı gruplarına aktarılabilmektedir:</p>
+        <ul>
+            <li><strong>Kargo firmaları:</strong> ad soyad, telefon ve teslimat adresi; siparişin teslimi amacıyla.</li>
+            <li><strong>Ödeme kuruluşu (iyzico - İyzi Ödeme ve Elektronik Para Hizmetleri A.Ş.):</strong> ad soyad, e-posta, telefon, adres, IP adresi ve sepet tutarı; kartlı ödemenin alınması, doğrulanması ve dolandırıcılığın önlenmesi amacıyla.</li>
+            <li><strong>Bulut altyapı, veritabanı, kimlik doğrulama, dosya depolama ve sunucu hizmeti sağlayıcısı (Google - Firebase / Google Cloud):</strong> Site üzerinden sağlanan tüm veriler; verilerin saklanması, siparişlerin işlenmesi ve hizmetin sunulması amacıyla.</li>
+            <li><strong>E-posta gönderim hizmeti sağlayıcısı (Resend) ve kurumsal e-posta hizmeti sağlayıcısı (Zoho):</strong> ad, e-posta adresi ve sipariş özeti; sipariş bilgilendirme e-postalarının gönderilmesi ve yazışmaların yürütülmesi amacıyla.</li>
+            <li><strong>Güvenlik doğrulama hizmeti (Google reCAPTCHA Enterprise / Firebase App Check):</strong> IP adresi, tarayıcı ve cihaz sinyalleri; otomatik saldırıların önlenmesi amacıyla.</li>
+            <li><strong>Web analizi hizmeti (Google Analytics):</strong> yalnızca açık rızanız varsa, gezinme ve cihaz bilgileri; istatistik amacıyla.</li>
+            <li><strong>Barındırma hizmeti (GitHub Pages):</strong> Sitenin sayfaları bu hizmet üzerinden sunulur; hizmet sağlayıcı teknik erişim kayıtlarını (IP adresi, tarayıcı bilgisi) tutabilir.</li>
+            <li><strong>Yetkili kamu kurum ve kuruluşları ile adli merciler:</strong> kanunlarda açıkça öngörülen hallerde ve talep edilmesi durumunda.</li>
+        </ul>
+
+        <h3>6. Kişisel Verilerin Yurt Dışına Aktarılması</h3>
+        <p>Siparişlerinizin güvenli biçimde saklanabilmesi, yüksek hızda ve kesintisiz işlenebilmesi, yedeklenebilmesi ve Siteye her an erişilebilmesi amacıyla kişisel verileriniz, yurt dışında bulunan sunucularda hizmet veren bulut altyapı sağlayıcılarına aktarılmaktadır. Sipariş, üyelik ve adres verilerinizin tutulduğu veritabanı ile sipariş ve ödeme işlemlerini yürüten sunucu fonksiyonları, Google'ın <strong>Belçika'daki (Avrupa Birliği, europe-west1 bölgesi) veri merkezlerinde</strong> bulunmaktadır. Veriler, gerek iletim sırasında (HTTPS/TLS) gerekse depolandıkları ortamda <strong>şifreli olarak</strong> saklanır.</p>
+        <p>Kimlik doğrulama, dosya depolama (yüklediğiniz logolar), güvenlik doğrulama ve (rızanız varsa) web analizi hizmetleri Google'ın Avrupa Birliği ve Amerika Birleşik Devletleri dahil farklı ülkelerdeki veri merkezlerinde; sipariş e-postaları Resend'in Avrupa Birliği (İrlanda) bölgesindeki altyapısı üzerinden; kurumsal e-posta yazışmaları Zoho'nun altyapısında; Sitenin sayfaları ise GitHub'ın (ABD) altyapısı üzerinden işlenebilmektedir. Kartlı ödemeler Türkiye'de yerleşik iyzico tarafından işlenir.</p>
+        <p>Yurt dışına aktarımlar, KVKK'nın 9. maddesinde ve Kişisel Verilerin Yurt Dışına Aktarılmasına İlişkin Usul ve Esaslar Hakkında Yönetmelik'te öngörülen usullere uygun olarak, hizmet sağlayıcıların sunduğu uygun güvenceler çerçevesinde ve yalnızca yukarıda belirtilen amaçlarla sınırlı olarak gerçekleştirilir. Web analizi kapsamındaki aktarım yalnızca açık rızanıza dayanır.</p>
+
+        <h3>7. Kişisel Verilerin Saklanma Süresi</h3>
+        <p>Kişisel verileriniz, işlendikleri amaç için gerekli olan süre ve ilgili mevzuatta öngörülen saklama süreleri boyunca saklanır. Bu kapsamda sipariş, ödeme ve ön bilgilendirme/sözleşme onay kayıtları mesafeli sözleşmeler ve vergi mevzuatında öngörülen süreler boyunca (en az 3 yıl, vergi kayıtları için 5 yıl) ve olası uyuşmazlıklarda zamanaşımı süreleri boyunca; üyelik verileri üyeliğiniz devam ettiği sürece; tamamlanmayan ödeme girişimlerine ait geçici kayıtlar ise en geç 24 saat içinde silinir. Saklama süresi sona eren veriler silinir, yok edilir veya anonim hale getirilir.</p>
+
+        <h3>8. Veri Güvenliği</h3>
+        <p>Veri Sorumlusu, KVKK'nın 12. maddesi uyarınca kişisel verilerinizin hukuka aykırı işlenmesini ve erişilmesini önlemek için uygun teknik ve idari tedbirleri almaktadır. Bu tedbirler arasında tüm bağlantıların şifreli (HTTPS) olması, verilerin şifreli ortamda saklanması, veritabanı erişiminin kurallarla yalnızca ilgili kullanıcı ve yetkili yönetici ile sınırlandırılması, sipariş tutarlarının yalnızca sunucu tarafında hesaplanması, ödeme ve sipariş işlemlerinde otomatik saldırılara karşı güvenlik doğrulaması yapılması, sipariş sorgulamada kişisel bilgilerin kısmen gizlenerek gösterilmesi ve deneme sayısının sınırlandırılması yer almaktadır.</p>
+
+        <h3>9. İlgili Kişinin Hakları (KVKK m.11)</h3>
+        <p>KVKK'nın 11. maddesi uyarınca Veri Sorumlusuna başvurarak;</p>
+        <ul>
+            <li>Kişisel verilerinizin işlenip işlenmediğini öğrenme,</li>
+            <li>Kişisel verileriniz işlenmişse buna ilişkin bilgi talep etme,</li>
+            <li>Kişisel verilerinizin işlenme amacını ve bunların amacına uygun kullanılıp kullanılmadığını öğrenme,</li>
+            <li>Yurt içinde veya yurt dışında kişisel verilerinizin aktarıldığı üçüncü kişileri bilme,</li>
+            <li>Kişisel verilerinizin eksik veya yanlış işlenmiş olması hâlinde bunların düzeltilmesini isteme ve bu kapsamda yapılan işlemin kişisel verilerin aktarıldığı üçüncü kişilere bildirilmesini isteme,</li>
+            <li>KVKK'nın 7. maddesinde öngörülen şartlar çerçevesinde kişisel verilerinizin silinmesini veya yok edilmesini isteme ve bu kapsamda yapılan işlemin kişisel verilerin aktarıldığı üçüncü kişilere bildirilmesini isteme,</li>
+            <li>İşlenen verilerin münhasıran otomatik sistemler vasıtasıyla analiz edilmesi suretiyle aleyhinize bir sonucun ortaya çıkmasına itiraz etme,</li>
+            <li>Kişisel verilerinizin kanuna aykırı olarak işlenmesi sebebiyle zarara uğramanız hâlinde zararın giderilmesini talep etme</li>
+        </ul>
+        <p>haklarına sahipsiniz.</p>
+
+        <h3>10. Başvuru Yöntemi</h3>
+        <p>Yukarıdaki haklarınıza ilişkin taleplerinizi, Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ'e uygun olarak; kimliğinizi tespit edici bilgiler ile talep konunuzu içeren yazılı bir dilekçeyle yukarıdaki adrese şahsen veya noter aracılığıyla iletebilir, ya da sistemimizde kayıtlı e-posta adresinizden <strong>info@engrare.com</strong> adresine gönderebilirsiniz. Başvurunuz, talebin niteliğine göre en kısa sürede ve en geç <strong>30 (otuz) gün</strong> içinde ücretsiz olarak sonuçlandırılır. İşlemin ayrıca bir maliyet gerektirmesi hâlinde Kişisel Verileri Koruma Kurulu tarafından belirlenen tarifedeki ücret alınabilir. Başvurunuzun reddedilmesi, verilen cevabın yetersiz bulunması veya süresinde cevap verilmemesi hâllerinde, KVKK'nın 14. maddesi uyarınca Kişisel Verileri Koruma Kurulu'na şikâyette bulunabilirsiniz.</p>
+
+        <h3>11. Çerezler</h3>
+        <p>Sitede kullanılan çerezler ve benzeri teknolojiler hakkında ayrıntılı bilgiye <a href="../gizlilik/">Gizlilik ve Çerez Politikası</a> sayfasından ulaşabilirsiniz.</p>
+
+        <h3>12. Değişiklikler</h3>
+        <p>Veri Sorumlusu, mevzuattaki ve işleme faaliyetlerindeki değişikliklere bağlı olarak bu aydınlatma metnini güncelleyebilir. Güncel metin her zaman bu sayfada yayımlanır.</p>
+
+        <p style="margin-top: 40px; font-style: italic; color: var(--text-light);">Son güncelleme: Eylül 2026</p>
+    </div>
+
+    <footer class="main-footer">
+        <div class="container footer-grid">
+            <div class="footer-col">
+                <div class="brand-logo" style="color:white; margin-bottom: 15px;">ENGRARE.</div>
+                <p style="color: #94A3B8; font-size: 0.9rem;">Kişisel 3D baskı ve tasarım atölyesi.</p>
+            </div>
+            <div class="footer-col">
+                <h5>Kurumsal</h5>
+                <ul>
+                    <li><a href="../iletisim/" style="color: inherit; text-decoration: none;">İletişim</a></li>
+                    <li><a href="../gizlilik/" style="color: inherit; text-decoration: none;">Gizlilik Politikası</a></li>
+                    <li><a href="../teslimat/" style="color: inherit; text-decoration: none;">Teslimat ve İade</a></li>
+                    <li><a href="../sozlesme/" style="color: inherit; text-decoration: none;">Mesafeli Satış Sözleşmesi</a></li>
+                    <li><a href="../kvkk/" style="color: inherit; text-decoration: none;">KVKK Aydınlatma Metni</a></li>
+                    <li><a href="/?siparis" style="color: inherit; text-decoration: none;">Sipariş Sorgula</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h5>Güvenli Ödeme</h5>
+                <div class="payment-methods">
+                    <span class="card-badge">VISA</span>
+                    <span class="card-badge mastercard">MASTERCARD</span>
+                    <div class="iyzico-badge">iyzico</div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module" src="../mevzuat_script.js?v=2"></script>
+    <!-- MOBILE BOTTOM NAV -->
+    <div class="bottom-nav-bar" id="mobile-bottom-nav">
+        <div class="bottom-nav-item" onclick="location.href='../../?products'">
+            <i class="fa-solid fa-box"></i>
+            <span>Ürünler</span>
+        </div>
+        <div class="bottom-nav-item" onclick="location.href='../../?checkout'">
+            <div style="position: relative;">
+                <i class="fa-solid fa-cart-shopping"></i>
+                <span class="cart-badge-mobile" id="mobile-cart-badge">0</span>
+            </div>
+            <span>Sepet</span>
+        </div>
+        <!-- Giriş yapılmamış: Giriş Yap -->
+        <div class="bottom-nav-item" id="mobile-nav-login" onclick="location.href='../../?login'">
+            <i class="fa-regular fa-user"></i>
+            <span>Giriş Yap</span>
+        </div>
+        <!-- Giriş yapılmış: Profil -->
+        <div class="bottom-nav-item" id="mobile-nav-profile" onclick="location.href='../../?dashboard'" style="display:none;">
+            <i class="fa-solid fa-circle-user"></i>
+            <span>Profil</span>
+        </div>
+    </div>
+</body>
+</html>
