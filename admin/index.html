@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engrare 3D - Yönetim Paneli</title>
+    <link rel="icon" type="image/png" href="https://www.engrare.com/files/photos/title_icon.png" sizes="48x48">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous">
+    <link rel="stylesheet" href="./myStyle.css?v=21">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+                "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+                "firebase/database": "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js",
+                "firebase/functions": "https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js"
+            }
+        }
+    </script>
+</head>
+<body class="auth-locked">
+
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-logo">ENGRARE.</div>
+                <div class="brand-subtitle">Admin Paneli</div>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item" data-page="summary" data-target="#dashboard-section" data-short="Özet">
+                    <i class="fa-solid fa-chart-pie"></i> <span>Panel Özeti</span>
+                </li>
+                <li class="nav-item" data-page="orders" data-target="#orders-section" data-short="Siparişler">
+                    <i class="fa-solid fa-cart-shopping"></i> <span>Sipariş Yönetimi</span>
+                </li>
+                <li class="nav-item" data-page="products" data-target="#products-admin-section" data-short="Ürünler">
+                    <i class="fa-solid fa-box-open"></i> <span>Ürünler</span>
+                </li>
+                <li class="nav-item" data-page="finance" data-target="#finance-section" data-short="Finans">
+                    <i class="fa-solid fa-file-invoice-dollar"></i> <span>Finans & Vergi</span>
+                </li>
+                <li class="nav-item" data-page="users" data-target="#users-section" data-short="Kullanıcılar">
+                    <i class="fa-solid fa-users"></i> <span>Kullanıcılar</span>
+                </li>
+                <!--
+                <li class="nav-item" data-page="production" data-target="#production-section">
+                    <i class="fa-solid fa-list-check"></i> <span>Üretim Kuyruğu</span>
+                </li>
+                <li class="nav-item" data-page="fleet" data-target="#fleet-section">
+                    <i class="fa-solid fa-server"></i> <span>Cihaz & Filo</span>
+                </li>
+                <li class="nav-item" data-page="files" data-target="#files-section">
+                    <i class="fa-solid fa-folder-open"></i> <span>Dosya Kütüphanesi</span>
+                </li>
+                <li class="nav-item" data-page="stock" data-target="#stock-section">
+                    <i class="fa-solid fa-cubes-stacked"></i> <span>Stok & Malzeme</span>
+                </li>
+                <li class="nav-item" data-page="logistics" data-target="#logistics-section">
+                    <i class="fa-solid fa-truck-fast"></i> <span>Lojistik</span>
+                </li>--><!--YAPAY ZEKA BURALARI SAKIN SİLME ŞİMDİLİK GİZLEDİM. BİLEREK YAPTIM LÜTFEN SİLME.-->
+            </ul>
+
+            <div class="sidebar-footer" id="admin-login-trigger" style="cursor: pointer;">
+                <div class="user-profile">
+                    <img id="admin-avatar" src="../content/images/default_user.png" alt="Admin">
+                    <div class="user-info">
+                        <span class="name" id="admin-name">Giriş Yap</span>
+                        <span class="role" id="admin-role">Misafir</span>
+                    </div>
+                </div>
+                <button class="logout-btn" id="admin-logout-btn" style="display:none;"><i class="fa-solid fa-right-from-bracket"></i></button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            
+            <!-- 1. Dashboard (Overview) -->
+            <section id="dashboard-section" class="content-section">
+                <div class="section-header">
+                    <h2>Panel Özeti</h2>
+                    <p class="section-desc">Günlük operasyonların ve canlı durumun özeti.</p>
+                </div>
+
+                <div class="dashboard-grid">
+                    <!-- Live Status -->
+                    <div class="card status-card">
+                        <div class="card-header">
+                            <h4>Canlı Baskı Durumu</h4>
+                            <span class="badge badge-success">Aktif</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="printer-info" id="live-status-info">
+                                <strong>Sistem Durumu</strong>
+                                <span id="live-status-msg">Yükleniyor...</span>
+                            </div>
+                            <div class="progress-wrapper" id="live-status-container" style="display:none;">
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar" style="width: 0%;"></div>
+                                </div>
+                                <div class="progress-stats">
+                                    <span>%0 Tamamlandı</span>
+                                    <span>Kalan: --</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Revenue Widget -->
+                    <div class="card revenue-card">
+                        <div class="card-header">
+                            <h4>Gelir & Kâr Özeti</h4>
+                            <span class="badge badge-success" id="rev-active-count">0 Aktif Sipariş</span>
+                        </div>
+                        <div class="revenue-stats" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div class="stat-item">
+                                <span class="label">Toplam Ciro</span>
+                                <span class="value" id="rev-total">₺0,00</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="label">Toplam Net Kâr</span>
+                                <span class="value" id="rev-profit" style="color: #10B981;">₺0,00</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="label">Bu Ay Ciro</span>
+                                <span class="value" id="rev-monthly" style="font-size: 1.15rem;">₺0,00</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="label">Bugün Ciro</span>
+                                <span class="value" id="rev-daily" style="font-size: 1.15rem;">₺0,00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- E-posta gönderimleri (Resend ücretsiz kota: 100/gün, 3000/ay) -->
+                    <div class="card full-width">
+                        <div class="card-header">
+                            <h4>Gönderilen E-postalar</h4>
+                            <span class="mail-quota">Bugün <strong id="mail-today">0 / 100</strong> · Bu ay <strong id="mail-month">0 / 3000</strong></span>
+                        </div>
+                        <div class="mail-charts">
+                            <div><div class="mail-chart-title">Son 30 gün</div><div class="mail-bars" id="mail-daily-bars"></div><div class="mail-axis" id="mail-daily-axis"></div></div>
+                            <div><div class="mail-chart-title">Son 12 ay</div><div class="mail-bars" id="mail-monthly-bars"></div><div class="mail-axis" id="mail-monthly-axis"></div></div>
+                        </div>
+                    </div>
+
+                    <!-- Camera Feed -->
+                    <div class="card camera-card full-width">
+                        <div class="card-header">
+                            <h4>Canlı İzleme</h4>
+                            <span class="live-indicator"><i class="fa-solid fa-circle"></i> CANLI</span>
+                        </div>
+                        <div class="camera-placeholder">
+                            <i class="fa-solid fa-video-slash"></i>
+                            <span>Kamera Bağlantısı Bekleniyor...</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Order Management -->
+            <section id="orders-section" class="content-section">
+                <div class="section-header">
+                    <h2>Sipariş Yönetimi</h2>
+                    <p class="section-desc">Gelen siparişleri görüntüleyin ve yönetin.</p>
+                </div>
+
+                <!-- Action Bar -->
+                <div class="orders-actions">
+                    <div class="bulk-actions">
+                        <select id="bulk-status-select" class="select-box" style="width: auto;">
+                            <option value="">Toplu Durum Seç</option>
+                            <option value="Ödendi">Ödendi</option>
+                            <option value="Hazırlanıyor">Hazırlanıyor</option>
+                            <option value="Kargolandı">Kargolandı</option>
+                            <option value="Teslim Edildi">Teslim Edildi</option>
+                            <option value="İptal">İptal</option>
+                        </select>
+                        <button id="btn-bulk-update" class="btn primary">Güncelle</button>
+                    </div>
+
+                    <div class="orders-filter-bar">
+                        <div class="sort-box">
+                            <i class="fa-solid fa-arrow-up-wide-short"></i>
+                            <select id="order-sort-select" class="select-box" aria-label="Sipariş sıralama tipi">
+                                <option value="priority-desc">Üretime Göre (Öncelikli Üstte)</option>
+                                <option value="priority-asc">Üretime Göre (Standart Üstte)</option>
+                                <option value="id-asc">Sipariş ID (Düşük → Yüksek)</option>
+                                <option value="id-desc">Sipariş ID (Yüksek → Düşük)</option>
+                                <option value="status-asc">Duruma Göre (Üretim Sırası)</option>
+                                <option value="status-desc">Duruma Göre (Ters Sıra)</option>
+                                <option value="price-desc">Tutar (Yüksek → Düşük)</option>
+                                <option value="price-asc">Tutar (Düşük → Yüksek)</option>
+                            </select>
+                        </div>
+
+                        <div class="search-box">
+                            <i class="fa-solid fa-search"></i>
+                            <input type="text" id="order-search-input" class="input-box" placeholder="Sipariş No, Ad Soyad, Öncelikli ara...">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card table-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;"><input type="checkbox" id="select-all-orders"></th>
+                                <th class="sortable-th" data-sort-col="id">Sipariş ID <i class="fa-solid fa-sort"></i></th>
+                                <th class="sortable-th" data-sort-col="priority">Üretim <i class="fa-solid fa-sort"></i></th>
+                                <th class="sortable-th" data-sort-col="status">Durum <i class="fa-solid fa-sort"></i></th>
+                                <th class="sortable-th" data-sort-col="price">Tutar <i class="fa-solid fa-sort"></i></th>
+                                <th>Müşteri</th>
+                                <th>İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-table-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 3. Production Queue -->
+            <section id="production-section" class="content-section">
+                <div class="section-header">
+                    <h2>Üretim Kuyruğu</h2>
+                    <p class="section-desc">Baskı sırasını sürükleyip bırakarak düzenleyin.</p>
+                </div>
+
+                <div class="queue-container" id="production-queue">
+                   <!-- Populated by JS -->
+                </div>
+            </section>
+
+            <!-- 4. Device & Fleet Management -->
+            <section id="fleet-section" class="content-section">
+                <div class="section-header">
+                    <h2>Cihaz & Filo</h2>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <p class="section-desc" style="margin: 0;">Yazıcılarınızın durumunu yönetin.</p>
+                        <button id="btn-refresh-fleet" class="btn-sm secondary" style="border-radius: 20px; padding: 6px 16px;">
+                            <i class="fa-solid fa-rotate"></i> Yenile
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid-3" id="device-grid">
+                    <!-- Populated by Cloud Function -->
+                    <div style="grid-column: 1/-1; text-align: center; color: #94A3B8; padding: 40px;">
+                        <i class="fa-solid fa-server" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                        <p>Cihaz durumu yükleniyor veya veri yok.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. File Library -->
+            <section id="files-section" class="content-section">
+                <div class="section-header">
+                    <h2>Dosya Kütüphanesi</h2>
+                    <button class="btn primary"><i class="fa-solid fa-cloud-arrow-up"></i> Yeni Dosya Yükle</button>
+                </div>
+
+                <div class="file-grid" id="file-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </section>
+
+            <!-- 6. Stock & Materials -->
+            <section id="stock-section" class="content-section">
+                <div class="section-header">
+                    <h2>Stok & Malzeme</h2>
+                    <p class="section-desc">Filament envanter takibi.</p>
+                </div>
+
+                <div class="stock-list" id="stock-list-container">
+                     <!-- Populated by JS -->
+                </div>
+            </section>
+
+            <!-- 7. Finance & Tax -->
+            <section id="finance-section" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Finans & Vergi</h2>
+                        <p class="section-desc">Esnaf vergi muafiyeti ciro takibi (1.900.000 TL), fiyatlandırma formülü entegreli kâr analizi ve gider yönetimi.</p>
+                    </div>
+                    <button type="button" id="btn-open-expense-modal-top" class="btn primary">
+                        <i class="fa-solid fa-plus"></i> Gider Ekle
+                    </button>
+                </div>
+
+                <!-- Vergi Muafiyet Limiti Kartı -->
+                <div class="card tax-card">
+                    <div class="card-header" style="margin-bottom: 10px;">
+                        <div>
+                            <h4>Vergi Muafiyet Ciro Limiti (2026)</h4>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Firebase'deki iptal edilmemiş ve ödeme beklemeyen tüm mevcut siparişlerin satış tutarları doğrudan toplanır. Giderler ciro limitini düşürmez.</p>
+                        </div>
+                        <span class="badge badge-success" id="tax-badge">Muafiyet Aktif</span>
+                    </div>
+                    <div class="tax-progress-wrapper">
+                        <div class="tax-labels">
+                            <span id="tax-current">Mevcut Ciro: ₺0,00</span>
+                            <span id="tax-remaining" style="color: var(--text-muted);">Kalan Hak: ₺1.900.000,00</span>
+                            <span id="tax-limit">Limit: ₺1.900.000,00</span>
+                        </div>
+                        <div class="progress-bar-container large">
+                            <div class="progress-bar gradient" id="tax-bar" style="width: 0%;"></div>
+                        </div>
+                        <div class="tax-status" id="tax-desc">
+                            <i class="fa-solid fa-check-circle"></i> Yükleniyor...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Finans & Kâr Özet Kartları (Fiyatlandırma Formülü Entegreli) -->
+                <div class="finance-kpi-grid">
+                    <div class="card finance-kpi-card">
+                        <div class="finance-kpi-top">
+                            <span class="finance-kpi-label">Toplam Ciro (Satış Tutarı)</span>
+                            <div class="finance-kpi-icon blue"><i class="fa-solid fa-sack-dollar"></i></div>
+                        </div>
+                        <div class="finance-kpi-value" id="fin-total-revenue">₺0,00</div>
+                        <div class="finance-kpi-sub" id="fin-revenue-sub">Bugün: ₺0,00 · Bu Ay: ₺0,00</div>
+                    </div>
+
+                    <div class="card finance-kpi-card">
+                        <div class="finance-kpi-top">
+                            <span class="finance-kpi-label">Ürün Maliyeti & Kesintiler</span>
+                            <div class="finance-kpi-icon amber"><i class="fa-solid fa-scale-balanced"></i></div>
+                        </div>
+                        <div class="finance-kpi-value" id="fin-total-costs">₺0,00</div>
+                        <div class="finance-kpi-sub" id="fin-costs-sub">Ham Maliyet: ₺0 · Kargo: ₺0 · iyzico: ₺0 · %4 Vergi: ₺0</div>
+                    </div>
+
+                    <div class="card finance-kpi-card highlight">
+                        <div class="finance-kpi-top">
+                            <span class="finance-kpi-label">Sipariş Kârı (Satış - Maliyet)</span>
+                            <div class="finance-kpi-icon green"><i class="fa-solid fa-chart-line"></i></div>
+                        </div>
+                        <div class="finance-kpi-value" id="fin-order-profit">₺0,00</div>
+                        <div class="finance-kpi-sub" id="fin-order-profit-sub">Satış - Ham Maliyet: ₺0,00 · Bu Ay: ₺0,00</div>
+                    </div>
+
+                    <div class="card finance-kpi-card">
+                        <div class="finance-kpi-top">
+                            <span class="finance-kpi-label">Net Kâr (Gider Sonrası)</span>
+                            <div class="finance-kpi-icon purple"><i class="fa-solid fa-wallet"></i></div>
+                        </div>
+                        <div class="finance-kpi-value" id="fin-net-profit">₺0,00</div>
+                        <div class="finance-kpi-sub" id="fin-net-profit-sub">Ekstra Giderler: -₺0,00</div>
+                    </div>
+                </div>
+
+                <!-- Günlük ve Aylık Kâr Grafikleri -->
+                <div class="card" style="margin-top: 24px;">
+                    <div class="card-header" style="flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <h4>Günlük & Aylık Kâr Grafikleri</h4>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">Fiyatlandırma parametreleriyle satış fiyatından ürün maliyeti bulunup satış fiyatından çıkartılarak hesaplanır.</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                            <span class="mail-quota">Son Gün Kâr: <strong id="profit-today">₺0,00</strong> · Bu Ay Kâr: <strong id="profit-month">₺0,00</strong></span>
+                            <select id="profit-chart-mode" class="small-select" aria-label="Kâr grafik modu">
+                                <option value="order">Net Sipariş Kârı (Satış - Ham Maliyet - Kesintiler)</option>
+                                <option value="gross">Brüt Ürün Kârı (Satış Fiyatı - Ham Maliyet)</option>
+                                <option value="net">Gider Sonrası Net Kâr (Ekstra Giderler Düşülmüş)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mail-charts">
+                        <div>
+                            <div class="mail-chart-title">Günlük Kâr (Son 30 Gün)</div>
+                            <div class="mail-bars profit-bars" id="profit-daily-bars"></div>
+                            <div class="mail-axis" id="profit-daily-axis"></div>
+                        </div>
+                        <div>
+                            <div class="mail-chart-title">Aylık Kâr (Son 12 Ay)</div>
+                            <div class="mail-bars profit-bars" id="profit-monthly-bars"></div>
+                            <div class="mail-axis" id="profit-monthly-axis"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gider Listesi -->
+                <div class="card expense-card" style="margin-top: 24px;">
+                    <div class="card-header">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <h4>Gider Listesi</h4>
+                            <span class="badge badge-danger" id="expense-total-badge">Toplam: -₺0,00</span>
+                        </div>
+                        <button type="button" id="btn-open-expense-modal" class="btn-sm primary">
+                            <i class="fa-solid fa-plus"></i> Gider Ekle
+                        </button>
+                    </div>
+                    <ul class="expense-list" id="expense-list">
+                       <!-- Populated by JS -->
+                    </ul>
+                </div>
+            </section>
+
+             <!-- 8. Logistics -->
+             <section id="logistics-section" class="content-section">
+                <div class="section-header">
+                    <h2>Lojistik</h2>
+                    <p class="section-desc">Kargo ve gönderi işlemleri.</p>
+                </div>
+
+                <div class="card logistics-card">
+                    <div class="form-group">
+                        <label>Sipariş Seçin</label>
+                        <select class="select-box">
+                            <option>#ORD-2451 - Ahmet Yılmaz</option>
+                            <option>#ORD-2450 - Ayşe Demir</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Kargo Firması</label>
+                            <select class="select-box">
+                                <option>Yurtiçi Kargo</option>
+                                <option>Aras Kargo</option>
+                                <option>MNG Kargo</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Takip Numarası</label>
+                            <input type="text" class="input-box" placeholder="Takip No Giriniz">
+                        </div>
+                    </div>
+
+                    <div class="logistics-actions">
+                        <button class="btn primary"><i class="fa-solid fa-barcode"></i> Barkod/Etiket Oluştur</button>
+                        <button class="btn secondary">Takip Numarasını Kaydet</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 9. Pricing Calculator -->
+            <!-- 10. Ürünler (Ürün yönetimi + Fiyatlandırma parametreleri + İndirim kodları tek sayfada) -->
+            <section id="products-admin-section" class="content-section">
+                <div class="section-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+                    <div>
+                        <h2>Ürünler</h2>
+                        <p class="section-desc">Her ürünün adını ve üretim süresini (saat) girin; fiyat, fiyatlandırma parametrelerine göre otomatik hesaplanır ve son hanesi her zaman 9 olur (ör. 359, 439). Kaydettiğinizde site ve ödeme tutarı anında güncellenir (tahsil edilen tutarı sunucu hesaplar).</p>
+                    </div>
+                    <button type="button" id="btn-save-products" class="btn primary">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Değişiklikleri Kaydet
+                    </button>
+                </div>
+
+                <!-- Fiyatlandırma parametreleri (katlanabilir) -->
+                <div class="card pricing-params-card">
+                    <div class="collapsible-head" id="pricing-params-toggle">
+                        <div class="collapsible-title">
+                            <i class="fa-solid fa-gear" style="color: var(--accent);"></i>
+                            <h4>Fiyatlandırma Parametreleri</h4>
+                            <span class="badge badge-info" id="pricing-sync-badge">Varsayılan</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-down collapsible-chevron"></i>
+                    </div>
+                    <div class="collapsible-body" id="pricing-params-body" style="display:none;">
+                        <p class="section-desc" style="margin-bottom:16px;">Bu sabitler tüm ürünlerin fiyatını belirler. Değiştirdiğinizde ürün fiyatları anında yeniden hesaplanır.</p>
+                        <div class="pricing-params-grid">
+                            <div class="form-group">
+                                <label for="param-G_saat">Saatlik Filament <code>G_saat</code> <small>(1 saatte harcanan)</small></label>
+                                <div class="pricing-input-wrap">
+                                    <input type="number" id="param-G_saat" class="input-box pricing-calc-trigger" step="1" min="0" value="35">
+                                    <span class="pricing-input-unit">g/saat</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="param-t_hazirlik">Hazırlık Süresi <code>t_hazirlik</code> <small>(ilk dk düşülür)</small></label>
+                                <div class="pricing-input-wrap">
+                                    <input type="number" id="param-t_hazirlik" class="input-box pricing-calc-trigger" step="1" min="0" value="10">
+                                    <span class="pricing-input-unit">dk</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="param-F_kg">Filament kg Fiyatı <code>F_kg</code> <small>(PETG için 700)</small></label>
+                                <div class="pricing-input-wrap">
+                                    <input type="number" id="param-F_kg" class="input-box pricing-calc-trigger" step="1" min="0" value="500">
+                                    <span class="pricing-input-unit">TL/kg</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="param-P_makine">Güç Tüketimi <code>P_makine</code> <small>(~150W)</small></label>
+                                <div class="pricing-input-wrap">
+                                    <input type="number" id="param-P_makine" class="input-box pricing-calc-trigger" step="0.01" min="0" value="0.15">
+                                    <span class="pricing-input-unit">kW</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="param-E_kwh">Elektrik Birim Fiyatı <code>E_kwh</code></label>
+                                <div class="pricing-input-wrap">
+                                    <input type="number" id="param-E_kwh" class="input-box pricing-calc-trigger" step="0.01" min="0" value="3.24">
+                                    <span class="pricing-input-unit">TL/kWh</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="param-A_saat">Saatlik Amortisman <code>A_saat</code></label>
+                                <div class="pricing-input-wrap">
+                                    <input type="number" id="param-A_saat" class="input-box pricing-calc-trigger" step="0.1" min="0" value="8.0">
+                                    <span class="pricing-input-unit">TL/saat</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="param-M_ambalaj">Ambalaj Maliyeti <code>M_ambalaj</code></label>
+                                <div class="pricing-input-wrap">
+                                    <input type="number" id="param-M_ambalaj" class="input-box pricing-calc-trigger" step="0.5" min="0" value="15.0">
+                                    <span class="pricing-input-unit">TL</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="param-K_kargo">Kargo Maliyeti <code>K_kargo</code> <small>(müşteriye ücretsiz, sipariş başı)</small></label>
+                                <div class="pricing-input-wrap">
+                                    <input type="number" id="param-K_kargo" class="input-box pricing-calc-trigger" step="0.5" min="0" value="108">
+                                    <span class="pricing-input-unit">TL</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="param-r_fire">Fire Oranı <code>r_fire</code> <small>(%10 = 0.10)</small></label>
+                                <div class="pricing-input-wrap">
+                                    <input type="number" id="param-r_fire" class="input-box pricing-calc-trigger" step="0.01" min="0" value="0.10">
+                                    <span class="pricing-input-unit">oran</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="param-k_kar">Kâr Çarpanı <code>k_kar</code></label>
+                                <div class="pricing-input-wrap">
+                                    <input type="number" id="param-k_kar" class="input-box pricing-calc-trigger" step="0.05" min="0" value="1.8">
+                                    <span class="pricing-input-unit">çarpan</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="param-c_oran">iyzico Komisyon Oranı <code>c_oran</code> <small>(%4.49 = 0.0449)</small></label>
+                                <div class="pricing-input-wrap">
+                                    <input type="number" id="param-c_oran" class="input-box pricing-calc-trigger" step="0.0001" min="0" max="0.99" value="0.0449">
+                                    <span class="pricing-input-unit">oran</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="param-c_sabit">iyzico Sabit Ücret <code>c_sabit</code></label>
+                                <div class="pricing-input-wrap">
+                                    <input type="number" id="param-c_sabit" class="input-box pricing-calc-trigger" step="0.05" min="0" value="0.25">
+                                    <span class="pricing-input-unit">TL</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="param-v_devlet">Devlet Vergisi <code>v_devlet</code> <small>(%4 = 0.04)</small></label>
+                                <div class="pricing-input-wrap">
+                                    <input type="number" id="param-v_devlet" class="input-box pricing-calc-trigger" step="0.01" min="0" max="0.99" value="0.04">
+                                    <span class="pricing-input-unit">oran</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pricing-header-actions" style="margin-top:16px;">
+                            <button type="button" id="btn-reset-pricing-params" class="btn secondary">
+                                <i class="fa-solid fa-rotate-left"></i> Varsayılana Dön
+                            </button>
+                            <button type="button" id="btn-save-pricing-params" class="btn primary">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> Parametreleri Kaydet
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ürün listesi -->
+                <div class="card">
+                    <div id="products-admin-list"></div>
+                </div>
+
+                <!-- İndirim kodları -->
+                <div class="section-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-top: 32px;">
+                    <div>
+                        <h2>İndirim Kodları</h2>
+                        <p class="section-desc">Kupon kodu oluşturun, düzenleyin veya silin. Kodlar ödeme sayfasında geçerlidir; kullanım sayısı sipariş verildikçe otomatik artar.</p>
+                    </div>
+                    <button type="button" id="btn-add-discount" class="btn primary">
+                        <i class="fa-solid fa-plus"></i> Yeni Kod
+                    </button>
+                </div>
+                <div class="card">
+                    <table class="data-table discounts-table">
+                        <thead>
+                            <tr>
+                                <th>Kod</th><th>Tür</th><th>Değer</th><th>Limit</th><th>Kullanım</th><th>Son Tarih</th><th style="text-align:right;">İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody id="discounts-table-body"></tbody>
+                    </table>
+                    <p id="discounts-empty" class="section-desc" style="display:none; margin-top:12px;">Henüz indirim kodu yok. "Yeni Kod" ile ekleyin.</p>
+                </div>
+            </section>
+
+            <!-- 9. Kullanıcı Yönetimi -->
+            <section id="users-section" class="content-section">
+                <div class="section-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+                    <div>
+                        <h2>Kullanıcı Yönetimi</h2>
+                        <p class="section-desc">Kayıtlı üyeleri, misafir alıcıları ve yöneticileri inceleyin. Detayları görmek veya silmek için kullanıcı satırına tıklayın.</p>
+                    </div>
+                    <span class="badge badge-info" id="users-total-badge" style="font-size: 0.85rem; padding: 8px 14px;">0 Kullanıcı</span>
+                </div>
+
+                <!-- Yönetici hesabı: giriş yapılmışsa profil + şifre değiştirme + çıkış, değilse giriş butonu -->
+                <div class="card admin-self-card" id="admin-self-card">
+                    <div class="admin-self-profile" id="admin-self-logged-in" style="display:none;">
+                        <img id="admin-self-avatar" src="../content/images/default_user.png" alt="Yönetici">
+                        <div class="admin-self-meta">
+                            <strong id="admin-self-name">Yönetici</strong>
+                            <span id="admin-self-email">-</span>
+                            <span class="badge badge-success" id="admin-self-role">Süper Admin</span>
+                        </div>
+                    </div>
+                    <div class="admin-self-actions" id="admin-self-actions" style="display:none;">
+                        <button type="button" id="btn-admin-change-password" class="btn secondary">
+                            <i class="fa-solid fa-key"></i> Şifre Değiştir
+                        </button>
+                        <button type="button" id="btn-admin-logout" class="btn danger">
+                            <i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap
+                        </button>
+                    </div>
+
+                    <div class="admin-self-profile" id="admin-self-guest">
+                        <img src="../content/images/default_user.png" alt="Misafir">
+                        <div class="admin-self-meta">
+                            <strong>Giriş yapılmadı</strong>
+                            <span>Yönetim işlemleri için yönetici girişi yapın.</span>
+                        </div>
+                    </div>
+                    <div class="admin-self-actions" id="admin-self-guest-actions">
+                        <button type="button" id="btn-admin-login" class="btn primary">
+                            <i class="fa-solid fa-right-to-bracket"></i> Giriş Yap
+                        </button>
+                    </div>
+                </div>
+
+                <!-- İki Adımlı Doğrulama (2FA) e-posta listesi -->
+                <div class="card" id="mfa-emails-card" style="display:none;">
+                    <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <h4><i class="fa-solid fa-shield-halved" style="color: var(--accent); margin-right: 6px;"></i> İki Adımlı Doğrulama (2FA)</h4>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">Bu listedeki e-postalarla giriş yapan yöneticiler, e-postaya gelen 6 haneli kodu girmek zorundadır.</span>
+                        </div>
+                    </div>
+                    <div class="mfa-email-add">
+                        <input type="email" id="mfa-email-input" class="input-box" placeholder="ornek@mail.com" autocomplete="off">
+                        <button type="button" id="btn-add-mfa-email" class="btn primary">
+                            <i class="fa-solid fa-plus"></i> Ekle
+                        </button>
+                    </div>
+                    <ul id="mfa-email-list" class="mfa-email-list"></ul>
+                    <p id="mfa-email-empty" class="section-desc" style="display:none; margin-top: 8px;">Liste boş — 2FA hiçbir hesap için zorunlu değil.</p>
+                </div>
+
+                <!-- Kullanıcı KPI Özeti -->
+                <div class="finance-kpi-grid" style="margin-bottom: 24px;">
+                    <div class="card finance-kpi-card">
+                        <div class="finance-kpi-icon blue"><i class="fa-solid fa-users"></i></div>
+                        <div class="finance-kpi-body">
+                            <span class="finance-kpi-label">Toplam Kullanıcı</span>
+                            <strong class="finance-kpi-value" id="users-kpi-total">0</strong>
+                            <span class="finance-kpi-sub" id="users-kpi-total-sub">Sistemdeki tüm profiller ve alıcılar</span>
+                        </div>
+                    </div>
+
+                    <div class="card finance-kpi-card">
+                        <div class="finance-kpi-icon emerald"><i class="fa-solid fa-user-check"></i></div>
+                        <div class="finance-kpi-body">
+                            <span class="finance-kpi-label">Kayıtlı Üyeler</span>
+                            <strong class="finance-kpi-value" id="users-kpi-registered">0</strong>
+                            <span class="finance-kpi-sub">Hesap oluşturmuş üyeler</span>
+                        </div>
+                    </div>
+
+                    <div class="card finance-kpi-card">
+                        <div class="finance-kpi-icon amber"><i class="fa-solid fa-user-clock"></i></div>
+                        <div class="finance-kpi-body">
+                            <span class="finance-kpi-label">Misafir Alıcılar</span>
+                            <strong class="finance-kpi-value" id="users-kpi-guests">0</strong>
+                            <span class="finance-kpi-sub">Üye olmadan sipariş verenler</span>
+                        </div>
+                    </div>
+
+                    <div class="card finance-kpi-card">
+                        <div class="finance-kpi-icon purple"><i class="fa-solid fa-user-shield"></i></div>
+                        <div class="finance-kpi-body">
+                            <span class="finance-kpi-label">Yöneticiler (Korumalı)</span>
+                            <strong class="finance-kpi-value" id="users-kpi-admins">0</strong>
+                            <span class="finance-kpi-sub">Silinemez yetkili hesaplar</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtre & Arama Barı -->
+                <div class="orders-actions">
+                    <div class="bulk-actions" style="gap: 10px;">
+                        <select id="user-role-filter" class="select-box" style="width: auto; min-width: 170px;" aria-label="Kullanıcı tipi filtresi">
+                            <option value="all">Tüm Kullanıcılar</option>
+                            <option value="registered">Kayıtlı Üyeler</option>
+                            <option value="guest">Misafir Alıcılar</option>
+                            <option value="admin">Yöneticiler (Admin)</option>
+                            <option value="with-orders">Siparişi Olanlar</option>
+                        </select>
+                    </div>
+
+                    <div class="orders-filter-bar">
+                        <div class="sort-box">
+                            <i class="fa-solid fa-arrow-up-wide-short"></i>
+                            <select id="user-sort-select" class="select-box" aria-label="Kullanıcı sıralama tipi">
+                                <option value="recent-desc">Son İşlem / Kayıt (Yeni → Eski)</option>
+                                <option value="recent-asc">Kayıt Tarihi (Eski → Yeni)</option>
+                                <option value="orders-desc">Sipariş Sayısı (Çok → Az)</option>
+                                <option value="spent-desc">Toplam Harcama (Yüksek → Düşük)</option>
+                                <option value="name-asc">Ad Soyad (A → Z)</option>
+                            </select>
+                        </div>
+
+                        <div class="search-box">
+                            <i class="fa-solid fa-search"></i>
+                            <input type="text" id="user-search-input" class="input-box" placeholder="Ad Soyad, E-posta, Telefon veya UID ara...">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kullanıcı Listesi Tablosu -->
+                <div class="card table-card">
+                    <table class="data-table users-table">
+                        <thead>
+                            <tr>
+                                <th>Kullanıcı</th>
+                                <th>İletişim Bilgileri</th>
+                                <th>Rol / Hesap Tipi</th>
+                                <th>Adresler</th>
+                                <th>Sipariş & Harcama</th>
+                                <th>Kayıt / Son İşlem</th>
+                                <th style="text-align: right;">İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal-overlay open">
+        <div class="modal-content">
+            <div class="modal-close">&times;</div>
+            <h3 style="margin-bottom: 20px; color: var(--primary);">Yönetici Girişi</h3>
+            <p style="margin-bottom: 18px; color: var(--text-muted); font-size: 0.9rem;">
+                Panele erişmek için yönetici hesabınızla giriş yapın.
+            </p>
+            <form id="admin-login-form">
+                <div class="form-group">
+                    <label>E-posta</label>
+                    <input type="email" id="login-email" class="input-box" required>
+                </div>
+                <div class="form-group">
+                    <label>Şifre</label>
+                    <input type="password" id="login-password" class="input-box" required>
+                </div>
+                <button type="submit" class="btn primary" style="width: 100%;">Giriş Yap</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Şifre Değiştirme Modal -->
+    <div id="admin-password-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 420px;">
+            <div class="modal-close" id="close-admin-password-modal">&times;</div>
+            <h3 style="margin-bottom: 6px; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-key" style="color: var(--accent);"></i> Şifre Değiştir
+            </h3>
+            <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 18px;">
+                Güvenlik için önce mevcut şifrenizi, ardından yeni şifrenizi girin.
+            </p>
+            <form id="admin-password-form">
+                <div class="form-group">
+                    <label for="pwd-current">Mevcut Şifre</label>
+                    <input type="password" id="pwd-current" class="input-box" autocomplete="current-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="pwd-new">Yeni Şifre <small style="font-weight: 500; color: var(--text-light);">(en az 6 karakter)</small></label>
+                    <input type="password" id="pwd-new" class="input-box" autocomplete="new-password" minlength="6" required>
+                </div>
+                <div class="form-group">
+                    <label for="pwd-confirm">Yeni Şifre (Tekrar)</label>
+                    <input type="password" id="pwd-confirm" class="input-box" autocomplete="new-password" minlength="6" required>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" id="cancel-admin-password" class="btn secondary">Vazgeç</button>
+                    <button type="submit" id="btn-save-admin-password" class="btn primary">
+                        <i class="fa-solid fa-check"></i> Şifreyi Güncelle
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- İndirim Kodu Ekle/Düzenle Modal -->
+    <div id="discount-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 440px;">
+            <div class="modal-close" id="close-discount-modal">&times;</div>
+            <h3 style="margin-bottom: 6px; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-tags" style="color: var(--accent);"></i> <span id="discount-modal-title">Yeni İndirim Kodu</span>
+            </h3>
+            <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 18px;">
+                Kod ödeme sayfasında geçerlidir. Yüzde veya sabit tutar indirimi tanımlayabilirsiniz.
+            </p>
+            <form id="discount-form">
+                <div class="form-group">
+                    <label for="discount-code">Kod</label>
+                    <input type="text" id="discount-code" class="input-box" placeholder="Örn: YENIYIL25" maxlength="40" style="text-transform: uppercase;" required>
+                </div>
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label for="discount-type">Tür</label>
+                        <select id="discount-type" class="select-box">
+                            <option value="percent">Yüzde (%)</option>
+                            <option value="fixed">Sabit Tutar (₺)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="discount-value">Değer</label>
+                        <input type="number" id="discount-value" class="input-box" min="0.01" step="0.01" placeholder="Örn: 15" required>
+                    </div>
+                </div>
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label for="discount-limit">Kullanım Limiti <small style="font-weight:500;color:var(--text-light);">(boş = sınırsız)</small></label>
+                        <input type="number" id="discount-limit" class="input-box" min="1" step="1" placeholder="Örn: 100">
+                    </div>
+                    <div class="form-group">
+                        <label for="discount-expiry">Son Tarih <small style="font-weight:500;color:var(--text-light);">(boş = süresiz)</small></label>
+                        <input type="date" id="discount-expiry" class="input-box">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" id="cancel-discount-modal" class="btn secondary">Vazgeç</button>
+                    <button type="submit" id="btn-save-discount" class="btn primary">
+                        <i class="fa-solid fa-check"></i> Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- İki Adımlı Doğrulama (2FA) Modal — yönetici hesabı için e-posta kodu -->
+    <div id="mfa-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 12px;">🔐</div>
+            <h3 style="margin-bottom: 8px; color: var(--primary);">İki Adımlı Doğrulama</h3>
+            <p style="margin-bottom: 18px; color: var(--text-muted); font-size: 0.9rem;">
+                Yönetici hesabınız için e-postanıza gönderilen 6 haneli kodu girin.
+            </p>
+            <form id="mfa-form" style="display: flex; flex-direction: column; gap: 14px;">
+                <input type="text" id="mfa-code" class="input-box" inputmode="numeric" maxlength="6" placeholder="000000"
+                       style="text-align:center; font-size:1.5rem; letter-spacing:6px; font-weight:700; padding:12px;" autocomplete="one-time-code" required>
+                <label style="display:flex; align-items:center; gap:8px; justify-content:center; font-size:0.88rem; color:var(--text-muted); cursor:pointer;">
+                    <input type="checkbox" id="mfa-remember"> Bu cihazı 30 gün hatırla
+                </label>
+                <button type="submit" id="btn-mfa-verify" class="btn primary" style="width:100%; padding:12px;">
+                    <i class="fa-solid fa-check"></i> Doğrula
+                </button>
+            </form>
+            <div style="margin-top: 14px; display:flex; justify-content:space-between; font-size:0.85rem;">
+                <a href="#" id="mfa-resend" style="color: var(--accent); text-decoration:none;">Kodu tekrar gönder</a>
+                <a href="#" id="mfa-logout" style="color: var(--text-muted); text-decoration:none;">Çıkış yap</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bambu Lab 2FA Modal -->
+    <div id="bambu-2fa-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 380px; text-align: center;">
+            <div class="modal-close" id="close-2fa-modal">&times;</div>
+            <div style="font-size: 3rem; margin-bottom: 15px;">🔐</div>
+            <h3 style="margin-bottom: 10px; color: var(--primary);">Güvenlik Doğrulaması</h3>
+            <p style="margin-bottom: 15px; color: var(--text-muted); font-size: 0.9rem;">
+                Bambu Lab hesabınız için e-postanıza gönderilen doğrulama kodunu giriniz.
+            </p>
+            
+            <form id="bambu-2fa-form" style="display: flex; flex-direction: column; gap: 15px;">
+                <div class="form-group" style="margin: 0;">
+                    <!-- EXPLICIT INPUT FIELD -->
+                    <input type="text" id="bambu-2fa-code" class="input-box" 
+                           placeholder="Kodu Buraya Girin (örn. 123456)" 
+                           style="text-align: center; font-size: 1.4rem; letter-spacing: 3px; font-weight: 700; padding: 12px; border: 2px solid var(--primary); border-radius: 8px; width: 100%; display: block;" 
+                           required autocomplete="off">
+                </div>
+                
+                <div style="font-size: 0.85rem;">
+                    <a href="#" id="resend-2fa-code" style="color: var(--accent); text-decoration: none;">
+                        Kodu Tekrar Gönder <span id="resend-timer"></span>
+                    </a>
+                </div>
+                
+                <button type="submit" class="btn primary" style="width: 100%; padding: 12px; font-size: 1rem;">DOĞRULA</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Order Detail Modal -->
+    <div id="order-detail-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 800px; width: 90%;">
+            <div class="modal-close" id="close-order-modal">&times;</div>
+            
+            <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px;">
+                <div>
+                    <h3 style="color: var(--primary); display: flex; align-items: center; gap: 10px; margin: 0;">
+                        <i class="fa-solid fa-clipboard-list"></i> Sipariş Detayı <span id="modal-order-id" style="color: var(--text-muted); font-size: 1rem; font-weight: 400;">#ORD-000</span>
+                    </h3>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-regular fa-calendar-days"></i> <span id="modal-order-date">-</span>
+                    </div>
+                </div>
+                <span id="modal-order-status" class="badge badge-muted">Yükleniyor...</span>
+            </div>
+
+            <div class="modal-body">
+                <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+                    <!-- Customer Info -->
+                    <div class="info-group">
+                        <h4 style="font-size: 0.95rem; color: var(--text-light); text-transform: uppercase; margin-bottom: 10px;">Müşteri Bilgileri</h4>
+                        <div style="background: #F8FAFC; padding: 15px; border-radius: 8px; font-size: 0.9rem;">
+                            <p><strong style="width: 80px; display: inline-block;">Ad Soyad:</strong> <span id="modal-customer-name">-</span></p>
+                            <p><strong style="width: 80px; display: inline-block;">Email:</strong> <span id="modal-customer-email">-</span></p>
+                            <p><strong style="width: 80px; display: inline-block;">Tel:</strong> <span id="modal-customer-phone">-</span></p>
+                            <p><strong style="width: 80px; display: inline-block;">User ID:</strong> <span id="modal-customer-id">-</span></p>
+                        </div>
+                    </div>
+
+                    <!-- Shipping Info -->
+                    <div class="info-group">
+                        <h4 style="font-size: 0.95rem; color: var(--text-light); text-transform: uppercase; margin-bottom: 10px;">Teslimat & Ödeme</h4>
+                        <div style="background: #F8FAFC; padding: 15px; border-radius: 8px; font-size: 0.9rem;">
+                            <p><strong style="width: 80px; display: inline-block;">Tarih:</strong> <span id="modal-order-datetime">-</span></p>
+                            <p><strong style="width: 80px; display: inline-block;">Adres:</strong> <span id="modal-shipping-address">-</span></p>
+                            <p><strong style="width: 80px; display: inline-block;">Yöntem:</strong> <span id="modal-shipping-method">-</span></p>
+                            <p><strong style="width: 80px; display: inline-block;">Ödeme:</strong> <span id="modal-payment-method">-</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Items Table -->
+                <h4 style="font-size: 0.95rem; color: var(--text-light); text-transform: uppercase; margin-bottom: 10px;">Sipariş İçeriği</h4>
+                <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+                    <table class="data-table" style="margin: 0;">
+                        <thead>
+                            <tr style="background: #F1F5F9;">
+                                <th>Ürün</th>
+                                <th>Birim Fiyat</th>
+                                <th>Adet</th>
+                                <th>Toplam</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-items-body">
+                            <!-- Items populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Totals -->
+                <div style="display: flex; justify-content: flex-end;">
+                    <div style="width: 250px; font-size: 0.95rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: var(--text-muted);">Ara Toplam:</span>
+                            <span id="modal-subtotal">₺0.00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: var(--text-muted);">Kargo:</span>
+                            <span id="modal-shipping-cost">₺0.00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; color: #10B981;">
+                            <span>İndirim:</span>
+                            <span id="modal-discount">-₺0.00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 2px solid var(--border); font-weight: 800; font-size: 1.1rem; color: var(--primary);">
+                            <span>GENEL TOPLAM:</span>
+                            <span id="modal-total">₺0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Expense Add Modal (Gider Ekle Pop-up) -->
+    <div id="expense-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 460px; width: 92%;">
+            <div class="modal-close" id="close-expense-modal">&times;</div>
+            <h3 style="margin-bottom: 6px; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-receipt" style="color: var(--accent);"></i> Yeni Gider Ekle
+            </h3>
+            <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 18px;">
+                İşletme giderinizi kaydedin. Giderler yalnızca net kâr hesabından düşülür; 1.900.000 TL vergi muafiyeti ciro limitini etkilemez.
+            </p>
+            <form id="expense-form">
+                <div class="form-group">
+                    <label for="expense-title">Gider Açıklaması / Kalemi</label>
+                    <input type="text" id="expense-title" class="input-box" placeholder="Örn: 5 Rulo PLA Filament, Kargo Kutusu..." maxlength="120" required>
+                </div>
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label for="expense-category">Kategori</label>
+                        <select id="expense-category" class="select-box">
+                            <option value="Filament & Malzeme">Filament & Malzeme</option>
+                            <option value="Ambalaj & Kargo">Ambalaj & Kargo</option>
+                            <option value="Makine & Bakım">Makine & Bakım</option>
+                            <option value="Elektrik & Fatura">Elektrik & Fatura</option>
+                            <option value="Reklam & Pazarlama">Reklam & Pazarlama</option>
+                            <option value="Diğer">Diğer</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="expense-amount">Tutar (₺)</label>
+                        <input type="number" id="expense-amount" class="input-box" placeholder="Örn: 650.00" step="0.01" min="0.01" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="expense-date">Gider Tarihi</label>
+                    <input type="date" id="expense-date" class="input-box" required>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" id="cancel-expense-modal" class="btn secondary">Vazgeç</button>
+                    <button type="submit" id="btn-save-expense" class="btn primary">
+                        <i class="fa-solid fa-check"></i> Gideri Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Elegant Status Notification Modal (Sipariş Bildirim E-postası Pop-up) -->
+    <div id="status-notify-modal" class="modal-overlay">
+        <div class="modal-content notify-modal-card">
+            <div class="modal-close" id="close-notify-modal">&times;</div>
+            <div class="notify-modal-header">
+                <div class="notify-modal-icon" id="notify-modal-icon">
+                    <i class="fa-solid fa-envelope-open-text"></i>
+                </div>
+                <div>
+                    <span class="notify-modal-eyebrow">SİPARİŞ BİLDİRİM SİSTEMİ</span>
+                    <h3 id="notify-modal-title">Müşteriye Bildirim Gönderilsin mi?</h3>
+                </div>
+            </div>
+
+            <p class="notify-modal-desc" id="notify-modal-desc">
+                Sipariş durumu güncellendi. Müşteriye yeni durumu içeren bilgilendirme e-postası göndermek ister misiniz?
+            </p>
+
+            <div class="notify-summary-box">
+                <div class="notify-summary-row">
+                    <span class="notify-summary-label">Alıcı / Sipariş</span>
+                    <strong class="notify-summary-value" id="notify-summary-recipient">-</strong>
+                </div>
+                <div class="notify-summary-row" id="notify-summary-email-row">
+                    <span class="notify-summary-label">E-posta Adresi</span>
+                    <span class="notify-summary-value" id="notify-summary-email">-</span>
+                </div>
+                <div class="notify-summary-row">
+                    <span class="notify-summary-label">Bildirilecek Durum</span>
+                    <span id="notify-summary-status"></span>
+                </div>
+            </div>
+
+            <form id="status-notify-form">
+                <div class="form-group" id="notify-tracking-group" style="display: none; margin-top: 16px; margin-bottom: 6px;">
+                    <label for="notify-tracking-input">
+                        <i class="fa-solid fa-truck-fast" style="color: var(--accent); margin-right: 4px;"></i>
+                        Kargo Takip Numarası <small style="font-weight: 500; color: var(--text-light);">(İsteğe bağlı)</small>
+                    </label>
+                    <input type="text" id="notify-tracking-input" class="input-box" placeholder="Örn: 123456789012 (Boş bırakılabilir)" maxlength="60">
+                    <span style="display: block; font-size: 0.76rem; color: var(--text-muted); margin-top: 6px;">
+                        Girerseniz müşteriye giden e-postada ve sipariş sorgulama ekranında gösterilir.
+                    </span>
+                </div>
+
+                <div class="notify-modal-actions">
+                    <button type="button" id="cancel-notify-modal" class="btn secondary">
+                        Gönderme
+                    </button>
+                    <button type="submit" id="confirm-notify-modal" class="btn primary">
+                        <i class="fa-solid fa-paper-plane"></i> E-posta Gönder
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Elegant Generic Confirm Modal -->
+    <div id="admin-confirm-modal" class="modal-overlay">
+        <div class="modal-content notify-modal-card" style="max-width: 420px;">
+            <div class="modal-close" id="close-admin-confirm">&times;</div>
+            <div class="notify-modal-header">
+                <div class="notify-modal-icon amber" id="admin-confirm-icon">
+                    <i class="fa-solid fa-circle-question"></i>
+                </div>
+                <div>
+                    <span class="notify-modal-eyebrow" id="admin-confirm-eyebrow">İŞLEM ONAYI</span>
+                    <h3 id="admin-confirm-title">İşlemi Onaylıyor musunuz?</h3>
+                </div>
+            </div>
+            <p class="notify-modal-desc" id="admin-confirm-desc" style="margin-bottom: 6px;"></p>
+            <div class="notify-modal-actions">
+                <button type="button" id="cancel-admin-confirm" class="btn secondary">Vazgeç</button>
+                <button type="button" id="accept-admin-confirm" class="btn primary">Onayla</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Detail Modal (Kullanıcı Detayları Pop-up) -->
+    <div id="user-detail-modal" class="modal-overlay">
+        <div class="modal-content user-detail-modal-card">
+            <div class="modal-close" id="close-user-detail-modal">&times;</div>
+
+            <div class="user-detail-header">
+                <div class="user-detail-avatar" id="ud-avatar">K</div>
+                <div class="user-detail-title-wrap">
+                    <div class="user-detail-name-row">
+                        <h3 id="ud-name">Kullanıcı Adı</h3>
+                        <span id="ud-role-badge" class="badge badge-info">Üye</span>
+                    </div>
+                    <div class="user-detail-meta-row">
+                        <span class="user-uid-pill" id="ud-uid-pill" title="UID Kopyala">
+                            <i class="fa-solid fa-fingerprint"></i> <code id="ud-uid">-</code>
+                            <i class="fa-regular fa-copy" style="font-size: 0.72rem; opacity: 0.7;"></i>
+                        </span>
+                        <span class="user-created-text">
+                            <i class="fa-regular fa-calendar-check"></i> <span id="ud-created-at">-</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Özet İstatistik Kutuları -->
+            <div class="user-detail-stats-grid">
+                <div class="user-stat-box">
+                    <span class="user-stat-label">Toplam Sipariş</span>
+                    <strong class="user-stat-value" id="ud-stat-orders">0</strong>
+                </div>
+                <div class="user-stat-box">
+                    <span class="user-stat-label">Toplam Harcama</span>
+                    <strong class="user-stat-value" id="ud-stat-spent" style="color: #10B981;">₺0,00</strong>
+                </div>
+                <div class="user-stat-box">
+                    <span class="user-stat-label">Kayıtlı Adres</span>
+                    <strong class="user-stat-value" id="ud-stat-addresses">0</strong>
+                </div>
+                <div class="user-stat-box">
+                    <span class="user-stat-label">Son İşlem</span>
+                    <strong class="user-stat-value" id="ud-stat-last-active" style="font-size: 0.9rem;">-</strong>
+                </div>
+            </div>
+
+            <div class="user-detail-body">
+                <!-- 1. Profil & İletişim Bilgileri -->
+                <div class="user-detail-section">
+                    <h4 class="user-detail-section-title">
+                        <i class="fa-solid fa-id-card"></i> Profil & İletişim Verileri
+                    </h4>
+                    <div class="user-profile-info-grid">
+                        <div class="user-info-item">
+                            <span class="user-info-label">Ad Soyad</span>
+                            <strong class="user-info-val" id="ud-info-name">-</strong>
+                        </div>
+                        <div class="user-info-item">
+                            <span class="user-info-label">E-posta Adresi</span>
+                            <strong class="user-info-val" id="ud-info-email">-</strong>
+                        </div>
+                        <div class="user-info-item">
+                            <span class="user-info-label">Telefon Numarası</span>
+                            <strong class="user-info-val" id="ud-info-phone">-</strong>
+                        </div>
+                        <div class="user-info-item">
+                            <span class="user-info-label">Hesap Türü & Yetki</span>
+                            <strong class="user-info-val" id="ud-info-type">-</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Kayıtlı Adresler -->
+                <div class="user-detail-section">
+                    <h4 class="user-detail-section-title">
+                        <i class="fa-solid fa-location-dot"></i> Kayıtlı Adresler (<span id="ud-addr-count">0</span>)
+                    </h4>
+                    <div id="ud-addresses-list" class="user-addresses-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- 3. Sipariş Geçmişi -->
+                <div class="user-detail-section">
+                    <div class="user-orders-section-head">
+                        <h4 class="user-detail-section-title" style="margin-bottom: 0;">
+                            <i class="fa-solid fa-bag-shopping"></i> Sipariş Geçmişi (<span id="ud-orders-count">0</span>)
+                        </h4>
+                        <div id="ud-orders-bulk-bar" class="user-orders-bulk-bar" style="display: none;">
+                            <span id="ud-selected-orders-badge" class="badge badge-danger" style="font-size: 0.78rem;">0 Seçildi</span>
+                            <button type="button" id="btn-delete-selected-user-orders" class="btn-sm danger" disabled>
+                                <i class="fa-solid fa-trash-can"></i> Seçilen Siparişleri Sil
+                            </button>
+                        </div>
+                    </div>
+                    <div class="user-orders-table-wrap">
+                        <table class="data-table" style="margin: 0;">
+                            <thead>
+                                <tr style="background: #F8FAFC;">
+                                    <th style="width: 40px; text-align: center;">
+                                        <input type="checkbox" id="ud-orders-select-all" class="ud-order-checkbox" title="Tüm Siparişleri Seç / Kaldır">
+                                    </th>
+                                    <th>Sipariş No</th>
+                                    <th>Tarih & Saat</th>
+                                    <th>Ürünler</th>
+                                    <th>Durum</th>
+                                    <th>Tutar</th>
+                                    <th style="text-align: right;">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ud-orders-tbody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="user-detail-footer">
+                <div id="ud-delete-action-area">
+                    <button type="button" id="btn-open-user-delete" class="btn danger">
+                        <i class="fa-solid fa-user-xmark"></i> Kullanıcıyı ve Tüm Verilerini Sil
+                    </button>
+                    <div id="ud-admin-protected-badge" class="admin-protected-banner" style="display: none;">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span>Bu hesap <strong>Yönetici (Admin)</strong> yetkisine sahiptir. Yönetici hesapları silinemez.</span>
+                    </div>
+                </div>
+                <button type="button" id="btn-close-user-detail" class="btn secondary">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Delete Confirmation Modal (2 Saniye Basılı Tutmalı Silme Pop-up) -->
+    <div id="user-delete-modal" class="modal-overlay">
+        <div class="modal-content notify-modal-card user-delete-modal-card">
+            <div class="modal-close" id="close-user-delete-modal">&times;</div>
+
+            <div class="notify-modal-header">
+                <div class="notify-modal-icon rose">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div>
+                    <span class="notify-modal-eyebrow" style="color: #DC2626;">KALICI SİLME ONAYI</span>
+                    <h3>Kullanıcı ve Verileri Silinsin mi?</h3>
+                </div>
+            </div>
+
+            <p class="notify-modal-desc">
+                Bu işlem geri alınamaz. Seçilen kullanıcının <strong>profil bilgileri, kayıtlı adresleri ve tüm sipariş verileri</strong> sistemden kalıcı olarak silinecektir.
+            </p>
+
+            <div class="notify-summary-box" style="border-color: #FECACA; background: #FEF2F2;">
+                <div class="notify-summary-row">
+                    <span class="notify-summary-label">Kullanıcı</span>
+                    <strong class="notify-summary-value" id="del-user-name">-</strong>
+                </div>
+                <div class="notify-summary-row">
+                    <span class="notify-summary-label">E-posta / UID</span>
+                    <span class="notify-summary-value" id="del-user-meta">-</span>
+                </div>
+                <div class="notify-summary-row">
+                    <span class="notify-summary-label">Silinecek Veriler</span>
+                    <strong class="notify-summary-value" id="del-user-stats" style="color: #DC2626;">-</strong>
+                </div>
+            </div>
+
+            <div class="hold-delete-hint">
+                <i class="fa-solid fa-hand-pointer"></i>
+                <span>Güvenlik için aşağıdaki silme butonuna <strong>2 saniye boyunca basılı tutun</strong>.</span>
+            </div>
+
+            <div class="notify-modal-actions">
+                <button type="button" id="cancel-user-delete-modal" class="btn secondary">
+                    Vazgeç
+                </button>
+                <button type="button" id="btn-hold-delete-user" class="btn-hold-delete">
+                    <span class="hold-progress-fill" id="hold-delete-fill"></span>
+                    <span class="hold-btn-content" id="hold-delete-label">
+                        <i class="fa-solid fa-trash-can"></i> Silmek İçin 2 Sn Basılı Tutun
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Orders Delete Confirmation Modal (2 Saniye Basılı Tutmalı Sipariş Silme Pop-up) -->
+    <div id="user-orders-delete-modal" class="modal-overlay">
+        <div class="modal-content notify-modal-card user-delete-modal-card">
+            <div class="modal-close" id="close-user-orders-delete-modal">&times;</div>
+
+            <div class="notify-modal-header">
+                <div class="notify-modal-icon rose">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                </div>
+                <div>
+                    <span class="notify-modal-eyebrow" style="color: #DC2626;">SİPARİŞ SİLME ONAYI</span>
+                    <h3 id="del-orders-modal-title">Seçilen Siparişler Silinsin mi?</h3>
+                </div>
+            </div>
+
+            <p class="notify-modal-desc">
+                Bu işlem geri alınamaz. Seçilen sipariş kayıtları <strong>kullanıcının geçmişinden, sipariş yönetiminden ve finans/ciro hesaplamalarından</strong> kalıcı olarak silinecektir.
+            </p>
+
+            <div class="notify-summary-box" style="border-color: #FECACA; background: #FEF2F2;">
+                <div class="notify-summary-row">
+                    <span class="notify-summary-label">Müşteri</span>
+                    <strong class="notify-summary-value" id="del-orders-user-name">-</strong>
+                </div>
+                <div class="notify-summary-row">
+                    <span class="notify-summary-label">Silinecek Siparişler</span>
+                    <strong class="notify-summary-value" id="del-orders-count-text" style="color: #DC2626;">-</strong>
+                </div>
+                <div class="notify-summary-row">
+                    <span class="notify-summary-label">Toplam Sipariş Tutarı</span>
+                    <strong class="notify-summary-value" id="del-orders-total-amount">-</strong>
+                </div>
+            </div>
+
+            <div class="hold-delete-hint">
+                <i class="fa-solid fa-hand-pointer"></i>
+                <span>Güvenlik için aşağıdaki silme butonuna <strong>2 saniye boyunca basılı tutun</strong>.</span>
+            </div>
+
+            <div class="notify-modal-actions">
+                <button type="button" id="cancel-user-orders-delete-modal" class="btn secondary">
+                    Vazgeç
+                </button>
+                <button type="button" id="btn-hold-delete-orders" class="btn-hold-delete">
+                    <span class="hold-progress-fill" id="hold-delete-orders-fill"></span>
+                    <span class="hold-btn-content" id="hold-delete-orders-label">
+                        <i class="fa-solid fa-trash-can"></i> Silmek İçin 2 Sn Basılı Tutun
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+    <script type="module" src="myScript.js?v=41"></script>
+</body>
+</html>
