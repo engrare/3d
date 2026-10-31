@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>KVKK Aydınlatma Metni - Engrare 3D</title>
+    <meta name="description" content="Engrare 3D KVKK aydınlatma metni: kişisel verilerinizin işlenmesi, aktarılması ve haklarınız.">
+    <link rel="canonical" href="https://engrare.com/mevzuat/kvkk/">
+    <link rel="icon" type="image/png" href="/favicon.png?v=4" sizes="48x48">
+    <link rel="icon" href="/favicon.ico?v=4" sizes="any">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#0F172A">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    
+	<link rel="preload" href="../../content/fonts/fa-lite-solid.woff2?v=9ded6b" as="font" type="font/woff2" crossorigin>
+	<link rel="stylesheet" href="../../myStyle.css?v=98">
+    <style>
+        .legal-content p { margin-bottom: 15px; line-height: 1.8; }
+        .legal-content ul { margin-bottom: 20px; padding-left: 20px; }
+        .legal-content li { margin-bottom: 10px; color: var(--text-muted); }
+    </style>
+    <!-- Sayfaya ozel mobil alt menu stilleri (head'de: gec reflow olusturmaz) -->
+    <style>
+    /* Alt menü yüksekliği tek yerde: body alt boşluğu da bunu kullanıyor (önceden 86px menüye 70px boşluk kalıyor, içerik altta kesiliyordu) */
+    :root { --bottom-nav-h: 60px; }
+    .bottom-nav-bar { display: none; position: fixed; bottom: 0; left: 0; width: 100%; height: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px)); box-sizing: border-box; background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; justify-content: space-around; align-items: stretch; padding: 0 0 env(safe-area-inset-bottom, 0px); border-top: 1px solid var(--border); }
+    .bottom-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.72rem; font-weight: 600; cursor: pointer; text-decoration: none; gap: 3px; padding: 0; }
+    .bottom-nav-item i { font-size: 1.25rem; }
+    .bottom-nav-item.active { color: var(--primary); }
+    .cart-badge-mobile { position: absolute; top: -6px; right: -10px; background: #EF4444; color: #fff; font-size: 0.6rem; font-weight: 700; padding: 2px 5px; border-radius: 10px; }
+    @media (max-width: 768px) {
+        .bottom-nav-bar { display: flex; }
+        .mobile-menu-toggle { display: none !important; }
+        .nav-menu { display: none !important; }
+        body { padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px)); }
+    }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="brand-logo" style="cursor: pointer; height: 100%;"><a href="../../?products" style="text-decoration: none; color: inherit; display: flex; align-items: center; height: 100%; line-height: 0;"><img src="../../content/images/engrare_logo_elegant_s.webp" height="65" width="101" fetchpriority="high" decoding="async" alt="Engrare" style="display: block;" onerror="this.style.display='none'; this.parentElement.innerText='ENGRARE.'"></a></div>
+            
+
+            <button type="button" class="nav-lookup-pill" onclick="window.navPillAction ? window.navPillAction() : (window.openOrderLookup && window.openOrderLookup())" title="Sipariş Sorgula">
+                <i class="fa-solid fa-magnifying-glass"></i> Sipariş Takibi
+            </button>
+
+            <!-- Mobile Menu Toggle Button -->
+            <div class="mobile-menu-toggle" id="mobile-menu-toggle" style="display: none; cursor: pointer; font-size: 1.5rem; color: var(--primary);">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+            
+            <div class="mobile-backdrop" id="mobile-backdrop"></div>
+            
+            <ul class="nav-menu" id="nav-menu">
+                <div class="mobile-menu-close" id="mobile-menu-close" style="display: none; align-self: flex-end; padding: 5px; cursor: pointer; font-size: 1.5rem; color: var(--text-main);">
+                    <i class="fa-solid fa-xmark"></i>
+                </div>
+                <li><a href="../../?urunler" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center; height: 100%;">Ürünlerimiz</a></li>
+                <li title="Sepet" style="display: flex; align-items: center;"><a href="../../?checkout" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center; gap: 6px; height: 100%;"><i class="fa-solid fa-cart-shopping" style="font-size: 1.2rem;"></i> Sepet <span id="cart-badge">0</span></a></li>
+                <li id="nav-lookup-btn" onclick="window.openOrderLookup && window.openOrderLookup()" style="display: flex; align-items: center; cursor: pointer;"><a href="../../?siparis" onclick="event.preventDefault(); window.openOrderLookup && window.openOrderLookup();" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center; gap: 6px; height: 100%;">
+                    <i class="fa-solid fa-magnifying-glass" style="font-size: 0.95rem;"></i> Sipariş Takibi
+                </a></li>
+                <li id="nav-login-btn" style="display: none; cursor: pointer; align-items: center;"><a href="../../?login" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; height: 100%;">
+                    <i class="fa-regular fa-user" style="font-size: 1.2rem;"></i> Giriş Yap
+                </a></li>
+                
+                <li id="nav-user-profile" style="display: none; cursor: pointer; align-items: center;"><a href="../../?dashboard" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; height: 100%;">
+                    <i class="fa-solid fa-circle-user" style="font-size: 1.3rem;"></i> Profil
+                </a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container narrow legal-content">
+        <h1>Kişisel Verilerin Korunması Aydınlatma Metni</h1>
+        <p>İşbu aydınlatma metni, 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") ve Aydınlatma Yükümlülüğünün Yerine Getirilmesinde Uyulacak Usul ve Esaslar Hakkında Tebliğ uyarınca, engrare.com internet sitesini ("Site") ziyaret eden, üye olan, sipariş veren veya bizimle iletişime geçen gerçek kişileri ("İlgili Kişi"), kişisel verilerinin hangi amaçlarla, hangi hukuki sebeplere dayanılarak, kimlere ve nereye aktarılarak işlendiği ve KVKK kapsamındaki hakları konusunda bilgilendirmek amacıyla hazırlanmıştır.</p>
+
+        <h3>1. Veri Sorumlusu</h3>
+        <p>Kişisel verileriniz, veri sorumlusu sıfatıyla <strong>Kaya Sertel</strong> ("Veri Sorumlusu" veya "Satıcı") tarafından işlenmektedir.<br>
+        Adres: Atakent Mah. Bosphorus City 52B Blok, Daire 5, Küçükçekmece / İstanbul<br>
+        E-posta: info@engrare.com<br>
+        Telefon: 0 (541) 298 98 03</p>
+
+        <h3>2. İşlenen Kişisel Veri Kategorileri</h3>
+        <ul>
+            <li><strong>Kimlik bilgileri:</strong> ad, soyad.</li>
+            <li><strong>İletişim bilgileri:</strong> e-posta adresi, telefon numarası, teslimat adresi, şehir, posta kodu.</li>
+            <li><strong>Müşteri işlem bilgileri:</strong> sipariş numarası, sipariş edilen ürünler, adet, renk ve kişiselleştirme seçimleri (ürüne yazdırılan metin, yüklenen logo, QR koduna dönüştürülen sosyal medya kullanıcı adı veya bağlantısı), sipariş tutarı, kargo ve üretim seçenekleri, sipariş ve ödeme durumu, sipariş öncesi ön bilgilendirme ve sözleşme onayının zamanı.</li>
+            <li><strong>Finansal bilgiler:</strong> ödeme yöntemi, ödeme kuruluşu tarafından iletilen işlem numarası ve ödeme sonucu, havale/EFT açıklaması. Kart numarası, son kullanma tarihi ve güvenlik kodu gibi kart bilgileriniz Satıcı tarafından hiçbir şekilde görülmez, işlenmez ve saklanmaz; bu bilgiler doğrudan lisanslı ödeme kuruluşu iyzico tarafından alınır.</li>
+            <li><strong>Üyelik bilgileri:</strong> e-posta adresi, ad soyad, profil bilgileri, kayıtlı adresler, oturum açma kayıtları. Şifreniz tek yönlü olarak şifrelenmiş biçimde kimlik doğrulama hizmet sağlayıcısında tutulur; Satıcı şifrenizi göremez.</li>
+            <li><strong>İşlem güvenliği bilgileri:</strong> IP adresi, tarayıcı ve cihaz bilgileri, oturum ve güvenlik doğrulama (bot koruması) kayıtları, sistem erişim kayıtları.</li>
+            <li><strong>Pazarlama ve analiz bilgileri:</strong> yalnızca çerez tercihlerinizde onay vermeniz halinde; Site içindeki gezinme ve etkileşim verileri (ziyaret edilen sayfalar, süre, cihaz türü, yaklaşık konum) ile reklam ölçümü için ürün görüntüleme, sepete ekleme, ödemeye geçme ve satın alma bilgisi (tutar ve ürün kimliği; sipariş numarası ve iletişim bilgileriniz hariç).</li>
+        </ul>
+
+        <h3>3. Kişisel Verilerin Toplanma Yöntemi</h3>
+        <p>Kişisel verileriniz; Site üzerindeki üyelik, giriş, sepet, ödeme, adres, sipariş sorgulama ve iletişim formları, ödeme kuruluşundan gelen ödeme sonucu bildirimleri, e-posta yazışmaları ve (onay vermeniz halinde) çerezler ve benzeri teknolojiler aracılığıyla, tamamen veya kısmen otomatik yollarla elektronik ortamda toplanmaktadır.</p>
+
+        <h3>4. İşleme Amaçları ve Hukuki Sebepler</h3>
+        <ul>
+            <li>Siparişin alınması, kişiye özel ürünün üretilmesi, ödemenin alınması ve doğrulanması, ürünün kargoya verilmesi ve teslimi, siparişe ilişkin bilgilendirme e-postalarının gönderilmesi, sipariş sorgulama hizmetinin sunulması: <strong>bir sözleşmenin kurulması veya ifasıyla doğrudan ilgili olması</strong> (KVKK m.5/2-c).</li>
+            <li>Üyelik hesabının oluşturulması ve yönetilmesi, kayıtlı adreslerin ve sipariş geçmişinin gösterilmesi: <strong>sözleşmenin kurulması veya ifası</strong> (KVKK m.5/2-c).</li>
+            <li>Mesafeli sözleşmeler mevzuatı kapsamında ön bilgilendirme ve sözleşme onayı kayıtlarının tutulması, vergi mevzuatı kapsamında kayıt ve belge düzeni, yetkili kurumların taleplerinin karşılanması: <strong>veri sorumlusunun hukuki yükümlülüğünü yerine getirebilmesi</strong> (KVKK m.5/2-ç).</li>
+            <li>Talep, şikâyet ve iade süreçlerinin yönetimi, olası uyuşmazlıklarda delil olarak kullanılması: <strong>bir hakkın tesisi, kullanılması veya korunması</strong> (KVKK m.5/2-e).</li>
+            <li>Sitenin, ödeme ve sipariş sistemlerinin güvenliğinin sağlanması, kötüye kullanımın, sahte işlemlerin ve otomatik (bot) saldırıların önlenmesi, hizmetin kesintisiz ve hızlı sunulması: <strong>temel hak ve özgürlüklerinize zarar vermemek kaydıyla veri sorumlusunun meşru menfaati</strong> (KVKK m.5/2-f).</li>
+            <li>Site kullanımının istatistiksel olarak analiz edilmesi ve Sitenin geliştirilmesi: <strong>açık rızanız</strong> (KVKK m.5/1). Bu amaçla işleme yalnızca çerez bandında "Kabul et" seçeneğini işaretlemeniz halinde yapılır; rızanızı dilediğiniz zaman geri alabilirsiniz.</li>
+            <li>Reklam faaliyetlerinin ölçülmesi ve reklamların ilgili kişilere gösterilmesi (Meta Pixel): <strong>açık rızanız</strong> (KVKK m.5/1); aynı şekilde yalnızca "Kabul et" seçeneğiyle yapılır ve rızanız geri alınabilir.</li>
+        </ul>
+
+        <h3>5. Kişisel Verilerin Aktarılması</h3>
+        <p>Kişisel verileriniz, yukarıdaki amaçlarla sınırlı ve ölçülü olarak aşağıdaki alıcı gruplarına aktarılabilmektedir:</p>
+        <ul>
+            <li><strong>Kargo firmaları:</strong> ad soyad, telefon ve teslimat adresi; siparişin teslimi amacıyla.</li>
+            <li><strong>Ödeme kuruluşu (iyzico - İyzi Ödeme ve Elektronik Para Hizmetleri A.Ş.):</strong> ad soyad, e-posta, telefon, adres, IP adresi ve sepet tutarı; kartlı ödemenin alınması, doğrulanması ve dolandırıcılığın önlenmesi amacıyla.</li>
+            <li><strong>Bulut altyapı, veritabanı, kimlik doğrulama, dosya depolama ve sunucu hizmeti sağlayıcısı (Google - Firebase / Google Cloud):</strong> Site üzerinden sağlanan tüm veriler; verilerin saklanması, siparişlerin işlenmesi ve hizmetin sunulması amacıyla.</li>
+            <li><strong>E-posta gönderim hizmeti sağlayıcısı (Resend) ve kurumsal e-posta hizmeti sağlayıcısı (Zoho):</strong> ad, e-posta adresi ve sipariş özeti; sipariş bilgilendirme e-postalarının gönderilmesi ve yazışmaların yürütülmesi amacıyla.</li>
+            <li><strong>Güvenlik doğrulama hizmeti (Google reCAPTCHA Enterprise / Firebase App Check):</strong> IP adresi, tarayıcı ve cihaz sinyalleri; otomatik saldırıların önlenmesi amacıyla.</li>
+            <li><strong>Web analizi hizmeti (Google Analytics):</strong> yalnızca açık rızanız varsa, gezinme ve cihaz bilgileri; istatistik amacıyla.</li>
+            <li><strong>Reklam ölçümü hizmeti (Meta Pixel - Meta Platforms Ireland Ltd.):</strong> yalnızca açık rızanız varsa, gezinme ve cihaz bilgileri ile ürün görüntüleme, sepete ekleme, ödemeye geçme ve satın alma bilgisi (tutar ve ürün kimliği); reklamların etkisinin ölçülmesi ve ilgili kişilere gösterilmesi amacıyla.</li>
+            <li><strong>Barındırma hizmeti (GitHub Pages):</strong> Sitenin sayfaları bu hizmet üzerinden sunulur; hizmet sağlayıcı teknik erişim kayıtlarını (IP adresi, tarayıcı bilgisi) tutabilir.</li>
+            <li><strong>Yetkili kamu kurum ve kuruluşları ile adli merciler:</strong> kanunlarda açıkça öngörülen hallerde ve talep edilmesi durumunda.</li>
+        </ul>
+
+        <h3>6. Kişisel Verilerin Yurt Dışına Aktarılması</h3>
+        <p>Siparişlerinizin güvenli biçimde saklanabilmesi, yüksek hızda ve kesintisiz işlenebilmesi, yedeklenebilmesi ve Siteye her an erişilebilmesi amacıyla kişisel verileriniz, yurt dışında bulunan sunucularda hizmet veren bulut altyapı sağlayıcılarına aktarılmaktadır. Sipariş, üyelik ve adres verilerinizin tutulduğu veritabanı ile sipariş ve ödeme işlemlerini yürüten sunucu fonksiyonları, Google'ın <strong>Belçika'daki (Avrupa Birliği, europe-west1 bölgesi) veri merkezlerinde</strong> bulunmaktadır. Veriler, gerek iletim sırasında (HTTPS/TLS) gerekse depolandıkları ortamda <strong>şifreli olarak</strong> saklanır.</p>
+        <p>Kimlik doğrulama, dosya depolama (yüklediğiniz logolar), güvenlik doğrulama ve (rızanız varsa) web analizi hizmetleri Google'ın Avrupa Birliği ve Amerika Birleşik Devletleri dahil farklı ülkelerdeki veri merkezlerinde; sipariş e-postaları Resend'in Avrupa Birliği (İrlanda) bölgesindeki altyapısı üzerinden; kurumsal e-posta yazışmaları Zoho'nun altyapısında; Sitenin sayfaları ise GitHub'ın (ABD) altyapısı üzerinden işlenebilmektedir. Rızanız varsa reklam ölçümü verileri Meta Platforms Ireland Ltd.'e (Avrupa Birliği) iletilir ve Meta'nın Amerika Birleşik Devletleri dahil diğer ülkelerdeki altyapısında işlenebilir. Kartlı ödemeler Türkiye'de yerleşik iyzico tarafından işlenir.</p>
+        <p>Yurt dışına aktarımlar, KVKK'nın 9. maddesinde ve Kişisel Verilerin Yurt Dışına Aktarılmasına İlişkin Usul ve Esaslar Hakkında Yönetmelik'te öngörülen usullere uygun olarak, hizmet sağlayıcıların sunduğu uygun güvenceler çerçevesinde ve yalnızca yukarıda belirtilen amaçlarla sınırlı olarak gerçekleştirilir. Web analizi ve reklam ölçümü kapsamındaki aktarımlar yalnızca açık rızanıza dayanır.</p>
+
+        <h3>7. Kişisel Verilerin Saklanma Süresi</h3>
+        <p>Kişisel verileriniz, işlendikleri amaç için gerekli olan süre ve ilgili mevzuatta öngörülen saklama süreleri boyunca saklanır. Bu kapsamda sipariş, ödeme ve ön bilgilendirme/sözleşme onay kayıtları mesafeli sözleşmeler ve vergi mevzuatında öngörülen süreler boyunca (en az 3 yıl, vergi kayıtları için 5 yıl) ve olası uyuşmazlıklarda zamanaşımı süreleri boyunca; üyelik verileri üyeliğiniz devam ettiği sürece; tamamlanmayan ödeme girişimlerine ait geçici kayıtlar ise en geç 24 saat içinde silinir. Saklama süresi sona eren veriler silinir, yok edilir veya anonim hale getirilir.</p>
+
+        <h3>8. Veri Güvenliği</h3>
+        <p>Veri Sorumlusu, KVKK'nın 12. maddesi uyarınca kişisel verilerinizin hukuka aykırı işlenmesini ve erişilmesini önlemek için uygun teknik ve idari tedbirleri almaktadır. Bu tedbirler arasında tüm bağlantıların şifreli (HTTPS) olması, verilerin şifreli ortamda saklanması, veritabanı erişiminin kurallarla yalnızca ilgili kullanıcı ve yetkili yönetici ile sınırlandırılması, sipariş tutarlarının yalnızca sunucu tarafında hesaplanması, ödeme ve sipariş işlemlerinde otomatik saldırılara karşı güvenlik doğrulaması yapılması, sipariş sorgulamada kişisel bilgilerin kısmen gizlenerek gösterilmesi ve deneme sayısının sınırlandırılması yer almaktadır.</p>
+
+        <h3>9. İlgili Kişinin Hakları (KVKK m.11)</h3>
+        <p>KVKK'nın 11. maddesi uyarınca Veri Sorumlusuna başvurarak;</p>
+        <ul>
+            <li>Kişisel verilerinizin işlenip işlenmediğini öğrenme,</li>
+            <li>Kişisel verileriniz işlenmişse buna ilişkin bilgi talep etme,</li>
+            <li>Kişisel verilerinizin işlenme amacını ve bunların amacına uygun kullanılıp kullanılmadığını öğrenme,</li>
+            <li>Yurt içinde veya yurt dışında kişisel verilerinizin aktarıldığı üçüncü kişileri bilme,</li>
+            <li>Kişisel verilerinizin eksik veya yanlış işlenmiş olması hâlinde bunların düzeltilmesini isteme ve bu kapsamda yapılan işlemin kişisel verilerin aktarıldığı üçüncü kişilere bildirilmesini isteme,</li>
+            <li>KVKK'nın 7. maddesinde öngörülen şartlar çerçevesinde kişisel verilerinizin silinmesini veya yok edilmesini isteme ve bu kapsamda yapılan işlemin kişisel verilerin aktarıldığı üçüncü kişilere bildirilmesini isteme,</li>
+            <li>İşlenen verilerin münhasıran otomatik sistemler vasıtasıyla analiz edilmesi suretiyle aleyhinize bir sonucun ortaya çıkmasına itiraz etme,</li>
+            <li>Kişisel verilerinizin kanuna aykırı olarak işlenmesi sebebiyle zarara uğramanız hâlinde zararın giderilmesini talep etme</li>
+        </ul>
+        <p>haklarına sahipsiniz.</p>
+
+        <h3>10. Başvuru Yöntemi</h3>
+        <p>Yukarıdaki haklarınıza ilişkin taleplerinizi, Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ'e uygun olarak; kimliğinizi tespit edici bilgiler ile talep konunuzu içeren yazılı bir dilekçeyle yukarıdaki adrese şahsen veya noter aracılığıyla iletebilir, ya da sistemimizde kayıtlı e-posta adresinizden <strong>info@engrare.com</strong> adresine gönderebilirsiniz. Başvurunuz, talebin niteliğine göre en kısa sürede ve en geç <strong>30 (otuz) gün</strong> içinde ücretsiz olarak sonuçlandırılır. İşlemin ayrıca bir maliyet gerektirmesi hâlinde Kişisel Verileri Koruma Kurulu tarafından belirlenen tarifedeki ücret alınabilir. Başvurunuzun reddedilmesi, verilen cevabın yetersiz bulunması veya süresinde cevap verilmemesi hâllerinde, KVKK'nın 14. maddesi uyarınca Kişisel Verileri Koruma Kurulu'na şikâyette bulunabilirsiniz.</p>
+
+        <h3>11. Çerezler</h3>
+        <p>Sitede kullanılan çerezler ve benzeri teknolojiler hakkında ayrıntılı bilgiye <a href="../gizlilik/">Gizlilik ve Çerez Politikası</a> sayfasından ulaşabilirsiniz.</p>
+
+        <h3>12. Değişiklikler</h3>
+        <p>Veri Sorumlusu, mevzuattaki ve işleme faaliyetlerindeki değişikliklere bağlı olarak bu aydınlatma metnini güncelleyebilir. Güncel metin her zaman bu sayfada yayımlanır.</p>
+
+        <p style="margin-top: 40px; font-style: italic; color: var(--text-light);">Son güncelleme: Eylül 2026</p>
+    </div>
+
+    <footer class="main-footer">
+        <div class="container footer-trust" aria-label="Güvenli alışveriş">
+            <div class="footer-trust-item"><i class="fa-solid fa-lock"></i><span><strong>SSL şifreli bağlantı</strong>Tüm sayfalar güvenli aktarılır</span></div>
+            <div class="footer-trust-item"><i class="fa-solid fa-shield-halved"></i><span><strong>3D Secure doğrulama</strong>iyzico güvencesiyle kartlı ödeme</span></div>
+            <div class="footer-trust-item"><i class="fa-solid fa-credit-card"></i><span><strong>Kart bilginiz saklanmaz</strong>Ödeme formu iyzico'da açılır</span></div>
+            <div class="footer-trust-item"><i class="fa-solid fa-building-columns"></i><span><strong>Havale / EFT</strong>Banka transferiyle de ödeyin</span></div>
+        </div>
+        <div class="container footer-grid">
+            <div class="footer-col footer-brand">
+                <a href="../../" class="footer-logo" aria-label="Engrare ana sayfa"><img src="/content/images/engrare_logo_white_s.webp" alt="Engrare" width="144" height="52" loading="lazy" decoding="async"></a>
+                <p>Kişisel 3D baskı ve tasarım atölyesi. Size özel, tek tek üretilir.</p>
+                <div class="footer-contact">
+                    <a class="footer-social" href="https://instagram.com/engrar3d" target="_blank" rel="noopener" aria-label="Instagram"><svg class="footer-ico" viewBox="0 0 448 512" aria-hidden="true"><path fill="currentColor" d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"/></svg><span>Instagram</span></a>
+                    <a class="footer-social" href="https://wa.me/905412989803" target="_blank" rel="noopener" aria-label="WhatsApp"><svg class="footer-ico" viewBox="0 0 448 512" aria-hidden="true"><path fill="currentColor" d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></svg><span>WhatsApp</span></a>
+                    <a class="footer-phone" href="tel:+905412989803" aria-label="Ara: 0 (541) 298 98 03"><i class="fa-solid fa-phone"></i><span>0 (541) 298 98 03</span></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h5>Yardım</h5>
+                <ul>
+                    <li><a href="/?siparis">Sipariş Sorgula</a></li>
+                    <li><a href="../sss/">Sıkça Sorulan Sorular</a></li>
+                    <li><a href="../teslimat/">Teslimat ve İade</a></li>
+                    <li><a href="../iletisim/">İletişim</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h5>Yasal</h5>
+                <ul>
+                    <li><a href="../sozlesme/">Mesafeli Satış Sözleşmesi</a></li>
+                    <li><a href="../gizlilik/">Gizlilik Politikası</a></li>
+                    <li><a href="../kvkk/">KVKK Aydınlatma Metni</a></li>
+                    <li><a href="/?cerez">Çerez Tercihleri</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h5>Güvenli Ödeme</h5>
+                <div class="payment-methods">
+                    <span class="card-badge visa">VISA</span>
+                    <span class="card-badge mc"><i></i><i></i><b>mastercard</b></span>
+                    <span class="iyzico-badge">iyzico</span>
+                </div>
+                <p class="footer-note">Ödemeler iyzico altyapısıyla, 3D Secure doğrulamalı alınır.</p>
+            </div>
+        </div>
+        <div class="container footer-bottom">
+            <p>Satıcı: Kaya Sertel (Esnaf) · Vergi Dairesi: Halkalı · Vergi Kimlik No: 7630841323</p>
+            <p>Atakent Mah. Bosphorus City 52B Blok, Daire 5, Küçükçekmece / İstanbul · info@engrare.com</p>
+            <p>&copy; <span class="footer-year">2026</span> Engrare. Tüm hakları saklıdır.</p>
+            <script>document.querySelectorAll('.footer-year').forEach(function (e) { e.textContent = new Date().getFullYear(); });</script>
+        </div>
+    </footer>
+
+    <script src="/olcum.js?v=2" defer></script>
+    <script type="module" src="../mevzuat_script.js?v=3"></script>
+    <!-- MOBILE BOTTOM NAV -->
+    <div class="bottom-nav-bar" id="mobile-bottom-nav">
+        <div class="bottom-nav-item" onclick="location.href='../../?urunler'">
+            <i class="fa-solid fa-box"></i>
+            <span>Ürünler</span>
+        </div>
+        <div class="bottom-nav-item" onclick="location.href='../../?checkout'">
+            <div style="position: relative;">
+                <i class="fa-solid fa-cart-shopping"></i>
+                <span class="cart-badge-mobile" id="mobile-cart-badge">0</span>
+            </div>
+            <span>Sepet</span>
+        </div>
+        <!-- Giriş yapılmamış: Giriş Yap -->
+        <div class="bottom-nav-item" id="mobile-nav-login" onclick="location.href='../../?login'">
+            <i class="fa-regular fa-user"></i>
+            <span>Giriş Yap</span>
+        </div>
+        <!-- Giriş yapılmış: Profil -->
+        <div class="bottom-nav-item" id="mobile-nav-profile" onclick="location.href='../../?dashboard'" style="display:none;">
+            <i class="fa-solid fa-circle-user"></i>
+            <span>Profil</span>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /payment/
+
+Sitemap: https://engrare.com/sitemap.xml
