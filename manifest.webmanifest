@@ -1,0 +1,15 @@
+{
+  "name": "Engrare 3D",
+  "short_name": "Engrare 3D",
+  "description": "Kişiye özel 3D baskı numaratör, isimlik ve QR stand",
+  "lang": "tr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F8F9FB",
+  "theme_color": "#0F172A",
+  "icons": [
+    { "src": "/icon-192.png?v=4", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png?v=4", "sizes": "512x512", "type": "image/png" }
+  ]
+}
