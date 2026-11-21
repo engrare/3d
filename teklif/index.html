@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Size Özel Tasarımlar | Engrare</title>
+    <!-- Müşteriye özel teklif sayfası (link yalnız müşteriye verilir): arama motoruna girmez -->
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="icon" type="image/png" href="/favicon.png?v=4" sizes="48x48">
+    <link rel="icon" href="/favicon.ico?v=4" sizes="any">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4">
+    <meta name="theme-color" content="#0F172A">
+    <link rel="preload" href="../content/fonts/fa-lite-solid.woff2?v=178f34" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="../myStyle.css?v=130">
+    <link rel="stylesheet" href="teklif.css?v=5">
+    <link rel="modulepreload" href="../products.js?v=25">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="brand-logo" style="height: 100%;"><a href="../" style="text-decoration: none; color: inherit; display: flex; align-items: center; height: 100%; line-height: 0;"><img src="../content/images/engrare_logo_elegant_s.webp" height="65" width="101" decoding="async" alt="Engrare" style="display: block;" onerror="this.style.display='none'; this.parentElement.innerText='ENGRARE.'"></a></div>
+            <div class="nav-secure"><i class="fa-solid fa-lock"></i> Size Özel</div>
+        </div>
+    </nav>
+
+    <main class="tk-main">
+        <div id="tk-yukleniyor" class="tk-durum">Tasarımlarınız yükleniyor…</div>
+        <div id="tk-hata" class="tk-durum tk-hata" hidden></div>
+
+        <section id="tk-icerik" hidden>
+            <h1 id="tk-baslik">Size özel tasarımlar</h1>
+            <p id="tk-not" class="tk-not" hidden></p>
+
+            <div class="tk-izgara">
+                <div class="tk-sol">
+                    <div class="tk-viewer-kutu">
+                        <div id="tk-viewer"></div>
+                        <div id="tk-viewer-durum" class="tk-viewer-durum">3B model yükleniyor…</div>
+                        <div class="tk-viewer-ipucu"><i class="fa-solid fa-hand-pointer"></i> Parmağınızla çevirip her yönden bakabilirsiniz</div>
+                    </div>
+                    <div id="tk-boya" class="tk-boya" hidden>
+                        <div class="tk-boya-ust"><strong><i class="fa-solid fa-pen"></i> Boyama</strong> <small>Bu kutu yalnız sizde görünür; kaydedince müşteri boyalı önizlemeyi görür.</small></div>
+                        <button type="button" id="tk-boya-ac" class="tk-boya-ac"><i class="fa-solid fa-pen"></i> Boyama ekranını aç</button>
+                        <div class="tk-boya-durum" aria-live="polite"></div>
+                        <div class="tk-baski-bolum">
+                            <div class="tk-boya-ust"><strong>Baskıya hazır dosya</strong> <small id="tk-baski-etiket">Seçili seçenek ve boy, dilimleyiciye hazır (OBJ+MTL / STL).</small></div>
+                            <div class="tk-baski-satir">
+                                <button type="button" id="tk-baski-renkli" class="tk-baski-btn tk-baski-ana"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Renkli baskı (ZIP · OBJ+MTL)</span></button>
+                                <button type="button" id="tk-baski-stl" class="tk-baski-btn"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>STL (tek renk)</span></button>
+                            </div>
+                            <div id="tk-baski-durum" class="tk-baski-durum" aria-live="polite"></div>
+                        </div>
+                    </div>
+                    <div class="tk-secenek-baslik">Seçenekler <span id="tk-secenek-sayi"></span></div>
+                    <div id="tk-secenekler" class="tk-secenekler" role="radiogroup" aria-label="Tasarım seçenekleri"></div>
+                </div>
+
+                <div class="tk-sag">
+                    <div class="tk-kart">
+                        <div class="tk-secili-ad" id="tk-secili-ad">Seçenek 1</div>
+                        <div class="tk-palet-baslik" id="tk-palet-baslik">Basılacak renkler</div>
+                        <div id="tk-palet" class="tk-palet"></div>
+                        <div id="tk-boyama" class="tk-boyama" hidden><i class="fa-solid fa-pen"></i> <span>Figürünüz baskıdan sonra <strong>ustamız tarafından elle boyanır</strong>. 3B önizlemedeki renk hataları boyamada düzeltilir; renkler gönderdiğiniz görsele göre uygulanır.</span></div>
+                        <div id="tk-yazi" class="tk-yazi" hidden></div>
+
+                        <div class="tk-boy-baslik">Boy <span>(kaide dahil yükseklik)</span></div>
+                        <div id="tk-boylar" class="tk-boylar" role="radiogroup" aria-label="Boy"></div>
+                        <div id="tk-boy-not" class="tk-boy-not"></div>
+
+                        <div class="tk-fiyat-satir">
+                            <span>Tutar</span>
+                            <span><s id="tk-eski-fiyat"></s> <strong id="tk-fiyat"></strong></span>
+                        </div>
+                        <div class="tk-kargo"><i class="fa-solid fa-truck"></i> Kargo dahil · İstanbul'daki atölyemizde üretilir</div>
+
+                        <button id="tk-sec" class="tk-btn" type="button"><i class="fa-solid fa-lock"></i> Bu tasarımı seç ve ödemeye geç</button>
+                        <div id="tk-sec-not" class="tk-sec-not">Ödeme sayfasında adres bilgilerinizi girip kartla ya da havaleyle ödersiniz. Üyelik gerekmez.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tk-bilgi">
+                <div id="tk-renk-bilgi"><i class="fa-solid fa-circle-check"></i> 3B önizlemede gördüğünüz renkler basılacak filament renkleridir.</div>
+                <div><i class="fa-solid fa-circle-check"></i> Baskıdan önce ekibimiz modeli kontrol eder.</div>
+                <div><i class="fa-solid fa-phone"></i> Sorunuz olursa WhatsApp'tan yazabilirsiniz: <a href="https://wa.me/905412989803" rel="noopener">0541 298 98 03</a></div>
+            </div>
+            <p id="tk-sure" class="tk-sure"></p>
+        </section>
+    </main>
+
+    <script>try { var q = new URLSearchParams(location.search).get('ben'); if (q === '1') localStorage.setItem('engrare_kendim', '1'); else if (q === '0') localStorage.removeItem('engrare_kendim'); } catch (e) {}</script>
+    <script src="/olcum.js?v=4" defer></script>
+    <script src="../fiyat.js" defer></script>
+    <script type="module" src="teklif.js?v=7"></script>
+</body>
+</html>
