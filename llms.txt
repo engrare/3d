@@ -1,0 +1,77 @@
+# Engrare
+
+> Engrare (engrare.com; eski adıyla Engrare 3D): İstanbul’da kişiye özel 3D baskı atölyesi ve online mağaza (engrare.com). Yapay zekâ ile tasarlanan renkli 3D figür (karakter figürü / minyatür heykel; kaideye ücretsiz isim yazılabilir), fotoğraftan 3D portre büst, araç içi telefon numaratörü ve QR kodlu kartvizit standı üretir. Her ürün sipariş verildikten sonra müşteriye özel basılır; Türkiye’nin her iline kargo ücretsizdir.
+
+Temel bilgiler:
+
+- Konum: İstanbul (Küçükçekmece) atölyesi; Türkiye geneline kargoyla gönderim, kargo ücretsiz.
+- Nasıl sipariş verilir: ürün sayfasında kişiselleştirilir (yazı, renk, logo; figürde tarif ya da görsel, büstte fotoğraf), sipariş öncesi canlı önizleme görülür (figür ve büstte döndürülebilir 3D önizleme), sepete eklenip ödenir.
+- Figür ve büst tasarımı yapay zekâyla yaklaşık 2 dakikada hazırlanır; denemek ücretsizdir ve üyelik gerekmez.
+- Hediye: ödeme sayfasında “Hediye olarak gönder” seçilip teslimat adresine alıcının adresi yazılır; ürün karta yazılan notla doğrudan alıcıya gönderilir. Örneğin bir arkadaşınıza tek cümlelik tarifle (prompt) oyun karakteri havasında bir figür tasarlayıp 3D önizlemesine bakabilir, beğenirseniz onun adresine hediye olarak gönderebilirsiniz.
+- Üretim: standart üretimde 3-5 iş günü, Öncelikli Üretim seçeneğinde 2-3 iş günü içinde kargoya verilir.
+- Ödeme: kartla (iyzico, 3D Secure) ya da havale/EFT.
+- İade: kişiye özel üretildiği için cayma hakkı kapsamı dışındadır; kargoda hasar ya da üretim hatasında ürün ücretsiz yeniden basılıp gönderilir.
+- Telif: oyun/film karakterlerinin birebir kopyası basılmaz; müşteri karakterin görünüşünü tarif ederek özgün bir figür tasarlatır.
+- İletişim: WhatsApp +90 541 298 98 03 (https://wa.me/905412989803), e-posta info@engrare.com, Instagram @engrare.official (https://instagram.com/engrare.official).
+
+## Ürünler
+
+- [Araba İçi Numaratör](https://engrare.com/urun/araba-ici-numarator/): Araç içi telefon numaratörü: numaranız sizin seçtiğiniz renkle, kişiye özel 3D baskıyla basılır. Ücretsiz kargo, 3-5 iş günü içinde kargoda. Fiyat (kargo dahil): 229 TL.
+- [Yapay Zekâ ile Renkli 3D Figür](https://engrare.com/urun/yapay-zeka-ile-renkli-3d-figur/): Hayalindeki karakteri yaz ya da görselini yükle; yapay zekâ renkli, kaideli 3D figürünü tasarlasın, önizlemesini döndürerek gör, beğenirsen basalım. Ücretsiz kargo. Fiyat (kargo dahil): 5 cm 399 TL, 8 cm 859 TL, 10 cm 949 TL, 15 cm 1.899 TL, 20 cm 3.799 TL.
+- [Kişiye Özel 3D Portre Büst](https://engrare.com/urun/kisiye-ozel-3d-portre-bust/): Fotoğrafını yükle, yapay zekâ 3D büstünü dakikalar içinde hazırlasın; ödeme yapmadan döndürerek önizle. Tek kişilik ya da sevgili, arkadaş için çift büst. Fiyat (kargo dahil): 699 TL.
+
+## Sık sorulan sorular
+
+### Araba İçi Numaratör
+
+- Numaratörde hangi bilgi yazılır? Araç içinde görünmesini istediğiniz telefon numarası; ürün sayfasında numaranızı yazıp rengi seçtikçe canlı önizlemeyi görürsünüz.
+- Rengi ve yazıyı seçebilir miyim? Evet. Ürün sayfasındaki renk çiftlerinden birini seçersiniz; yazı ve renk siparişte seçtiğiniz gibi basılır.
+- Ne zaman kargoya verilir? Ürün siparişe özel basıldığı için standart üretimde 3-5 iş günü içinde, Öncelikli Üretim seçeneğinde 2-3 iş günü içinde kargoya verilir. Kargo Türkiye genelinde ücretsizdir; kargoda hasar ya da üretim hatası olursa ücretsiz yeniden basılır.
+- Yanlış numara yazdım, değiştirebilir miyim? Üretime başlanmadan önce bize WhatsApp veya e-postayla yazarsanız düzeltiriz. Kişiye özel basıldığı için üretimden sonra değişiklik yapılamaz; siparişten önce numarayı son kez kontrol edin.
+- Numaramı gizleyebilir miyim? Evet. Basarak açılıp kapanan mekanizması sayesinde numaranızı dilediğiniz zaman gizleyebilir, park ettiğinizde tek dokunuşla görünür hale getirebilirsiniz.
+- Araca nasıl yerleştirilir? Ön göğüste veya ön cam önünde kullanıma uygun kompakt gövdeye sahiptir; yüksek kontrastlı kabartma rakamları cam arkasından da net okunur.
+
+### Yapay Zekâ ile Renkli 3D Figür
+
+- Figür nasıl hazırlanıyor? Figürünüzü tek cümlelik bir tarifle (prompt) anlatırsınız ya da bir görsel yüklersiniz; yapay zekâ yaklaşık 2 dakikada renkli, kaideli bir 3D model hazırlar. Modeli ürün sayfasında döndürerek incelersiniz, beğenirseniz boyunu seçip sepete eklersiniz. Denemek ücretsizdir ve üyelik gerekmez (günde 3 tasarım); sayfayı kapatsanız da üretim arka planda sürer, giriş yaparsanız tasarımlarınız hesabınıza kaydedilir.
+- Fiyatı ne kadar, boya göre değişiyor mu? Evet, fiyat seçtiğiniz boya (kaide dahil yükseklik) göre değişir: 5 cm 399 TL, 8 cm 859 TL, 10 cm 949 TL, 15 cm 1.899 TL, 20 cm 3.799 TL. Fiyata kargo dahildir, ek ücret çıkmaz. Boyu tasarımdan sonra ürün sayfasında seçersiniz; sepette de değiştirebilirsiniz.
+- Hangi boyu seçmeliyim? 5 cm kibrit kutusu, 8 cm kredi kartının uzun kenarı, 10 cm çay bardağı, 15 cm telefon, 20 cm A4 kağıdın kısa kenarı kadardır. Masaüstü ve hediye için 8-10 cm en dengeli seçimdir; 5 cm’de yüz, parmak gibi ince ayrıntılar sadeleşir. Eni ve derinliği figürün şekline göre değişir.
+- Oyun, film ya da çizgi film karakteri yaptırabilir miyim? Telif hakları nedeniyle hazır bir karakterin birebir kopyasını basmıyoruz. Bunun yerine karakterin adını değil görünüşünü yazın (ör. “altın zırhlı, kalkanlı, kızıl saçlı kadın savaşçı”); yapay zekâ size oyun karakteri havasında özgün bir figür tasarlar. Gerçek kişilerin ve ünlülerin benzerini de istemeyin.
+- Kaidesine isim ya da not yazdırabilir miyim? Evet, ücretsiz. Figürünüzü tasarladıktan sonra WhatsApp’tan bize yazın; kaideye isim, tarih gibi kısa bir yazı ekleyip size özel sipariş bağlantısı göndeririz, fiyat değişmez. Yazı, kaidenin önüne kabartma olarak basılır.
+- Boyalı mı, renkler nasıl veriliyor? Boya kullanılmaz; figür doğrudan renkli PLA filamentle (Porima PLA) en çok 4 renkle basılır. Önizlemede gördüğünüz renkler basılacak renklerdir ve baskıdan önce ekibimiz modeli kontrol eder. Göz bebeği, ince çizgi gibi çok küçük renkli ayrıntılar en yakın renge karışabilir.
+- Hangi görseli yükleyebilirim? Tek bir karakterin ya da nesnenin olduğu, sade arka planlı bir görsel en iyi sonucu verir. Tarif yazarken de sahne/arka plan (orman, deniz) yazmayın. Telifli ya da ünlü karakterlerin ve gerçek kişilerin benzerini istemeyin. Yüklediğiniz görsel yalnızca figür için işlenir; siparişe dönmezse 7 gün içinde silinir.
+- Arkadaşıma hediye olarak doğrudan gönderebilir miyim? Evet. Figürü tasarlayıp beğendikten sonra sepete ekleyin; ödeme sayfasında teslimat adresine hediyeyi alacak kişinin adını ve adresini yazın, “Hediye olarak gönder” kutusunu işaretleyip karta yazılacak notu ve adınızı ekleyin. Figür doğrudan arkadaşınızın adresine gönderilir.
+- Neredesiniz, kargo nasıl? Atölyemiz İstanbul’dadır; Türkiye’nin her iline kargoyla gönderiyoruz ve kargo ücretsizdir. Kart (iyzico güvenli ödeme) ya da havale ile ödeyebilirsiniz.
+- Kargoda kırılırsa ne olur? Kargoda hasar ya da üretim hatası durumunda kargo tutanağı veya fotoğrafla bize ulaşmanız yeterlidir; figürünüz ücretsiz olarak yeniden basılıp gönderilir.
+- Ne zaman kargoya verilir? Figür siparişe özel basıldığı için standart üretimde 3-5 iş günü, Öncelikli Üretim seçeneğinde 2-3 iş günü içinde kargoya verilir; 15 ve 20 cm’de baskı daha uzun sürdüğünden 1-2 iş günü uzayabilir. Kişiye özel üretildiği için cayma hakkı kapsamı dışındadır.
+
+### Kişiye Özel 3D Portre Büst
+
+- Fotoğraftan 3D büst nasıl hazırlanıyor? Fotoğrafınızı ürün sayfasına yüklersiniz; yapay zekâ fotoğraftan kaideli, stilize bir 3D büst modeli hazırlar. Sonucu aynı sayfada döndürerek görür, beğenirseniz sepete eklersiniz. Atölyemiz büstü 3D yazıcıda basıp kargoya verir.
+- 3D önizleme ne kadar sürede hazır olur? Seçtiğiniz kaliteye göre yaklaşık 30 saniye ile 2,5 dakika arasında: hızlı modda 30-40 saniye, en kaliteli modda tek kişilik büst yaklaşık 1,5 dakika, çift büst yaklaşık 2,5 dakika. Önizleme ekranında beklerken sayfayı kapatsanız da üretim sürer; giriş yaparsanız büstleriniz hesabınıza da kaydedilir.
+- Ödeme yapmadan önce görebilir miyim, denemek ücretli mi? Evet, büstünüzü ödeme yapmadan önce 3D olarak döndürüp incelersiniz. Denemek ücretsizdir ve üyelik gerekmez (giriş yapmadan günde 3 deneme, üye girişiyle daha fazla). Yalnızca sepete eklediğiniz büst üretilir.
+- Arkadaşımla ya da ailemle çift büst yaptırabilir miyim? Evet. Çift büst, aynı fotoğraftaki iki kişiden yapılır: sevgililer, arkadaşlar, kardeşler ya da anne-çocuk. İki kişinin de yüzünün net göründüğü tek bir fotoğraf yükleyin; iki kişi algılandığında çift büst hazırlanır.
+- Hangi fotoğraf uygundur? Yüzün net göründüğü, iyi ışıkta çekilmiş, önden ya da hafif yandan bir fotoğraf en iyi sonucu verir. Çift büst için iki kişinin de göründüğü tek bir fotoğraf yükleyin.
+- Büst fotoğraftaki gibi mi çıkar? Büst fotoğrafınızdaki kişiye benzer ama stilize bir yorumdur, birebir kopya değildir. Sakal, dantel, ince saç telleri gibi çok küçük ayrıntılar 3D baskıda yumuşar. Sonuç beğenilmezse başka bir tane deneyebilir ya da farklı bir fotoğraf yükleyebilirsiniz.
+- Büstün ölçüsü ve rengi ne? Kaide dahil tek kişilik büst yaklaşık 9 cm, çift büst yaklaşık 10 cm boyundadır. Büst, seçtiğiniz tek baskı rengiyle (Kil Beyazı, Gri, Terrakota ya da Siyah) basılır.
+- Hediye olarak başka bir adrese gönderebilir miyim? Evet. Ödeme sayfasında teslimat adresine hediyeyi alacak kişinin adını ve adresini yazın, “Hediye olarak gönder” kutusunu işaretleyip karta yazılacak notu ve adınızı ekleyin. Büst doğrudan o adrese gönderilir.
+- Kargoda kırılırsa ne olur? Kargoda hasar ya da üretim hatası durumunda kargo tutanağı veya fotoğrafla bize ulaşmanız yeterlidir; büstünüz ücretsiz olarak yeniden basılıp gönderilir.
+- Fotoğrafım ne olur? Yalnızca büstünüzü hazırlamak için işlenir. Sipariş vermezseniz en geç 7 gün içinde silinir; sipariş verdiyseniz üretim ve iade süreleri için en fazla 120 gün saklanır.
+- Ne zaman kargoya verilir? Ürün siparişe özel basıldığı için standart üretimde 3-5 iş günü, Öncelikli Üretim seçeneğinde 2-3 iş günü içinde kargoya verilir; kargo ücretsizdir. Kişiye özel üretildiği için cayma hakkı kapsamı dışındadır.
+
+## Rehberler
+
+- [Kişiye Özel 3D Figür Yaptırma: Karakter, Boy, Fiyat ve Kaideye İsim](https://engrare.com/rehber/kisiye-ozel-3d-figur-yaptirma/): Hayalinizdeki karakteri ya da sevdiğiniz bir hayvanı küçük bir 3D baskı figür (minyatür heykel) olarak yaptırmak için bilmeniz gerekenler: nasıl tasarlanır, hangi boy, fiyatı ne kadar, kaideye isim yazılır mı.
+- [Fotoğraftan 3D Büst Yaptırma: Sevgiliye ve Aileye Kişiye Özel Hediye](https://engrare.com/rehber/fotograftan-3d-bust-yaptirma/): Bir fotoğraftan kişiye benzeyen kaideli 3D baskı büst yaptırmak: hangi fotoğraf uygun, tek ve çift büst, ölçü, fiyat, fotoğrafınızın gizliliği.
+- [Araç İçi Telefon Numaratörü Nedir, Nasıl Kullanılır?](https://engrare.com/rehber/arac-ici-numarator-nedir-nasil-kullanilir/): Park halindeyken telefon numaranızı araçta görünür kılan numaratörün ne işe yaradığını, nasıl kullanıldığını ve sipariş verirken nelere dikkat edeceğinizi anlatıyoruz.
+- [Kişiye Özel 3D Baskı Hediye Fikirleri](https://engrare.com/rehber/kisiye-ozel-hediye-fikirleri/): Sevgiliye, oyun ve karakter seven birine, sürücüye, iş ortağına: kişiye özel 3D baskı hediye fikirleri (figür, büst, numaratör, kartvizitlik) ve hediye siparişinde bilmeniz gerekenler.
+- [QR Kodlu Kartvizit Standı Seçerken Nelere Dikkat Edilmeli?](https://engrare.com/rehber/qr-kodlu-kartvizit-standi-nasil-secilir/): Kartvizit standı alırken kapasite, kartvizit uyumu, QR kodun dayanıklılığı ve kişiselleştirme seçeneklerine nasıl bakacağınızı anlatan kısa rehber.
+
+## Mağaza bilgileri
+
+- [Sıkça Sorulan Sorular](https://engrare.com/mevzuat/sss/)
+- [Teslimat ve İade](https://engrare.com/mevzuat/teslimat/)
+- [İletişim](https://engrare.com/mevzuat/iletisim/)
+- [Mesafeli Satış Sözleşmesi](https://engrare.com/mevzuat/sozlesme/)
+
+Bu dosya 2026-11-28 tarihinde siteden otomatik üretildi; güncel fiyat ürün sayfasındadır.
